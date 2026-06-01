@@ -24,4 +24,13 @@ public static class CodigosError
     public const string NombreRequerido = "NOMBRE_REQUERIDO";
     public const string AreaRequerida = "AREA_REQUERIDA";
     public const string UsuarioInexistente = "USUARIO_INEXISTENTE";
+
+    // Relevamientos (CU-01, CU-10; RN-02, RN-05)
+    public const string IdentificacionRequerida = "IDENTIFICACION_REQUERIDA";
+    public const string RadioInvalido = "RADIO_INVALIDO";
+    public const string AgenteFueraDeArea = "AGENTE_FUERA_DE_AREA";
+    public const string RelevamientoSoloLectura = "RELEVAMIENTO_SOLO_LECTURA";
+    public const string TransicionInvalida = "TRANSICION_INVALIDA";
+    public const string ReaperturaNoAutorizada = "REAPERTURA_NO_AUTORIZADA";
+    public const string RelevamientoInexistente = "RELEVAMIENTO_INEXISTENTE";
 }

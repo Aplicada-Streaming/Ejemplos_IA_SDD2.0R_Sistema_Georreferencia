@@ -97,6 +97,52 @@ public sealed class GeoVialApiCliente
         return (false, problema?.Codigo ?? $"Error {(int)resp.StatusCode}");
     }
 
+    // --- Relevamientos (CU-01, CU-10) ---
+
+    public async Task<IReadOnlyList<RelevamientoDto>> ListarRelevamientosAsync(CancellationToken ct = default)
+    {
+        using var req = new HttpRequestMessage(HttpMethod.Get, "api/v1/relevamientos");
+        Autorizar(req);
+        var resp = await _http.SendAsync(req, ct);
+        if (!resp.IsSuccessStatusCode)
+        {
+            return Array.Empty<RelevamientoDto>();
+        }
+
+        return await resp.Content.ReadFromJsonAsync<List<RelevamientoDto>>(ct) ?? new List<RelevamientoDto>();
+    }
+
+    public Task<(bool Ok, string Mensaje)> CrearRelevamientoAsync(string identificacion, decimal radio, CancellationToken ct = default) =>
+        EnviarAsync(HttpMethod.Post, "api/v1/relevamientos", new CrearRelevamientoRequest(identificacion, radio), "Relevamiento creado.", ct);
+
+    public Task<(bool Ok, string Mensaje)> TransicionarAsync(Guid id, int estadoDestino, CancellationToken ct = default) =>
+        EnviarAsync(HttpMethod.Post, $"api/v1/relevamientos/{id}/transicion", new TransicionRequest(estadoDestino), "Estado actualizado.", ct);
+
+    public Task<(bool Ok, string Mensaje)> ReabrirAsync(Guid id, CancellationToken ct = default) =>
+        EnviarAsync<object?>(HttpMethod.Post, $"api/v1/relevamientos/{id}/reabrir", null, "Relevamiento reabierto.", ct);
+
+    public Task<(bool Ok, string Mensaje)> AsignarAgentesAsync(Guid id, IReadOnlyList<Guid> agentes, CancellationToken ct = default) =>
+        EnviarAsync(HttpMethod.Post, $"api/v1/relevamientos/{id}/agentes", new AsignarAgentesRequest(agentes), "Agentes asignados.", ct);
+
+    private async Task<(bool Ok, string Mensaje)> EnviarAsync<TBody>(HttpMethod metodo, string ruta, TBody? cuerpo, string exito, CancellationToken ct)
+    {
+        using var req = new HttpRequestMessage(metodo, ruta);
+        if (cuerpo is not null)
+        {
+            req.Content = JsonContent.Create(cuerpo);
+        }
+
+        Autorizar(req);
+        var resp = await _http.SendAsync(req, ct);
+        if (resp.IsSuccessStatusCode)
+        {
+            return (true, exito);
+        }
+
+        var problema = await resp.Content.ReadFromJsonAsync<ProblemaApi>(ct);
+        return (false, problema?.Codigo ?? $"Error {(int)resp.StatusCode}");
+    }
+
     private void Autorizar(HttpRequestMessage req)
     {
         if (_token is not null)

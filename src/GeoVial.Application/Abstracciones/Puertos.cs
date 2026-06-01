@@ -16,6 +16,14 @@ public interface IAreaRepository
     Task<Area?> ObtenerPorIdAsync(Guid areaId, CancellationToken ct = default);
 }
 
+public interface IRelevamientoRepository
+{
+    Task<Relevamiento?> ObtenerPorIdAsync(Guid relevamientoId, CancellationToken ct = default);
+    Task<IReadOnlyList<Relevamiento>> ListarTodosAsync(CancellationToken ct = default);
+    Task AgregarAsync(Relevamiento relevamiento, CancellationToken ct = default);
+    Task GuardarCambiosAsync(CancellationToken ct = default);
+}
+
 public interface ICredencialRepository
 {
     Task<Credencial?> ObtenerPorNombreUsuarioAsync(string nombreUsuario, CancellationToken ct = default);

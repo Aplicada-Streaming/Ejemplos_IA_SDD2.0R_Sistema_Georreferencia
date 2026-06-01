@@ -2,6 +2,8 @@ using System.Security.Claims;
 using System.Text;
 using GeoVial.Api;
 using GeoVial.Application;
+using GeoVial.Application.Cqrs;
+using GeoVial.Application.Relevamientos;
 using GeoVial.Application.Servicios;
 using GeoVial.Domain;
 using GeoVial.Infrastructure;
@@ -153,6 +155,77 @@ usuarios.MapGet("/", async (ClaimsPrincipal solicitante, GestionUsuariosService 
     return Results.Ok(lista.Select(AMapa));
 });
 
+// --- Relevamientos (CU-01, CU-10; US-06/07/08/09/10) — módulo CQRS ligero ---
+var relevamientos = app.MapGroup("/api/v1/relevamientos").RequireAuthorization();
+
+relevamientos.MapPost("/", async (CrearRelevamientoRequest req, ClaimsPrincipal jefe, IMediador mediador, CancellationToken ct) =>
+{
+    if (!TryGetUsuarioId(jefe, out var jefeId))
+    {
+        return Results.Unauthorized();
+    }
+
+    var r = await mediador.EnviarAsync(new CrearRelevamientoCommand(jefeId, req.IdentificacionObra, req.RadioAgrupacionMetros), ct);
+    return r.EsExito
+        ? Results.Created($"/api/v1/relevamientos/{r.Valor!.RelevamientoId}", AMapaRelevamiento(r.Valor!))
+        : MapeoErrores.AProblema(r.Codigo);
+});
+
+relevamientos.MapPost("/{id:guid}/agentes", async (Guid id, AsignarAgentesRequest req, ClaimsPrincipal jefe, IMediador mediador, CancellationToken ct) =>
+{
+    if (!TryGetUsuarioId(jefe, out var jefeId))
+    {
+        return Results.Unauthorized();
+    }
+
+    var r = await mediador.EnviarAsync(new AsignarAgentesCommand(jefeId, id, req.AgentesIds), ct);
+    return r.EsExito ? Results.NoContent() : MapeoErrores.AProblema(r.Codigo);
+});
+
+relevamientos.MapPut("/{id:guid}/agentes", async (Guid id, AsignarAgentesRequest req, ClaimsPrincipal jefe, IMediador mediador, CancellationToken ct) =>
+{
+    if (!TryGetUsuarioId(jefe, out var jefeId))
+    {
+        return Results.Unauthorized();
+    }
+
+    var r = await mediador.EnviarAsync(new ReasignarAgentesCommand(jefeId, id, req.AgentesIds), ct);
+    return r.EsExito ? Results.NoContent() : MapeoErrores.AProblema(r.Codigo);
+});
+
+relevamientos.MapPost("/{id:guid}/transicion", async (Guid id, TransicionRequest req, ClaimsPrincipal jefe, IMediador mediador, CancellationToken ct) =>
+{
+    if (!TryGetUsuarioId(jefe, out var jefeId))
+    {
+        return Results.Unauthorized();
+    }
+
+    var r = await mediador.EnviarAsync(new TransicionarEstadoCommand(jefeId, id, (EstadoRelevamiento)req.EstadoDestino), ct);
+    return r.EsExito ? Results.NoContent() : MapeoErrores.AProblema(r.Codigo);
+});
+
+relevamientos.MapPost("/{id:guid}/reabrir", async (Guid id, ClaimsPrincipal jefe, IMediador mediador, CancellationToken ct) =>
+{
+    if (!TryGetUsuarioId(jefe, out var jefeId))
+    {
+        return Results.Unauthorized();
+    }
+
+    var r = await mediador.EnviarAsync(new ReabrirRelevamientoCommand(jefeId, id), ct);
+    return r.EsExito ? Results.NoContent() : MapeoErrores.AProblema(r.Codigo);
+});
+
+relevamientos.MapGet("/", async (ClaimsPrincipal solicitante, IMediador mediador, CancellationToken ct) =>
+{
+    if (!TryGetUsuarioId(solicitante, out var id))
+    {
+        return Results.Unauthorized();
+    }
+
+    var lista = await mediador.EnviarAsync(new ListarRelevamientosQuery(id), ct);
+    return Results.Ok(lista.Select(AMapaRelevamiento));
+});
+
 app.Run();
 
 static bool TryGetUsuarioId(ClaimsPrincipal principal, out Guid id)
@@ -163,6 +236,9 @@ static bool TryGetUsuarioId(ClaimsPrincipal principal, out Guid id)
 
 static UsuarioDto AMapa(Usuario u) =>
     new(u.UsuarioId, u.Nombre, (int)u.Rol, u.AreaId, u.EstadoVigencia, u.MetodoSeguridadConfigurado);
+
+static RelevamientoDto AMapaRelevamiento(Relevamiento r) =>
+    new(r.RelevamientoId, r.IdentificacionObra, (int)r.Estado, r.RadioAgrupacionMetros, r.AreaId, r.AgentesVigentes());
 
 /// <summary>Punto de entrada expuesto para pruebas de integración (WebApplicationFactory).</summary>
 public partial class Program;

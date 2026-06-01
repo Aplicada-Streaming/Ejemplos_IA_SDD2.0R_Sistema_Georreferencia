@@ -27,3 +27,19 @@ public sealed record UsuarioDto(
     Guid? AreaId,
     bool Vigente,
     bool MetodoSeguridadConfigurado);
+
+// --- Relevamientos (CU-01, CU-10; US-06/07/08/09/10) ---
+
+public sealed record CrearRelevamientoRequest(string IdentificacionObra, decimal RadioAgrupacionMetros);
+
+public sealed record AsignarAgentesRequest(IReadOnlyList<Guid> AgentesIds);
+
+public sealed record TransicionRequest(int EstadoDestino);
+
+public sealed record RelevamientoDto(
+    Guid RelevamientoId,
+    string IdentificacionObra,
+    int Estado,
+    decimal RadioAgrupacionMetros,
+    Guid AreaId,
+    IReadOnlyList<Guid> AgentesVigentes);

@@ -35,6 +35,24 @@ public sealed class AreaRepository : IAreaRepository
         _db.Areas.FirstOrDefaultAsync(a => a.AreaId == areaId, ct);
 }
 
+public sealed class RelevamientoRepository : IRelevamientoRepository
+{
+    private readonly GeoVialDbContext _db;
+
+    public RelevamientoRepository(GeoVialDbContext db) => _db = db;
+
+    public Task<Relevamiento?> ObtenerPorIdAsync(Guid relevamientoId, CancellationToken ct = default) =>
+        _db.Relevamientos.Include(r => r.Asignaciones).FirstOrDefaultAsync(r => r.RelevamientoId == relevamientoId, ct);
+
+    public async Task<IReadOnlyList<Relevamiento>> ListarTodosAsync(CancellationToken ct = default) =>
+        await _db.Relevamientos.Include(r => r.Asignaciones).AsNoTracking().ToListAsync(ct);
+
+    public async Task AgregarAsync(Relevamiento relevamiento, CancellationToken ct = default) =>
+        await _db.Relevamientos.AddAsync(relevamiento, ct);
+
+    public Task GuardarCambiosAsync(CancellationToken ct = default) => _db.SaveChangesAsync(ct);
+}
+
 public sealed class CredencialRepository : ICredencialRepository
 {
     private readonly GeoVialDbContext _db;

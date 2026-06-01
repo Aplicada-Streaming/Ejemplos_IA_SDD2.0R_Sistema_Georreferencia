@@ -18,6 +18,7 @@ public sealed class GeoVialDbContext : DbContext
     public DbSet<Area> Areas => Set<Area>();
     public DbSet<Credencial> Credenciales => Set<Credencial>();
     public DbSet<RegistroAuditoria> RegistrosAuditoria => Set<RegistroAuditoria>();
+    public DbSet<Relevamiento> Relevamientos => Set<Relevamiento>();
 
     protected override void OnModelCreating(ModelBuilder modelo)
     {
@@ -55,6 +56,26 @@ public sealed class GeoVialDbContext : DbContext
             e.Property(r => r.Operacion).HasMaxLength(200).IsRequired();
             e.Property(r => r.RecursoAfectado).HasMaxLength(300).IsRequired();
             e.HasIndex(r => r.Momento).HasDatabaseName("IX_Auditoria_Momento");
+        });
+
+        modelo.Entity<Relevamiento>(e =>
+        {
+            e.ToTable("Relevamiento");
+            e.HasKey(r => r.RelevamientoId);
+            e.Property(r => r.IdentificacionObra).HasMaxLength(300).IsRequired();
+            e.Property(r => r.Estado).HasConversion<byte>().IsRequired();
+            e.Property(r => r.RadioAgrupacionMetros).HasColumnType("decimal(9,2)").IsRequired();
+            e.HasIndex(r => r.AreaId).HasDatabaseName("IX_Relevamiento_Area");
+            e.HasMany(r => r.Asignaciones).WithOne().HasForeignKey(a => a.RelevamientoId).OnDelete(DeleteBehavior.Cascade);
+            e.Navigation(r => r.Asignaciones).UsePropertyAccessMode(PropertyAccessMode.Field);
+        });
+
+        modelo.Entity<AsignacionAgente>(e =>
+        {
+            e.ToTable("AsignacionAgente");
+            e.HasKey(a => a.AsignacionAgenteId);
+            e.Property(a => a.Vigente).IsRequired();
+            e.HasIndex(a => new { a.RelevamientoId, a.AgenteUsuarioId }).IsUnique().HasDatabaseName("UX_AsignacionAgente");
         });
     }
 }

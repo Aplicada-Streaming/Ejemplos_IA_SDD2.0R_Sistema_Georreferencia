@@ -41,6 +41,33 @@ internal sealed class FakeAreaRepository : IAreaRepository
     public Task<Area?> ObtenerPorIdAsync(Guid areaId, CancellationToken ct = default) => Task.FromResult<Area?>(null);
 }
 
+internal sealed class FakeRelevamientoRepository : IRelevamientoRepository
+{
+    private readonly Dictionary<Guid, Relevamiento> _datos = new();
+
+    public FakeRelevamientoRepository(params Relevamiento[] iniciales)
+    {
+        foreach (var r in iniciales)
+        {
+            _datos[r.RelevamientoId] = r;
+        }
+    }
+
+    public Task<Relevamiento?> ObtenerPorIdAsync(Guid relevamientoId, CancellationToken ct = default) =>
+        Task.FromResult(_datos.GetValueOrDefault(relevamientoId));
+
+    public Task<IReadOnlyList<Relevamiento>> ListarTodosAsync(CancellationToken ct = default) =>
+        Task.FromResult<IReadOnlyList<Relevamiento>>(_datos.Values.ToList());
+
+    public Task AgregarAsync(Relevamiento relevamiento, CancellationToken ct = default)
+    {
+        _datos[relevamiento.RelevamientoId] = relevamiento;
+        return Task.CompletedTask;
+    }
+
+    public Task GuardarCambiosAsync(CancellationToken ct = default) => Task.CompletedTask;
+}
+
 internal sealed class FakeCredencialRepository : ICredencialRepository
 {
     private readonly Dictionary<string, Credencial> _datos;

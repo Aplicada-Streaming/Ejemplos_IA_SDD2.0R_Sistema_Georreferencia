@@ -82,4 +82,37 @@ public class ApiAccesoUsuariosTests : IClassFixture<WebApplicationFactory<Progra
         var resp = await cliente.GetAsync("/api/v1/usuarios");
         resp.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
     }
+
+    [Fact] // CU-01 / RN-01: el raíz no es jefe de área, no puede crear relevamientos → 403
+    public async Task Crear_relevamiento_por_raiz_devuelve_403()
+    {
+        var cliente = _factory.CreateClient();
+        var token = await LoginRaizAsync(cliente);
+        cliente.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+
+        var resp = await cliente.PostAsJsonAsync(
+            "/api/v1/relevamientos", new CrearRelevamientoRequest("Puente Río 12", 15m));
+
+        resp.StatusCode.Should().Be(HttpStatusCode.Forbidden);
+    }
+
+    [Fact] // CU-01: el listado de relevamientos responde 200 con el token del raíz
+    public async Task Listar_relevamientos_con_token_devuelve_200()
+    {
+        var cliente = _factory.CreateClient();
+        var token = await LoginRaizAsync(cliente);
+        cliente.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+
+        var resp = await cliente.GetAsync("/api/v1/relevamientos");
+
+        resp.StatusCode.Should().Be(HttpStatusCode.OK);
+    }
+
+    [Fact] // CU-01: relevamientos sin token → 401
+    public async Task Listar_relevamientos_sin_token_devuelve_401()
+    {
+        var cliente = _factory.CreateClient();
+        var resp = await cliente.GetAsync("/api/v1/relevamientos");
+        resp.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
+    }
 }
