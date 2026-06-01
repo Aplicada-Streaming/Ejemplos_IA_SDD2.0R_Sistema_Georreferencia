@@ -58,4 +58,7 @@ public static class CodigosError
 
     // Exportación e importación (CU-08 §5.A/§5.B; EP-07)
     public const string ArchivoExportacionInvalido = "ARCHIVO_EXPORTACION_INVALIDO";
+
+    // Alojamiento de fotos (CU-04; ADR-08, BT-20)
+    public const string ContenidoFotoRequerido = "CONTENIDO_FOTO_REQUERIDO";
 }

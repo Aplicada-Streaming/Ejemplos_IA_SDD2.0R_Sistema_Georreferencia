@@ -1,6 +1,7 @@
 using GeoVial.Application.Abstracciones;
 using GeoVial.Application.Cqrs;
 using GeoVial.Domain;
+using GeoVial.FileHosting;
 
 namespace GeoVial.Application.Captura;
 
@@ -176,6 +177,76 @@ public sealed class UbicarObservacionManualHandler : IManejador<UbicarObservacio
         }
 
         await _observaciones.GuardarCambiosAsync(ct);
+        return Resultado.Exito();
+    }
+}
+
+public sealed class SubirContenidoFotoHandler : IManejador<SubirContenidoFotoCommand, Resultado>
+{
+    private readonly IUsuarioRepository _usuarios;
+    private readonly IRelevamientoRepository _relevamientos;
+    private readonly IObservacionRepository _observaciones;
+    private readonly IFotoRepository _fotos;
+    private readonly IAlmacenFotos _almacen;
+    private readonly IServicioAuditoria _auditoria;
+
+    public SubirContenidoFotoHandler(
+        IUsuarioRepository usuarios, IRelevamientoRepository relevamientos, IObservacionRepository observaciones,
+        IFotoRepository fotos, IAlmacenFotos almacen, IServicioAuditoria auditoria)
+    {
+        _usuarios = usuarios;
+        _relevamientos = relevamientos;
+        _observaciones = observaciones;
+        _fotos = fotos;
+        _almacen = almacen;
+        _auditoria = auditoria;
+    }
+
+    public async Task<Resultado> ManejarAsync(SubirContenidoFotoCommand cmd, CancellationToken ct = default)
+    {
+        if (cmd.Contenido is null || cmd.Contenido.Length == 0)
+        {
+            return Resultado.Fallo(CodigosError.ContenidoFotoRequerido);
+        }
+
+        var foto = await _fotos.ObtenerParaEdicionAsync(cmd.FotoId, ct);
+        if (foto is null)
+        {
+            return Resultado.Fallo(CodigosError.FotoInexistente);
+        }
+
+        var observacion = await _observaciones.ObtenerPorIdAsync(foto.ObservacionId, ct);
+        if (observacion is null)
+        {
+            return Resultado.Fallo(CodigosError.ObservacionInexistente);
+        }
+
+        var relevamiento = await _relevamientos.ObtenerPorIdAsync(observacion.RelevamientoId, ct);
+        if (relevamiento is null)
+        {
+            return Resultado.Fallo(CodigosError.RelevamientoInexistente);
+        }
+
+        if (relevamiento.EsSoloLectura)
+        {
+            return Resultado.Fallo(CodigosError.RelevamientoSoloLectura);
+        }
+
+        var usuario = await _usuarios.ObtenerPorIdAsync(cmd.UsuarioId, ct);
+        if (usuario is null || !Autorizacion.PuedeAccederArea(usuario, relevamiento.AreaId))
+        {
+            return Resultado.Fallo(CodigosError.AccesoNoAutorizado);
+        }
+
+        var referencia = await _almacen.GuardarAsync(cmd.NombreArchivo, cmd.Contenido, ct);
+        foto.AsignarReferencia(referencia);
+
+        if (!await _auditoria.RegistrarAsync(cmd.UsuarioId, "SUBIR_CONTENIDO_FOTO", $"foto={cmd.FotoId}", ct))
+        {
+            return Resultado.Fallo(CodigosError.AccionNoAuditada);
+        }
+
+        await _fotos.GuardarCambiosAsync(ct);
         return Resultado.Exito();
     }
 }

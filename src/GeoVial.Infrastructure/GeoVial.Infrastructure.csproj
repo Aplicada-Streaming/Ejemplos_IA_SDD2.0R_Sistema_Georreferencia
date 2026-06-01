@@ -3,10 +3,12 @@
   <ItemGroup>
     <ProjectReference Include="..\GeoVial.Application\GeoVial.Application.csproj" />
     <ProjectReference Include="..\GeoVial.Domain\GeoVial.Domain.csproj" />
+    <ProjectReference Include="..\GeoVial.FileHosting\GeoVial.FileHosting.csproj" />
     <ProjectReference Include="..\GeoVial.Shared\GeoVial.Shared.csproj" />
   </ItemGroup>
 
   <ItemGroup>
+    <PackageReference Include="AWSSDK.S3" Version="3.7.405.4" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="10.0.8">
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
       <PrivateAssets>all</PrivateAssets>

@@ -52,6 +52,7 @@ else
                                 @f.ReferenciaArchivo — etiquetas: @(string.Join(", ", f.Etiquetas))
                                 <input placeholder="etiqueta" @bind="etiquetaFoto[f.FotoId]" size="12" />
                                 <button @onclick="() => EtiquetarFoto(f.FotoId)">Etiquetar</button>
+                                <InputFile OnChange="(e) => SubirContenido(f.FotoId, e)" />
                             </li>
                         }
                     </ul>
@@ -138,6 +139,23 @@ else
         var (ok, msg) = await Api.EtiquetarFotoAsync(fotoId, etiqueta);
         mensaje = ok ? msg : $"No se pudo etiquetar: {msg}";
         await Cargar();
+    }
+
+    private async Task SubirContenido(Guid fotoId, InputFileChangeEventArgs e)
+    {
+        const long limite = 25 * 1024 * 1024; // 25 MB
+        var archivo = e.File;
+        if (archivo.Size > limite)
+        {
+            mensaje = "El archivo supera el límite de 25 MB.";
+            return;
+        }
+
+        using var memoria = new MemoryStream();
+        await archivo.OpenReadStream(limite).CopyToAsync(memoria);
+
+        var (ok, msg) = await Api.SubirContenidoFotoAsync(fotoId, memoria.ToArray(), archivo.Name);
+        mensaje = ok ? msg : $"No se pudo subir el contenido: {msg}";
     }
 
     private static string NombreEstado(int estado) => estado switch

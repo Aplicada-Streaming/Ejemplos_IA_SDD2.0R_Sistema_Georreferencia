@@ -40,6 +40,7 @@ public static class MapeoErrores
         CodigosError.ConflictoInexistente => Problema(codigo, StatusCodes.Status404NotFound, "Conflicto inexistente o ya resuelto"),
         CodigosError.UnificacionNoAutorizada => Problema(codigo, StatusCodes.Status400BadRequest, "El marcador resultante no pertenece al conflicto"),
         CodigosError.ArchivoExportacionInvalido => Problema(codigo, StatusCodes.Status422UnprocessableEntity, "El archivo no es un relevamiento completo y coherente"),
+        CodigosError.ContenidoFotoRequerido => Problema(codigo, StatusCodes.Status400BadRequest, "El contenido de la foto es obligatorio"),
         _ => Problema(codigo ?? "ERROR_DESCONOCIDO", StatusCodes.Status500InternalServerError, "Error"),
     };
 

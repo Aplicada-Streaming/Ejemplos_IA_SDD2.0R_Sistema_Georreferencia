@@ -14,27 +14,37 @@ namespace GeoVial.Infrastructure.ExportImport;
 public sealed class EmpaquetadorZip : IEmpaquetadorRelevamiento
 {
     internal const string EntradaManifiesto = "manifiesto.json";
+    internal const string CarpetaFotos = "fotos/";
 
     private static readonly JsonSerializerOptions Opciones = new(JsonSerializerDefaults.Web)
     {
         WriteIndented = true,
     };
 
-    public byte[] Empaquetar(ManifiestoRelevamiento manifiesto)
+    public byte[] Empaquetar(ManifiestoRelevamiento manifiesto, IReadOnlyDictionary<string, byte[]> binariosFotos)
     {
         using var memoria = new MemoryStream();
         using (var zip = new ZipArchive(memoria, ZipArchiveMode.Create, leaveOpen: true))
         {
             var entrada = zip.CreateEntry(EntradaManifiesto, CompressionLevel.Optimal);
-            using var flujo = entrada.Open();
-            var json = JsonSerializer.SerializeToUtf8Bytes(manifiesto, Opciones);
-            flujo.Write(json, 0, json.Length);
+            using (var flujo = entrada.Open())
+            {
+                var json = JsonSerializer.SerializeToUtf8Bytes(manifiesto, Opciones);
+                flujo.Write(json, 0, json.Length);
+            }
+
+            foreach (var (referencia, contenido) in binariosFotos)
+            {
+                var entradaFoto = zip.CreateEntry(CarpetaFotos + Uri.EscapeDataString(referencia), CompressionLevel.Optimal);
+                using var flujoFoto = entradaFoto.Open();
+                flujoFoto.Write(contenido, 0, contenido.Length);
+            }
         }
 
         return memoria.ToArray();
     }
 
-    public ManifiestoRelevamiento? Desempaquetar(byte[] archivo)
+    public PaqueteRelevamiento? Desempaquetar(byte[] archivo)
     {
         try
         {
@@ -46,10 +56,34 @@ public sealed class EmpaquetadorZip : IEmpaquetadorRelevamiento
                 return null;
             }
 
-            using var flujo = entrada.Open();
-            using var lector = new StreamReader(flujo, Encoding.UTF8);
-            var json = lector.ReadToEnd();
-            return JsonSerializer.Deserialize<ManifiestoRelevamiento>(json, Opciones);
+            ManifiestoRelevamiento? manifiesto;
+            using (var flujo = entrada.Open())
+            using (var lector = new StreamReader(flujo, Encoding.UTF8))
+            {
+                manifiesto = JsonSerializer.Deserialize<ManifiestoRelevamiento>(lector.ReadToEnd(), Opciones);
+            }
+
+            if (manifiesto is null)
+            {
+                return null;
+            }
+
+            var binarios = new Dictionary<string, byte[]>();
+            foreach (var entradaFoto in zip.Entries)
+            {
+                if (!entradaFoto.FullName.StartsWith(CarpetaFotos, StringComparison.Ordinal) || entradaFoto.FullName.Length == CarpetaFotos.Length)
+                {
+                    continue;
+                }
+
+                var referencia = Uri.UnescapeDataString(entradaFoto.FullName[CarpetaFotos.Length..]);
+                using var flujoFoto = entradaFoto.Open();
+                using var memoriaFoto = new MemoryStream();
+                flujoFoto.CopyTo(memoriaFoto);
+                binarios[referencia] = memoriaFoto.ToArray();
+            }
+
+            return new PaqueteRelevamiento(manifiesto, binarios);
         }
         catch (Exception ex) when (ex is InvalidDataException or JsonException or ArgumentException)
         {

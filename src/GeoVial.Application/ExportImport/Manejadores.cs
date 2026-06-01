@@ -1,6 +1,7 @@
 using GeoVial.Application.Abstracciones;
 using GeoVial.Application.Cqrs;
 using GeoVial.Domain;
+using GeoVial.FileHosting;
 
 namespace GeoVial.Application.ExportImport;
 
@@ -18,12 +19,13 @@ public sealed class ExportarRelevamientoHandler : IManejador<ExportarRelevamient
     private readonly IComentarioRepository _comentarios;
     private readonly IEtiquetaRepository _etiquetas;
     private readonly IEmpaquetadorRelevamiento _empaquetador;
+    private readonly IAlmacenFotos _almacen;
     private readonly IServicioAuditoria _auditoria;
 
     public ExportarRelevamientoHandler(
         IUsuarioRepository usuarios, IRelevamientoRepository relevamientos, IMarcadorRepository marcadores,
         IObservacionRepository observaciones, IFotoRepository fotos, IComentarioRepository comentarios,
-        IEtiquetaRepository etiquetas, IEmpaquetadorRelevamiento empaquetador, IServicioAuditoria auditoria)
+        IEtiquetaRepository etiquetas, IEmpaquetadorRelevamiento empaquetador, IAlmacenFotos almacen, IServicioAuditoria auditoria)
     {
         _usuarios = usuarios;
         _relevamientos = relevamientos;
@@ -33,6 +35,7 @@ public sealed class ExportarRelevamientoHandler : IManejador<ExportarRelevamient
         _comentarios = comentarios;
         _etiquetas = etiquetas;
         _empaquetador = empaquetador;
+        _almacen = almacen;
         _auditoria = auditoria;
     }
 
@@ -51,7 +54,8 @@ public sealed class ExportarRelevamientoHandler : IManejador<ExportarRelevamient
         }
 
         var manifiesto = await ArmarManifiestoAsync(relevamiento, ct);
-        var contenido = _empaquetador.Empaquetar(manifiesto);
+        var binarios = await RecuperarBinariosAsync(manifiesto, ct);
+        var contenido = _empaquetador.Empaquetar(manifiesto, binarios);
 
         if (!await _auditoria.RegistrarAsync(cmd.UsuarioId, "EXPORTAR_RELEVAMIENTO", $"relevamiento={cmd.RelevamientoId}", ct))
         {
@@ -110,6 +114,27 @@ public sealed class ExportarRelevamientoHandler : IManejador<ExportarRelevamient
             manifiestoFotos,
             manifiestoComentarios);
     }
+
+    /// <summary>Recupera del backend de alojamiento los binarios de las fotos referenciadas, indexados por referencia.</summary>
+    private async Task<IReadOnlyDictionary<string, byte[]>> RecuperarBinariosAsync(ManifiestoRelevamiento manifiesto, CancellationToken ct)
+    {
+        var binarios = new Dictionary<string, byte[]>();
+        foreach (var foto in manifiesto.Fotos)
+        {
+            if (string.IsNullOrEmpty(foto.ReferenciaArchivo) || binarios.ContainsKey(foto.ReferenciaArchivo))
+            {
+                continue;
+            }
+
+            var contenido = await _almacen.RecuperarAsync(foto.ReferenciaArchivo, ct);
+            if (contenido is not null)
+            {
+                binarios[foto.ReferenciaArchivo] = contenido;
+            }
+        }
+
+        return binarios;
+    }
 }
 
 /// <summary>
@@ -127,12 +152,13 @@ public sealed class ImportarRelevamientoHandler : IManejador<ImportarRelevamient
     private readonly IComentarioRepository _comentarios;
     private readonly IEtiquetaRepository _etiquetas;
     private readonly IEmpaquetadorRelevamiento _empaquetador;
+    private readonly IAlmacenFotos _almacen;
     private readonly IServicioAuditoria _auditoria;
 
     public ImportarRelevamientoHandler(
         IUsuarioRepository usuarios, IRelevamientoRepository relevamientos, IMarcadorRepository marcadores,
         IObservacionRepository observaciones, IFotoRepository fotos, IComentarioRepository comentarios,
-        IEtiquetaRepository etiquetas, IEmpaquetadorRelevamiento empaquetador, IServicioAuditoria auditoria)
+        IEtiquetaRepository etiquetas, IEmpaquetadorRelevamiento empaquetador, IAlmacenFotos almacen, IServicioAuditoria auditoria)
     {
         _usuarios = usuarios;
         _relevamientos = relevamientos;
@@ -142,33 +168,34 @@ public sealed class ImportarRelevamientoHandler : IManejador<ImportarRelevamient
         _comentarios = comentarios;
         _etiquetas = etiquetas;
         _empaquetador = empaquetador;
+        _almacen = almacen;
         _auditoria = auditoria;
     }
 
     public async Task<Resultado<Guid>> ManejarAsync(ImportarRelevamientoCommand cmd, CancellationToken ct = default)
     {
-        var manifiesto = _empaquetador.Desempaquetar(cmd.Archivo);
-        if (manifiesto is null || !EsCoherente(manifiesto))
+        var paquete = _empaquetador.Desempaquetar(cmd.Archivo);
+        if (paquete is null || !EsCoherente(paquete.Manifiesto))
         {
             return Resultado<Guid>.Fallo(CodigosError.ArchivoExportacionInvalido);
         }
 
         var usuario = await _usuarios.ObtenerPorIdAsync(cmd.UsuarioId, ct);
-        if (usuario is null || !Autorizacion.PuedeAccederArea(usuario, manifiesto.AreaId))
+        if (usuario is null || !Autorizacion.PuedeAccederArea(usuario, paquete.Manifiesto.AreaId))
         {
             return Resultado<Guid>.Fallo(CodigosError.AccesoNoAutorizado);
         }
 
         // Audita antes de tocar la base: el asiento de auditoría se persiste solo, sin arrastrar la reconstrucción.
-        if (!await _auditoria.RegistrarAsync(cmd.UsuarioId, "IMPORTAR_RELEVAMIENTO", $"obra={manifiesto.IdentificacionObra}", ct))
+        if (!await _auditoria.RegistrarAsync(cmd.UsuarioId, "IMPORTAR_RELEVAMIENTO", $"obra={paquete.Manifiesto.IdentificacionObra}", ct))
         {
             return Resultado<Guid>.Fallo(CodigosError.AccionNoAuditada);
         }
 
-        return await ReconstruirAsync(manifiesto, ct);
+        return await ReconstruirAsync(paquete.Manifiesto, paquete.BinariosFotos, ct);
     }
 
-    private async Task<Resultado<Guid>> ReconstruirAsync(ManifiestoRelevamiento m, CancellationToken ct)
+    private async Task<Resultado<Guid>> ReconstruirAsync(ManifiestoRelevamiento m, IReadOnlyDictionary<string, byte[]> binarios, CancellationToken ct)
     {
         var creado = Relevamiento.Importar(m.IdentificacionObra, m.RadioAgrupacionMetros, m.AreaId, (EstadoRelevamiento)m.Estado);
         if (!creado.EsExito)
@@ -206,7 +233,15 @@ public sealed class ImportarRelevamientoHandler : IManejador<ImportarRelevamient
         foreach (var mf in m.Fotos)
         {
             Guid? marcadorId = mf.MarcadorClaveLocal is { } cl ? mapaMarcadores[cl] : null;
-            var foto = Foto.Crear(mapaObservaciones[mf.ObservacionClaveLocal], marcadorId, mf.TieneMetadatos, (FuenteCoordenada?)mf.Fuente, mf.ReferenciaArchivo);
+
+            // Si el ZIP trae el binario de la foto, se restaura en el backend activo y se usa la nueva referencia.
+            var referencia = mf.ReferenciaArchivo;
+            if (binarios.TryGetValue(mf.ReferenciaArchivo, out var contenido))
+            {
+                referencia = await _almacen.GuardarAsync(mf.ReferenciaArchivo, contenido, ct);
+            }
+
+            var foto = Foto.Crear(mapaObservaciones[mf.ObservacionClaveLocal], marcadorId, mf.TieneMetadatos, (FuenteCoordenada?)mf.Fuente, referencia);
             await _fotos.AgregarAsync(foto, ct);
             mapaFotos[mf.ClaveLocal] = foto.FotoId;
             await VincularEtiquetasFotoAsync(foto.FotoId, mf.Etiquetas, ct);

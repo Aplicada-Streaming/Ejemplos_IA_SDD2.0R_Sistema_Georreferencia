@@ -6,7 +6,7 @@ using Xunit;
 
 namespace GeoVial.UnitTests;
 
-/// <summary>Empaquetado físico del manifiesto en ZIP (CU-08 §4.1; EmpaquetadorZip).</summary>
+/// <summary>Empaquetado físico del manifiesto y los binarios en ZIP (CU-08 §4.1; EmpaquetadorZip).</summary>
 public class EmpaquetadorZipTests
 {
     private static ManifiestoRelevamiento Manifiesto() => new(
@@ -20,16 +20,29 @@ public class EmpaquetadorZipTests
         Array.Empty<ManifiestoFoto>(),
         Array.Empty<ManifiestoComentario>());
 
-    [Fact] // round-trip: empaquetar y desempaquetar devuelve el mismo manifiesto
-    public void Empaquetar_y_desempaquetar_round_trip()
+    [Fact] // round-trip del manifiesto: empaquetar y desempaquetar devuelve el mismo manifiesto
+    public void Empaquetar_y_desempaquetar_manifiesto_round_trip()
     {
         var emp = new EmpaquetadorZip();
         var original = Manifiesto();
 
-        var bytes = emp.Empaquetar(original);
+        var bytes = emp.Empaquetar(original, new Dictionary<string, byte[]>());
         var leido = emp.Desempaquetar(bytes);
 
-        leido.Should().BeEquivalentTo(original);
+        leido!.Manifiesto.Should().BeEquivalentTo(original);
+    }
+
+    [Fact] // round-trip de binarios: el ZIP transporta los binarios indexados por referencia
+    public void Empaquetar_y_desempaquetar_binarios_round_trip()
+    {
+        var emp = new EmpaquetadorZip();
+        var binarios = new Dictionary<string, byte[]> { ["abc-foto.jpg"] = new byte[] { 1, 2, 3, 4 } };
+
+        var bytes = emp.Empaquetar(Manifiesto(), binarios);
+        var leido = emp.Desempaquetar(bytes);
+
+        leido!.BinariosFotos.Should().ContainKey("abc-foto.jpg");
+        leido.BinariosFotos["abc-foto.jpg"].Should().Equal(1, 2, 3, 4);
     }
 
     [Fact] // un archivo que no es ZIP devuelve null (lo trata el handler como inválido)
@@ -56,11 +69,13 @@ public class RelevamientoImportarTests
         Relevamiento.Importar("Obra X", 0m, Area, EstadoRelevamiento.Recoleccion).Codigo.Should().Be(CodigosError.RadioInvalido);
 }
 
-/// <summary>Exportación e importación del relevamiento completo (CU-08 §5.A/§5.B; US-27/US-28).</summary>
+/// <summary>Exportación e importación del relevamiento completo con binarios (CU-08 §5.A/§5.B; US-27/US-28, ADR-08).</summary>
 public class ExportImportAplicacionTests
 {
     private static readonly Guid AreaNorte = Guid.NewGuid();
     private static readonly Guid AreaSur = Guid.NewGuid();
+    private const string ReferenciaFoto = "f.jpg";
+    private static readonly byte[] BinarioFoto = { 9, 8, 7, 6 };
 
     private static Usuario Jefe(Guid area) => Usuario.Crear("ja", RolJerarquico.JefeArea, area).Valor!;
 
@@ -73,6 +88,7 @@ public class ExportImportAplicacionTests
         FakeFotoRepository Fotos,
         FakeComentarioRepository Comentarios,
         FakeEtiquetaRepository Etiquetas,
+        FakeAlmacenFotos Almacen,
         Guid MarcadorId);
 
     private static async Task<Escenario> ArmarEscenarioAsync(EstadoRelevamiento estado = EstadoRelevamiento.Revision)
@@ -81,7 +97,7 @@ public class ExportImportAplicacionTests
         var rel = Relevamiento.Importar("Puente Río 12", 15m, AreaNorte, estado).Valor!;
         var marcador = Marcador.Crear(rel.RelevamientoId, new Coordenada(-34.6m, -58.4m));
         var obs = Observacion.Georreferenciada(rel.RelevamientoId, jefe.UsuarioId, new DateTime(2026, 6, 1), marcador.MarcadorId);
-        var foto = Foto.Crear(obs.ObservacionId, marcador.MarcadorId, tieneMetadatos: true, FuenteCoordenada.Metadatos, "f.jpg");
+        var foto = Foto.Crear(obs.ObservacionId, marcador.MarcadorId, tieneMetadatos: true, FuenteCoordenada.Metadatos, ReferenciaFoto);
         var com = Comentario.Crear(marcador.MarcadorId, foto.FotoId, jefe.UsuarioId, "fisura en viga", new DateTime(2026, 6, 1)).Valor!;
 
         var etiquetas = new FakeEtiquetaRepository();
@@ -90,13 +106,16 @@ public class ExportImportAplicacionTests
         await etiquetas.AgregarFotoEtiquetaAsync(new FotoEtiqueta(foto.FotoId, etiqueta.EtiquetaId));
         await etiquetas.AgregarComentarioEtiquetaAsync(new ComentarioEtiqueta(com.ComentarioId, etiqueta.EtiquetaId));
 
+        var almacen = new FakeAlmacenFotos();
+        almacen.Sembrar(ReferenciaFoto, BinarioFoto);
+
         return new Escenario(jefe, rel, new FakeRelevamientoRepository(rel), new FakeMarcadorRepository(marcador),
-            new FakeObservacionRepository(obs), new FakeFotoRepository(foto), new FakeComentarioRepository(com), etiquetas, marcador.MarcadorId);
+            new FakeObservacionRepository(obs), new FakeFotoRepository(foto), new FakeComentarioRepository(com), etiquetas, almacen, marcador.MarcadorId);
     }
 
     private static ExportarRelevamientoHandler ExportHandler(Escenario e, FakeAuditoria? auditoria = null) =>
         new(new FakeUsuarioRepository(e.Jefe), e.Relevamientos, e.Marcadores, e.Observaciones, e.Fotos, e.Comentarios,
-            e.Etiquetas, new EmpaquetadorZip(), auditoria ?? new FakeAuditoria());
+            e.Etiquetas, new EmpaquetadorZip(), e.Almacen, auditoria ?? new FakeAuditoria());
 
     [Fact] // US-27 CA-01: exportar entrega un archivo y audita
     public async Task Exportar_entrega_archivo_y_audita()
@@ -120,7 +139,7 @@ public class ExportImportAplicacionTests
         var jefeSur = Jefe(AreaSur);
         var handler = new ExportarRelevamientoHandler(
             new FakeUsuarioRepository(jefeSur), e.Relevamientos, e.Marcadores, e.Observaciones, e.Fotos, e.Comentarios,
-            e.Etiquetas, new EmpaquetadorZip(), new FakeAuditoria());
+            e.Etiquetas, new EmpaquetadorZip(), e.Almacen, new FakeAuditoria());
 
         var r = await handler.ManejarAsync(new ExportarRelevamientoCommand(jefeSur.UsuarioId, e.Rel.RelevamientoId));
 
@@ -133,7 +152,7 @@ public class ExportImportAplicacionTests
         var e = await ArmarEscenarioAsync();
         var handler = new ExportarRelevamientoHandler(
             new FakeUsuarioRepository(e.Jefe), new FakeRelevamientoRepository(), e.Marcadores, e.Observaciones, e.Fotos,
-            e.Comentarios, e.Etiquetas, new EmpaquetadorZip(), new FakeAuditoria());
+            e.Comentarios, e.Etiquetas, new EmpaquetadorZip(), e.Almacen, new FakeAuditoria());
 
         var r = await handler.ManejarAsync(new ExportarRelevamientoCommand(e.Jefe.UsuarioId, Guid.NewGuid()));
 
@@ -151,7 +170,7 @@ public class ExportImportAplicacionTests
         r.Codigo.Should().Be(CodigosError.AccionNoAuditada);
     }
 
-    [Fact] // US-27 + US-28 CA-01: el ciclo exportar → importar reconstruye el relevamiento completo
+    [Fact] // US-27 + US-28 CA-01: el ciclo exportar → importar reconstruye el relevamiento y restaura el binario
     public async Task Exportar_luego_importar_reconstruye_round_trip()
     {
         var origen = await ArmarEscenarioAsync(EstadoRelevamiento.Revision);
@@ -159,17 +178,18 @@ public class ExportImportAplicacionTests
         var exportado = await exportador.ManejarAsync(new ExportarRelevamientoCommand(origen.Jefe.UsuarioId, origen.Rel.RelevamientoId));
         exportado.EsExito.Should().BeTrue();
 
-        // Instancia destino: repositorios vacíos, mismo jefe de área.
+        // Instancia destino: repositorios y backend de alojamiento vacíos, mismo jefe de área.
         var relevamientos = new FakeRelevamientoRepository();
         var marcadores = new FakeMarcadorRepository();
         var observaciones = new FakeObservacionRepository();
         var fotos = new FakeFotoRepository();
         var comentarios = new FakeComentarioRepository();
         var etiquetas = new FakeEtiquetaRepository();
+        var almacenDestino = new FakeAlmacenFotos();
         var auditoria = new FakeAuditoria();
         var importador = new ImportarRelevamientoHandler(
             new FakeUsuarioRepository(origen.Jefe), relevamientos, marcadores, observaciones, fotos, comentarios,
-            etiquetas, new EmpaquetadorZip(), auditoria);
+            etiquetas, new EmpaquetadorZip(), almacenDestino, auditoria);
 
         var importado = await importador.ManejarAsync(new ImportarRelevamientoCommand(origen.Jefe.UsuarioId, exportado.Valor!.Contenido));
 
@@ -191,8 +211,14 @@ public class ExportImportAplicacionTests
         fotosImportadas.Should().ContainSingle();
         var comentariosImportados = await comentarios.ListarPorMarcadorAsync(nuevoMarcadorId);
         comentariosImportados.Should().ContainSingle().Which.Texto.Should().Be("fisura en viga");
-
         (await etiquetas.ListarNombresDeFotoAsync(fotosImportadas[0].FotoId)).Should().Contain("fisura");
+
+        // El binario se restauró en el backend destino bajo la nueva referencia de la foto importada.
+        almacenDestino.Datos.Should().ContainSingle();
+        var binarioRestaurado = await almacenDestino.RecuperarAsync(fotosImportadas[0].ReferenciaArchivo);
+        binarioRestaurado.Should().Equal(BinarioFoto);
+        fotosImportadas[0].ReferenciaArchivo.Should().NotBe(ReferenciaFoto); // referencia remapeada
+
         auditoria.Registros.Should().Contain(x => x.StartsWith("IMPORTAR_RELEVAMIENTO:"));
     }
 
@@ -202,7 +228,7 @@ public class ExportImportAplicacionTests
         var importador = new ImportarRelevamientoHandler(
             new FakeUsuarioRepository(Jefe(AreaNorte)), new FakeRelevamientoRepository(), new FakeMarcadorRepository(),
             new FakeObservacionRepository(), new FakeFotoRepository(), new FakeComentarioRepository(),
-            new FakeEtiquetaRepository(), new EmpaquetadorZip(), new FakeAuditoria());
+            new FakeEtiquetaRepository(), new EmpaquetadorZip(), new FakeAlmacenFotos(), new FakeAuditoria());
 
         var r = await importador.ManejarAsync(new ImportarRelevamientoCommand(Jefe(AreaNorte).UsuarioId, new byte[] { 9, 9, 9 }));
 
@@ -220,12 +246,12 @@ public class ExportImportAplicacionTests
             Array.Empty<ManifiestoObservacion>(),
             Array.Empty<ManifiestoFoto>(),
             new[] { new ManifiestoComentario(Guid.NewGuid(), null, jefe.UsuarioId, "x", new DateTime(2026, 6, 1), Array.Empty<string>()) });
-        var bytes = new EmpaquetadorZip().Empaquetar(manifiesto);
+        var bytes = new EmpaquetadorZip().Empaquetar(manifiesto, new Dictionary<string, byte[]>());
 
         var importador = new ImportarRelevamientoHandler(
             new FakeUsuarioRepository(jefe), new FakeRelevamientoRepository(), new FakeMarcadorRepository(),
             new FakeObservacionRepository(), new FakeFotoRepository(), new FakeComentarioRepository(),
-            new FakeEtiquetaRepository(), new EmpaquetadorZip(), new FakeAuditoria());
+            new FakeEtiquetaRepository(), new EmpaquetadorZip(), new FakeAlmacenFotos(), new FakeAuditoria());
 
         var r = await importador.ManejarAsync(new ImportarRelevamientoCommand(jefe.UsuarioId, bytes));
 
@@ -242,7 +268,7 @@ public class ExportImportAplicacionTests
         var importador = new ImportarRelevamientoHandler(
             new FakeUsuarioRepository(jefeSur), new FakeRelevamientoRepository(), new FakeMarcadorRepository(),
             new FakeObservacionRepository(), new FakeFotoRepository(), new FakeComentarioRepository(),
-            new FakeEtiquetaRepository(), new EmpaquetadorZip(), new FakeAuditoria());
+            new FakeEtiquetaRepository(), new EmpaquetadorZip(), new FakeAlmacenFotos(), new FakeAuditoria());
 
         var r = await importador.ManejarAsync(new ImportarRelevamientoCommand(jefeSur.UsuarioId, exportado.Valor!.Contenido));
 
@@ -258,7 +284,7 @@ public class ExportImportAplicacionTests
         var importador = new ImportarRelevamientoHandler(
             new FakeUsuarioRepository(origen.Jefe), new FakeRelevamientoRepository(), new FakeMarcadorRepository(),
             new FakeObservacionRepository(), new FakeFotoRepository(), new FakeComentarioRepository(),
-            new FakeEtiquetaRepository(), new EmpaquetadorZip(), new FakeAuditoria(exito: false));
+            new FakeEtiquetaRepository(), new EmpaquetadorZip(), new FakeAlmacenFotos(), new FakeAuditoria(exito: false));
 
         var r = await importador.ManejarAsync(new ImportarRelevamientoCommand(origen.Jefe.UsuarioId, exportado.Valor!.Contenido));
 

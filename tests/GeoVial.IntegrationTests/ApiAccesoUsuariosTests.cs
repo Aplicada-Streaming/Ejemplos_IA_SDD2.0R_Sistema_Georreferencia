@@ -220,4 +220,26 @@ public class ApiAccesoUsuariosTests : IClassFixture<WebApplicationFactory<Progra
 
         resp.StatusCode.Should().Be(HttpStatusCode.UnprocessableEntity);
     }
+
+    [Fact] // CU-04 / ADR-08: subir contenido de foto sin token → 401
+    public async Task Subir_contenido_foto_sin_token_devuelve_401()
+    {
+        var cliente = _factory.CreateClient();
+        using var contenido = new MultipartFormDataContent { { new ByteArrayContent(new byte[] { 1, 2, 3 }), "archivo", "foto.jpg" } };
+        var resp = await cliente.PostAsync($"/api/v1/fotos/{Guid.NewGuid()}/contenido", contenido);
+        resp.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
+    }
+
+    [Fact] // CU-04: subir contenido a una foto inexistente con token del raíz → 404
+    public async Task Subir_contenido_foto_inexistente_devuelve_404()
+    {
+        var cliente = _factory.CreateClient();
+        var token = await LoginRaizAsync(cliente);
+        cliente.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+
+        using var contenido = new MultipartFormDataContent { { new ByteArrayContent(new byte[] { 1, 2, 3 }), "archivo", "foto.jpg" } };
+        var resp = await cliente.PostAsync($"/api/v1/fotos/{Guid.NewGuid()}/contenido", contenido);
+
+        resp.StatusCode.Should().Be(HttpStatusCode.NotFound);
+    }
 }

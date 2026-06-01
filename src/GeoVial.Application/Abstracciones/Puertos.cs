@@ -60,7 +60,12 @@ public interface IFotoRepository
     /// <summary>Lista las fotos del marcador con seguimiento de cambios para reasignarlas (CU-12 §5.A).</summary>
     Task<IReadOnlyList<Foto>> ListarPorMarcadorParaEdicionAsync(Guid marcadorId, CancellationToken ct = default);
 
+    /// <summary>Carga la foto con seguimiento de cambios para asentar su referencia de binario (CU-04, ADR-08).</summary>
+    Task<Foto?> ObtenerParaEdicionAsync(Guid fotoId, CancellationToken ct = default);
+
     Task AgregarAsync(Foto foto, CancellationToken ct = default);
+
+    Task GuardarCambiosAsync(CancellationToken ct = default);
 }
 
 public interface IComentarioRepository
@@ -141,8 +146,11 @@ public interface IRelojUtc
 /// </summary>
 public interface IEmpaquetadorRelevamiento
 {
-    byte[] Empaquetar(GeoVial.Application.ExportImport.ManifiestoRelevamiento manifiesto);
+    /// <summary>Empaqueta el manifiesto y los binarios de las fotos (indexados por referencia) en un único ZIP.</summary>
+    byte[] Empaquetar(
+        GeoVial.Application.ExportImport.ManifiestoRelevamiento manifiesto,
+        IReadOnlyDictionary<string, byte[]> binariosFotos);
 
-    /// <summary>Devuelve el manifiesto, o null si el archivo no es legible como exportación válida.</summary>
-    GeoVial.Application.ExportImport.ManifiestoRelevamiento? Desempaquetar(byte[] archivo);
+    /// <summary>Devuelve el paquete (manifiesto + binarios), o null si el archivo no es una exportación legible.</summary>
+    GeoVial.Application.ExportImport.PaqueteRelevamiento? Desempaquetar(byte[] archivo);
 }

@@ -323,6 +323,21 @@ fotos.MapPost("/{fotoId:guid}/etiquetas", async (Guid fotoId, EtiquetarRequest r
     return r.EsExito ? Results.NoContent() : MapeoErrores.AProblema(r.Codigo);
 });
 
+// Subida del binario de una foto al backend de alojamiento (CU-04, ADR-08; BT-20).
+fotos.MapPost("/{fotoId:guid}/contenido", async (Guid fotoId, IFormFile archivo, ClaimsPrincipal usuario, IMediador mediador, CancellationToken ct) =>
+{
+    if (!TryGetUsuarioId(usuario, out var usuarioId))
+    {
+        return Results.Unauthorized();
+    }
+
+    using var memoria = new MemoryStream();
+    await archivo.CopyToAsync(memoria, ct);
+
+    var r = await mediador.EnviarAsync(new SubirContenidoFotoCommand(usuarioId, fotoId, archivo.FileName, memoria.ToArray()), ct);
+    return r.EsExito ? Results.NoContent() : MapeoErrores.AProblema(r.Codigo);
+}).DisableAntiforgery();
+
 var comentarios = app.MapGroup("/api/v1/comentarios").RequireAuthorization();
 comentarios.MapPost("/{comentarioId:guid}/etiquetas", async (Guid comentarioId, EtiquetarRequest req, ClaimsPrincipal usuario, IMediador mediador, CancellationToken ct) =>
 {

@@ -1,4 +1,8 @@
+using Amazon;
+using Amazon.S3;
 using GeoVial.Application.Abstracciones;
+using GeoVial.FileHosting;
+using GeoVial.Infrastructure.Alojamiento;
 using GeoVial.Infrastructure.ExportImport;
 using GeoVial.Infrastructure.Persistencia;
 using GeoVial.Infrastructure.Seguridad;
@@ -37,10 +41,37 @@ public static class DependencyInjection
         servicios.AddScoped<ICredencialRepository, CredencialRepository>();
         servicios.AddScoped<IServicioAuditoria, ServicioAuditoria>();
         servicios.AddSingleton<IEmpaquetadorRelevamiento, EmpaquetadorZip>();
+        RegistrarAlojamiento(servicios, configuracion);
         servicios.AddSingleton<IHasherClave, HasherClavePbkdf2>();
         servicios.AddScoped<IServicioToken, ServicioTokenJwt>();
         servicios.AddSingleton<IRelojUtc, RelojUtc>();
 
         return servicios;
+    }
+
+    /// <summary>
+    /// Registra el backend de alojamiento de fotos que el usuario raíz selecciona por configuración (ADR-08).
+    /// Por defecto, sin configuración, usa el backend local; con <c>Almacen:Backend=S3</c> usa AWS S3.
+    /// </summary>
+    private static void RegistrarAlojamiento(IServiceCollection servicios, IConfiguration configuracion)
+    {
+        var seccion = configuracion.GetSection(OpcionesAlmacen.Seccion);
+        var opciones = new OpcionesAlmacen
+        {
+            Backend = seccion["Backend"] ?? "Local",
+            RutaLocal = seccion["RutaLocal"] ?? "almacen-fotos",
+            BucketS3 = seccion["BucketS3"] ?? string.Empty,
+            RegionS3 = seccion["RegionS3"] ?? string.Empty,
+        };
+
+        if (opciones.EsS3)
+        {
+            servicios.AddSingleton<IAmazonS3>(_ => new AmazonS3Client(RegionEndpoint.GetBySystemName(opciones.RegionS3)));
+            servicios.AddSingleton<IAlmacenFotos>(sp => new AlmacenS3(sp.GetRequiredService<IAmazonS3>(), opciones.BucketS3));
+        }
+        else
+        {
+            servicios.AddSingleton<IAlmacenFotos>(new AlmacenLocal(opciones.RutaLocal));
+        }
     }
 }

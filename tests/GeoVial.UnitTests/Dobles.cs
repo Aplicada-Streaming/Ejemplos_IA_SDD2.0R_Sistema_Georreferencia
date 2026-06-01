@@ -1,7 +1,38 @@
 using GeoVial.Application.Abstracciones;
 using GeoVial.Domain;
+using GeoVial.FileHosting;
 
 namespace GeoVial.UnitTests;
+
+/// <summary>Backend de alojamiento en memoria para pruebas (sustituye a local/S3, ADR-08).</summary>
+internal sealed class FakeAlmacenFotos : IAlmacenFotos
+{
+    private readonly Dictionary<string, byte[]> _datos = new();
+
+    public IReadOnlyDictionary<string, byte[]> Datos => _datos;
+
+    public Task<string> GuardarAsync(string nombreSugerido, byte[] contenido, CancellationToken ct = default)
+    {
+        var referencia = $"{Guid.NewGuid():N}-{nombreSugerido}";
+        _datos[referencia] = contenido;
+        return Task.FromResult(referencia);
+    }
+
+    public Task<byte[]?> RecuperarAsync(string referencia, CancellationToken ct = default) =>
+        Task.FromResult(_datos.GetValueOrDefault(referencia));
+
+    public Task EliminarAsync(string referencia, CancellationToken ct = default)
+    {
+        _datos.Remove(referencia);
+        return Task.CompletedTask;
+    }
+
+    public Task<bool> ExisteAsync(string referencia, CancellationToken ct = default) =>
+        Task.FromResult(_datos.ContainsKey(referencia));
+
+    /// <summary>Siembra un binario con una referencia conocida (para preparar escenarios de exportación).</summary>
+    public void Sembrar(string referencia, byte[] contenido) => _datos[referencia] = contenido;
+}
 
 internal sealed class FakeUsuarioRepository : IUsuarioRepository
 {
@@ -146,11 +177,16 @@ internal sealed class FakeFotoRepository : IFotoRepository
     public Task<IReadOnlyList<Foto>> ListarPorMarcadorParaEdicionAsync(Guid marcadorId, CancellationToken ct = default) =>
         Task.FromResult<IReadOnlyList<Foto>>(_datos.Where(f => f.MarcadorId == marcadorId).ToList());
 
+    public Task<Foto?> ObtenerParaEdicionAsync(Guid fotoId, CancellationToken ct = default) =>
+        Task.FromResult(_datos.FirstOrDefault(f => f.FotoId == fotoId));
+
     public Task AgregarAsync(Foto foto, CancellationToken ct = default)
     {
         _datos.Add(foto);
         return Task.CompletedTask;
     }
+
+    public Task GuardarCambiosAsync(CancellationToken ct = default) => Task.CompletedTask;
 }
 
 internal sealed class FakeComentarioRepository : IComentarioRepository

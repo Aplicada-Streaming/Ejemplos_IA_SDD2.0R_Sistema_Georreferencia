@@ -31,3 +31,10 @@ public sealed record ManifiestoFoto(
 
 public sealed record ManifiestoComentario(
     Guid MarcadorClaveLocal, Guid? FotoClaveLocal, Guid AutorUsuarioId, string Texto, DateTime Momento, IReadOnlyList<string> Etiquetas);
+
+/// <summary>
+/// Paquete completo desempaquetado de un archivo de exportación: el manifiesto y los binarios de las
+/// fotos, indexados por la referencia que el manifiesto declara (CU-08 §5.B).
+/// </summary>
+public sealed record PaqueteRelevamiento(
+    ManifiestoRelevamiento Manifiesto, IReadOnlyDictionary<string, byte[]> BinariosFotos);

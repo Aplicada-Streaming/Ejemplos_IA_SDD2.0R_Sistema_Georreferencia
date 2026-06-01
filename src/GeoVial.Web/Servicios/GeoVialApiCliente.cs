@@ -183,6 +183,26 @@ public sealed class GeoVialApiCliente
     public Task<(bool Ok, string Mensaje)> EtiquetarFotoAsync(Guid fotoId, string etiqueta, CancellationToken ct = default) =>
         EnviarAsync(HttpMethod.Post, $"api/v1/fotos/{fotoId}/etiquetas", new EtiquetarRequest(etiqueta), "Foto etiquetada.", ct);
 
+    public async Task<(bool Ok, string Mensaje)> SubirContenidoFotoAsync(Guid fotoId, byte[] contenido, string nombre, CancellationToken ct = default)
+    {
+        using var formulario = new MultipartFormDataContent();
+        var archivo = new ByteArrayContent(contenido);
+        archivo.Headers.ContentType = new MediaTypeHeaderValue("application/octet-stream");
+        formulario.Add(archivo, "archivo", string.IsNullOrWhiteSpace(nombre) ? "foto.bin" : nombre);
+
+        using var req = new HttpRequestMessage(HttpMethod.Post, $"api/v1/fotos/{fotoId}/contenido") { Content = formulario };
+        Autorizar(req);
+
+        var resp = await _http.SendAsync(req, ct);
+        if (resp.IsSuccessStatusCode)
+        {
+            return (true, "Contenido de la foto subido.");
+        }
+
+        var problema = await resp.Content.ReadFromJsonAsync<ProblemaApi>(ct);
+        return (false, problema?.Codigo ?? $"Error {(int)resp.StatusCode}");
+    }
+
     // --- Detección y resolución de conflictos por radio (CU-11, CU-12) ---
 
     public async Task<IReadOnlyList<ConflictoPendienteDto>> ListarConflictosAsync(Guid relevamientoId, CancellationToken ct = default)

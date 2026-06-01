@@ -41,4 +41,10 @@ public sealed class Foto
 
     /// <summary>Reasigna la foto a otro marcador al unificar marcadores en conflicto (CU-12 §5.A).</summary>
     public void ReasignarMarcador(Guid marcadorId) => MarcadorId = marcadorId;
+
+    /// <summary>
+    /// Asienta la referencia del binario devuelta por el backend de alojamiento (CU-04, ADR-08). La base
+    /// persiste solo la referencia; el binario vive en el backend activo.
+    /// </summary>
+    public void AsignarReferencia(string referencia) => ReferenciaArchivo = referencia;
 }
