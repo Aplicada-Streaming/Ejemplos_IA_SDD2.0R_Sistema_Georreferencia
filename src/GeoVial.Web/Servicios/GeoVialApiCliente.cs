@@ -162,6 +162,27 @@ public sealed class GeoVialApiCliente
     public Task<(bool Ok, string Mensaje)> UbicarManualAsync(Guid observacionId, decimal latitud, decimal longitud, CancellationToken ct = default) =>
         EnviarAsync(HttpMethod.Post, $"api/v1/observaciones/{observacionId}/ubicacion", new UbicarManualRequest(latitud, longitud), "Observación ubicada.", ct);
 
+    // --- Provisión de credenciales (BT-23) ---
+
+    public Task<(bool Ok, string Mensaje)> EstablecerCredencialAsync(Guid usuarioId, string nombreUsuario, string clave, CancellationToken ct = default) =>
+        EnviarAsync(HttpMethod.Post, $"api/v1/usuarios/{usuarioId}/credencial", new EstablecerCredencialRequest(nombreUsuario, clave), "Credencial establecida.", ct);
+
+    // --- Revisión sobre mapa y gestión de marcador (CU-08, CU-09) ---
+
+    public async Task<RevisionRelevamientoDto?> RevisarRelevamientoAsync(Guid relevamientoId, CancellationToken ct = default)
+    {
+        using var req = new HttpRequestMessage(HttpMethod.Get, $"api/v1/relevamientos/{relevamientoId}/revision");
+        Autorizar(req);
+        var resp = await _http.SendAsync(req, ct);
+        return resp.IsSuccessStatusCode ? await resp.Content.ReadFromJsonAsync<RevisionRelevamientoDto>(ct) : null;
+    }
+
+    public Task<(bool Ok, string Mensaje)> AgregarComentarioAsync(Guid marcadorId, Guid? fotoId, string texto, CancellationToken ct = default) =>
+        EnviarAsync(HttpMethod.Post, $"api/v1/marcadores/{marcadorId}/comentarios", new AgregarComentarioRequest(fotoId, texto), "Comentario agregado.", ct);
+
+    public Task<(bool Ok, string Mensaje)> EtiquetarFotoAsync(Guid fotoId, string etiqueta, CancellationToken ct = default) =>
+        EnviarAsync(HttpMethod.Post, $"api/v1/fotos/{fotoId}/etiquetas", new EtiquetarRequest(etiqueta), "Foto etiquetada.", ct);
+
     private async Task<(bool Ok, string Mensaje)> EnviarAsync<TBody>(HttpMethod metodo, string ruta, TBody? cuerpo, string exito, CancellationToken ct)
     {
         using var req = new HttpRequestMessage(metodo, ruta);

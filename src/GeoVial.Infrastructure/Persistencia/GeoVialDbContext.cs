@@ -22,6 +22,10 @@ public sealed class GeoVialDbContext : DbContext
     public DbSet<Marcador> Marcadores => Set<Marcador>();
     public DbSet<Observacion> Observaciones => Set<Observacion>();
     public DbSet<Foto> Fotos => Set<Foto>();
+    public DbSet<Comentario> Comentarios => Set<Comentario>();
+    public DbSet<Etiqueta> Etiquetas => Set<Etiqueta>();
+    public DbSet<FotoEtiqueta> FotoEtiquetas => Set<FotoEtiqueta>();
+    public DbSet<ComentarioEtiqueta> ComentarioEtiquetas => Set<ComentarioEtiqueta>();
 
     protected override void OnModelCreating(ModelBuilder modelo)
     {
@@ -110,6 +114,36 @@ public sealed class GeoVialDbContext : DbContext
             e.Property(f => f.TieneMetadatosUbicacion).IsRequired();
             e.Property(f => f.Fuente).HasConversion<byte?>();
             e.HasIndex(f => f.ObservacionId).HasDatabaseName("IX_Foto_Observacion");
+            e.HasIndex(f => f.MarcadorId).HasDatabaseName("IX_Foto_Marcador");
+        });
+
+        modelo.Entity<Comentario>(e =>
+        {
+            e.ToTable("Comentario");
+            e.HasKey(c => c.ComentarioId);
+            e.Property(c => c.Texto).HasMaxLength(2000).IsRequired();
+            e.Property(c => c.Momento).IsRequired();
+            e.HasIndex(c => c.MarcadorId).HasDatabaseName("IX_Comentario_Marcador");
+        });
+
+        modelo.Entity<Etiqueta>(e =>
+        {
+            e.ToTable("Etiqueta");
+            e.HasKey(t => t.EtiquetaId);
+            e.Property(t => t.Nombre).HasMaxLength(100).IsRequired();
+            e.HasIndex(t => t.Nombre).IsUnique().HasDatabaseName("UX_Etiqueta_Nombre");
+        });
+
+        modelo.Entity<FotoEtiqueta>(e =>
+        {
+            e.ToTable("FotoEtiqueta");
+            e.HasKey(u => new { u.FotoId, u.EtiquetaId });
+        });
+
+        modelo.Entity<ComentarioEtiqueta>(e =>
+        {
+            e.ToTable("ComentarioEtiqueta");
+            e.HasKey(u => new { u.ComentarioId, u.EtiquetaId });
         });
     }
 }

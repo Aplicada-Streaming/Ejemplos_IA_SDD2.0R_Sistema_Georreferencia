@@ -74,6 +74,9 @@ internal sealed class FakeMarcadorRepository : IMarcadorRepository
 
     public FakeMarcadorRepository(params Marcador[] iniciales) => _datos = iniciales.ToList();
 
+    public Task<Marcador?> ObtenerPorIdAsync(Guid marcadorId, CancellationToken ct = default) =>
+        Task.FromResult(_datos.FirstOrDefault(m => m.MarcadorId == marcadorId));
+
     public Task<IReadOnlyList<Marcador>> ListarPorRelevamientoAsync(Guid relevamientoId, CancellationToken ct = default) =>
         Task.FromResult<IReadOnlyList<Marcador>>(_datos.Where(m => m.RelevamientoId == relevamientoId).ToList());
 
@@ -120,11 +123,90 @@ internal sealed class FakeFotoRepository : IFotoRepository
     public Task<Foto?> ObtenerPorObservacionAsync(Guid observacionId, CancellationToken ct = default) =>
         Task.FromResult<Foto?>(_datos.FirstOrDefault(f => f.ObservacionId == observacionId));
 
+    public Task<Foto?> ObtenerPorIdAsync(Guid fotoId, CancellationToken ct = default) =>
+        Task.FromResult<Foto?>(_datos.FirstOrDefault(f => f.FotoId == fotoId));
+
+    public Task<IReadOnlyList<Foto>> ListarPorMarcadorAsync(Guid marcadorId, CancellationToken ct = default) =>
+        Task.FromResult<IReadOnlyList<Foto>>(_datos.Where(f => f.MarcadorId == marcadorId).ToList());
+
     public Task AgregarAsync(Foto foto, CancellationToken ct = default)
     {
         _datos.Add(foto);
         return Task.CompletedTask;
     }
+}
+
+internal sealed class FakeComentarioRepository : IComentarioRepository
+{
+    private readonly Dictionary<Guid, Comentario> _datos = new();
+
+    public FakeComentarioRepository(params Comentario[] iniciales)
+    {
+        foreach (var c in iniciales)
+        {
+            _datos[c.ComentarioId] = c;
+        }
+    }
+
+    public Task<Comentario?> ObtenerPorIdAsync(Guid comentarioId, CancellationToken ct = default) =>
+        Task.FromResult(_datos.GetValueOrDefault(comentarioId));
+
+    public Task<IReadOnlyList<Comentario>> ListarPorMarcadorAsync(Guid marcadorId, CancellationToken ct = default) =>
+        Task.FromResult<IReadOnlyList<Comentario>>(_datos.Values.Where(c => c.MarcadorId == marcadorId).ToList());
+
+    public Task AgregarAsync(Comentario comentario, CancellationToken ct = default)
+    {
+        _datos[comentario.ComentarioId] = comentario;
+        return Task.CompletedTask;
+    }
+
+    public Task GuardarCambiosAsync(CancellationToken ct = default) => Task.CompletedTask;
+}
+
+internal sealed class FakeEtiquetaRepository : IEtiquetaRepository
+{
+    private readonly Dictionary<string, Etiqueta> _etiquetas = new();
+    private readonly List<FotoEtiqueta> _fotoEtiquetas = new();
+    private readonly List<ComentarioEtiqueta> _comentarioEtiquetas = new();
+
+    public Task<Etiqueta?> ObtenerPorNombreAsync(string nombre, CancellationToken ct = default) =>
+        Task.FromResult(_etiquetas.GetValueOrDefault(nombre));
+
+    public Task AgregarAsync(Etiqueta etiqueta, CancellationToken ct = default)
+    {
+        _etiquetas[etiqueta.Nombre] = etiqueta;
+        return Task.CompletedTask;
+    }
+
+    public Task AgregarFotoEtiquetaAsync(FotoEtiqueta union, CancellationToken ct = default)
+    {
+        _fotoEtiquetas.Add(union);
+        return Task.CompletedTask;
+    }
+
+    public Task AgregarComentarioEtiquetaAsync(ComentarioEtiqueta union, CancellationToken ct = default)
+    {
+        _comentarioEtiquetas.Add(union);
+        return Task.CompletedTask;
+    }
+
+    public Task<bool> ExisteFotoEtiquetaAsync(Guid fotoId, Guid etiquetaId, CancellationToken ct = default) =>
+        Task.FromResult(_fotoEtiquetas.Any(u => u.FotoId == fotoId && u.EtiquetaId == etiquetaId));
+
+    public Task<bool> ExisteComentarioEtiquetaAsync(Guid comentarioId, Guid etiquetaId, CancellationToken ct = default) =>
+        Task.FromResult(_comentarioEtiquetas.Any(u => u.ComentarioId == comentarioId && u.EtiquetaId == etiquetaId));
+
+    public Task<IReadOnlyList<string>> ListarNombresDeFotoAsync(Guid fotoId, CancellationToken ct = default) =>
+        Task.FromResult<IReadOnlyList<string>>(
+            _fotoEtiquetas.Where(u => u.FotoId == fotoId)
+                .Select(u => _etiquetas.Values.First(e => e.EtiquetaId == u.EtiquetaId).Nombre).ToList());
+
+    public Task<IReadOnlyList<string>> ListarNombresDeComentarioAsync(Guid comentarioId, CancellationToken ct = default) =>
+        Task.FromResult<IReadOnlyList<string>>(
+            _comentarioEtiquetas.Where(u => u.ComentarioId == comentarioId)
+                .Select(u => _etiquetas.Values.First(e => e.EtiquetaId == u.EtiquetaId).Nombre).ToList());
+
+    public Task GuardarCambiosAsync(CancellationToken ct = default) => Task.CompletedTask;
 }
 
 internal sealed class FakeReloj : IRelojUtc
@@ -141,6 +223,20 @@ internal sealed class FakeCredencialRepository : ICredencialRepository
 
     public Task<Credencial?> ObtenerPorNombreUsuarioAsync(string nombreUsuario, CancellationToken ct = default) =>
         Task.FromResult(_datos.GetValueOrDefault(nombreUsuario));
+
+    public Task<bool> ExisteNombreUsuarioAsync(string nombreUsuario, CancellationToken ct = default) =>
+        Task.FromResult(_datos.ContainsKey(nombreUsuario));
+
+    public Task<Credencial?> ObtenerPorUsuarioAsync(Guid usuarioId, CancellationToken ct = default) =>
+        Task.FromResult<Credencial?>(_datos.Values.FirstOrDefault(c => c.UsuarioId == usuarioId));
+
+    public Task AgregarAsync(Credencial credencial, CancellationToken ct = default)
+    {
+        _datos[credencial.NombreUsuario] = credencial;
+        return Task.CompletedTask;
+    }
+
+    public Task GuardarCambiosAsync(CancellationToken ct = default) => Task.CompletedTask;
 }
 
 internal sealed class FakeAuditoria : IServicioAuditoria

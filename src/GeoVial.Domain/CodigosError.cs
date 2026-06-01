@@ -40,4 +40,15 @@ public static class CodigosError
     public const string ObservacionInexistente = "OBSERVACION_INEXISTENTE";
     public const string MarcadorInexistente = "MARCADOR_INEXISTENTE";
     public const string AgenteNoAsignado = "AGENTE_NO_ASIGNADO";
+
+    // Provisión de credenciales (BT-23; ADR-03)
+    public const string NombreUsuarioEnUso = "NOMBRE_USUARIO_EN_USO";
+    public const string ClaveRequerida = "CLAVE_REQUERIDA";
+    public const string NombreUsuarioRequerido = "NOMBRE_USUARIO_REQUERIDO";
+
+    // Comentarios y etiquetas del marcador (CU-09; RC-04)
+    public const string TextoRequerido = "TEXTO_REQUERIDO";
+    public const string ComentarioInexistente = "COMENTARIO_INEXISTENTE";
+    public const string FotoInexistente = "FOTO_INEXISTENTE";
+    public const string EtiquetaRequerida = "ETIQUETA_REQUERIDA";
 }

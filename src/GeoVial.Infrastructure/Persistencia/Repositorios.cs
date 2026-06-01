@@ -59,6 +59,9 @@ public sealed class MarcadorRepository : IMarcadorRepository
 
     public MarcadorRepository(GeoVialDbContext db) => _db = db;
 
+    public Task<Marcador?> ObtenerPorIdAsync(Guid marcadorId, CancellationToken ct = default) =>
+        _db.Marcadores.AsNoTracking().FirstOrDefaultAsync(m => m.MarcadorId == marcadorId, ct);
+
     public async Task<IReadOnlyList<Marcador>> ListarPorRelevamientoAsync(Guid relevamientoId, CancellationToken ct = default) =>
         await _db.Marcadores.AsNoTracking().Where(m => m.RelevamientoId == relevamientoId).ToListAsync(ct);
 
@@ -93,6 +96,12 @@ public sealed class FotoRepository : IFotoRepository
     public Task<Foto?> ObtenerPorObservacionAsync(Guid observacionId, CancellationToken ct = default) =>
         _db.Fotos.FirstOrDefaultAsync(f => f.ObservacionId == observacionId, ct);
 
+    public Task<Foto?> ObtenerPorIdAsync(Guid fotoId, CancellationToken ct = default) =>
+        _db.Fotos.AsNoTracking().FirstOrDefaultAsync(f => f.FotoId == fotoId, ct);
+
+    public async Task<IReadOnlyList<Foto>> ListarPorMarcadorAsync(Guid marcadorId, CancellationToken ct = default) =>
+        await _db.Fotos.AsNoTracking().Where(f => f.MarcadorId == marcadorId).ToListAsync(ct);
+
     public async Task AgregarAsync(Foto foto, CancellationToken ct = default) =>
         await _db.Fotos.AddAsync(foto, ct);
 }
@@ -105,6 +114,72 @@ public sealed class CredencialRepository : ICredencialRepository
 
     public Task<Credencial?> ObtenerPorNombreUsuarioAsync(string nombreUsuario, CancellationToken ct = default) =>
         _db.Credenciales.AsNoTracking().FirstOrDefaultAsync(c => c.NombreUsuario == nombreUsuario, ct);
+
+    public Task<bool> ExisteNombreUsuarioAsync(string nombreUsuario, CancellationToken ct = default) =>
+        _db.Credenciales.AnyAsync(c => c.NombreUsuario == nombreUsuario, ct);
+
+    public Task<Credencial?> ObtenerPorUsuarioAsync(Guid usuarioId, CancellationToken ct = default) =>
+        _db.Credenciales.AsNoTracking().FirstOrDefaultAsync(c => c.UsuarioId == usuarioId, ct);
+
+    public async Task AgregarAsync(Credencial credencial, CancellationToken ct = default) =>
+        await _db.Credenciales.AddAsync(credencial, ct);
+
+    public Task GuardarCambiosAsync(CancellationToken ct = default) => _db.SaveChangesAsync(ct);
+}
+
+public sealed class ComentarioRepository : IComentarioRepository
+{
+    private readonly GeoVialDbContext _db;
+
+    public ComentarioRepository(GeoVialDbContext db) => _db = db;
+
+    public Task<Comentario?> ObtenerPorIdAsync(Guid comentarioId, CancellationToken ct = default) =>
+        _db.Comentarios.FirstOrDefaultAsync(c => c.ComentarioId == comentarioId, ct);
+
+    public async Task<IReadOnlyList<Comentario>> ListarPorMarcadorAsync(Guid marcadorId, CancellationToken ct = default) =>
+        await _db.Comentarios.AsNoTracking().Where(c => c.MarcadorId == marcadorId).ToListAsync(ct);
+
+    public async Task AgregarAsync(Comentario comentario, CancellationToken ct = default) =>
+        await _db.Comentarios.AddAsync(comentario, ct);
+
+    public Task GuardarCambiosAsync(CancellationToken ct = default) => _db.SaveChangesAsync(ct);
+}
+
+public sealed class EtiquetaRepository : IEtiquetaRepository
+{
+    private readonly GeoVialDbContext _db;
+
+    public EtiquetaRepository(GeoVialDbContext db) => _db = db;
+
+    public Task<Etiqueta?> ObtenerPorNombreAsync(string nombre, CancellationToken ct = default) =>
+        _db.Etiquetas.FirstOrDefaultAsync(e => e.Nombre == nombre, ct);
+
+    public async Task AgregarAsync(Etiqueta etiqueta, CancellationToken ct = default) =>
+        await _db.Etiquetas.AddAsync(etiqueta, ct);
+
+    public async Task AgregarFotoEtiquetaAsync(FotoEtiqueta union, CancellationToken ct = default) =>
+        await _db.FotoEtiquetas.AddAsync(union, ct);
+
+    public async Task AgregarComentarioEtiquetaAsync(ComentarioEtiqueta union, CancellationToken ct = default) =>
+        await _db.ComentarioEtiquetas.AddAsync(union, ct);
+
+    public Task<bool> ExisteFotoEtiquetaAsync(Guid fotoId, Guid etiquetaId, CancellationToken ct = default) =>
+        _db.FotoEtiquetas.AnyAsync(u => u.FotoId == fotoId && u.EtiquetaId == etiquetaId, ct);
+
+    public Task<bool> ExisteComentarioEtiquetaAsync(Guid comentarioId, Guid etiquetaId, CancellationToken ct = default) =>
+        _db.ComentarioEtiquetas.AnyAsync(u => u.ComentarioId == comentarioId && u.EtiquetaId == etiquetaId, ct);
+
+    public async Task<IReadOnlyList<string>> ListarNombresDeFotoAsync(Guid fotoId, CancellationToken ct = default) =>
+        await _db.FotoEtiquetas.Where(u => u.FotoId == fotoId)
+            .Join(_db.Etiquetas, u => u.EtiquetaId, e => e.EtiquetaId, (u, e) => e.Nombre)
+            .ToListAsync(ct);
+
+    public async Task<IReadOnlyList<string>> ListarNombresDeComentarioAsync(Guid comentarioId, CancellationToken ct = default) =>
+        await _db.ComentarioEtiquetas.Where(u => u.ComentarioId == comentarioId)
+            .Join(_db.Etiquetas, u => u.EtiquetaId, e => e.EtiquetaId, (u, e) => e.Nombre)
+            .ToListAsync(ct);
+
+    public Task GuardarCambiosAsync(CancellationToken ct = default) => _db.SaveChangesAsync(ct);
 }
 
 /// <summary>

@@ -58,3 +58,31 @@ public sealed record ObservacionDto(
     Guid? MarcadorId,
     Guid AgenteUsuarioId,
     bool SinGeorreferenciar);
+
+// --- Provisión de credenciales (BT-23) ---
+
+public sealed record EstablecerCredencialRequest(string NombreUsuario, string Clave);
+
+// --- Revisión sobre mapa y gestión de marcador (CU-08, CU-09; US-15/21/22) ---
+
+public sealed record AgregarComentarioRequest(Guid? FotoId, string Texto);
+
+public sealed record EtiquetarRequest(string Etiqueta);
+
+public sealed record RevisionFotoDto(Guid FotoId, string ReferenciaArchivo, IReadOnlyList<string> Etiquetas);
+
+public sealed record RevisionComentarioDto(Guid ComentarioId, string Texto, Guid? FotoId, IReadOnlyList<string> Etiquetas);
+
+public sealed record RevisionMarcadorDto(
+    Guid MarcadorId,
+    decimal Latitud,
+    decimal Longitud,
+    bool EnConflicto,
+    IReadOnlyList<RevisionFotoDto> Fotos,
+    IReadOnlyList<RevisionComentarioDto> Comentarios);
+
+public sealed record RevisionRelevamientoDto(
+    Guid RelevamientoId,
+    int Estado,
+    IReadOnlyList<RevisionMarcadorDto> Marcadores,
+    IReadOnlyList<Guid> ObservacionesSinGeorreferenciar);

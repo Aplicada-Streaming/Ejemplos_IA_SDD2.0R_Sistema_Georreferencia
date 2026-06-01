@@ -74,6 +74,9 @@ else
                             }
                             <input placeholder="Área (GUID)" @bind="areaPorUsuario[u.UsuarioId]" />
                             <button @onclick="() => Asociar(u.UsuarioId)">Asociar área</button>
+                            <input placeholder="usuario" @bind="credUsuario[u.UsuarioId]" size="10" />
+                            <input placeholder="clave" type="password" @bind="credClave[u.UsuarioId]" size="10" />
+                            <button @onclick="() => Credencial(u.UsuarioId)">Dar credencial</button>
                         </td>
                     </tr>
                 }
@@ -93,6 +96,8 @@ else
 
     private IReadOnlyList<UsuarioDto> usuarios = Array.Empty<UsuarioDto>();
     private readonly Dictionary<Guid, string> areaPorUsuario = new();
+    private readonly Dictionary<Guid, string> credUsuario = new();
+    private readonly Dictionary<Guid, string> credClave = new();
 
     private async Task Login()
     {
@@ -120,7 +125,16 @@ else
         foreach (var u in usuarios)
         {
             areaPorUsuario.TryAdd(u.UsuarioId, string.Empty);
+            credUsuario.TryAdd(u.UsuarioId, string.Empty);
+            credClave.TryAdd(u.UsuarioId, string.Empty);
         }
+    }
+
+    private async Task Credencial(Guid usuarioId)
+    {
+        var (ok, msg) = await Api.EstablecerCredencialAsync(
+            usuarioId, credUsuario.GetValueOrDefault(usuarioId, ""), credClave.GetValueOrDefault(usuarioId, ""));
+        mensaje = ok ? msg : $"No se pudo dar credencial: {msg}";
     }
 
     private async Task Baja(Guid id)

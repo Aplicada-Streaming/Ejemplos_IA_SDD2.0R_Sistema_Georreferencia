@@ -1,0 +1,150 @@
+@page "/revision"
+@rendermode InteractiveServer
+@using GeoVial.Shared
+@using GeoVial.Web.Servicios
+@inject GeoVialApiCliente Api
+
+<PageTitle>GeoVial — Revisión</PageTitle>
+
+<h1>Revisión sobre mapa</h1>
+<p>Slice del Sprint 04: revisión por marcadores con sus fotos, comentarios y etiquetas (CU-08, CU-09).</p>
+
+@if (!Api.Autenticado)
+{
+    <section>
+        <h2>Iniciar sesión</h2>
+        <div><label>Usuario: <input @bind="usuario" /></label></div>
+        <div><label>Clave: <input type="password" @bind="clave" /></label></div>
+        <button @onclick="Login">Ingresar</button>
+        @if (mensaje is not null)
+        {
+            <p role="alert">@mensaje</p>
+        }
+    </section>
+}
+else
+{
+    <section>
+        <button @onclick="Salir">Cerrar sesión</button>
+
+        <h2>Revisar relevamiento</h2>
+        <div><label>Relevamiento (GUID): <input @bind="relevamientoId" size="40" /></label></div>
+        <button @onclick="Cargar">Cargar</button>
+        @if (mensaje is not null)
+        {
+            <p role="alert">@mensaje</p>
+        }
+
+        @if (revision is not null)
+        {
+            <p>Estado: @NombreEstado(revision.Estado) — Marcadores: @revision.Marcadores.Count — Sin georreferenciar: @revision.ObservacionesSinGeorreferenciar.Count</p>
+
+            @foreach (var m in revision.Marcadores)
+            {
+                <article style="border:1px solid #ccc; margin:8px 0; padding:8px;">
+                    <h3>Marcador (@m.Latitud, @m.Longitud)@(m.EnConflicto ? " — en conflicto" : "")</h3>
+
+                    <h4>Fotos</h4>
+                    <ul>
+                        @foreach (var f in m.Fotos)
+                        {
+                            <li>
+                                @f.ReferenciaArchivo — etiquetas: @(string.Join(", ", f.Etiquetas))
+                                <input placeholder="etiqueta" @bind="etiquetaFoto[f.FotoId]" size="12" />
+                                <button @onclick="() => EtiquetarFoto(f.FotoId)">Etiquetar</button>
+                            </li>
+                        }
+                    </ul>
+
+                    <h4>Comentarios</h4>
+                    <ul>
+                        @foreach (var c in m.Comentarios)
+                        {
+                            <li>@c.Texto — etiquetas: @(string.Join(", ", c.Etiquetas))</li>
+                        }
+                    </ul>
+
+                    <input placeholder="nuevo comentario" @bind="comentarioMarcador[m.MarcadorId]" size="30" />
+                    <button @onclick="() => Comentar(m.MarcadorId)">Comentar</button>
+                </article>
+            }
+        }
+    </section>
+}
+
+@code {
+    private string usuario = "raiz";
+    private string clave = "";
+    private string? mensaje;
+
+    private string relevamientoId = "";
+    private RevisionRelevamientoDto? revision;
+
+    private readonly Dictionary<Guid, string> comentarioMarcador = new();
+    private readonly Dictionary<Guid, string> etiquetaFoto = new();
+
+    private async Task Login()
+    {
+        mensaje = null;
+        if (!await Api.LoginAsync(usuario, clave))
+        {
+            mensaje = "Credenciales inválidas.";
+        }
+    }
+
+    private void Salir()
+    {
+        Api.CerrarSesion();
+        revision = null;
+        mensaje = null;
+    }
+
+    private async Task Cargar()
+    {
+        if (!Guid.TryParse(relevamientoId, out var id))
+        {
+            mensaje = "Relevamiento inválido (se espera un GUID).";
+            return;
+        }
+
+        revision = await Api.RevisarRelevamientoAsync(id);
+        if (revision is null)
+        {
+            mensaje = "No se pudo cargar la revisión (acceso o relevamiento inválido).";
+            return;
+        }
+
+        foreach (var m in revision.Marcadores)
+        {
+            comentarioMarcador.TryAdd(m.MarcadorId, "");
+            foreach (var f in m.Fotos)
+            {
+                etiquetaFoto.TryAdd(f.FotoId, "");
+            }
+        }
+    }
+
+    private async Task Comentar(Guid marcadorId)
+    {
+        var texto = comentarioMarcador.GetValueOrDefault(marcadorId, "");
+        var (ok, msg) = await Api.AgregarComentarioAsync(marcadorId, null, texto);
+        mensaje = ok ? msg : $"No se pudo comentar: {msg}";
+        await Cargar();
+    }
+
+    private async Task EtiquetarFoto(Guid fotoId)
+    {
+        var etiqueta = etiquetaFoto.GetValueOrDefault(fotoId, "");
+        var (ok, msg) = await Api.EtiquetarFotoAsync(fotoId, etiqueta);
+        mensaje = ok ? msg : $"No se pudo etiquetar: {msg}";
+        await Cargar();
+    }
+
+    private static string NombreEstado(int estado) => estado switch
+    {
+        1 => "Recolección",
+        2 => "Revisión",
+        3 => "Cerrado",
+        _ => "Desconocido",
+    };
+}

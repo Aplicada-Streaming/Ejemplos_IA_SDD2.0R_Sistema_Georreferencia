@@ -5,6 +5,7 @@ using GeoVial.Application;
 using GeoVial.Application.Captura;
 using GeoVial.Application.Cqrs;
 using GeoVial.Application.Relevamientos;
+using GeoVial.Application.Revision;
 using GeoVial.Application.Servicios;
 using GeoVial.Domain;
 using GeoVial.Infrastructure;
@@ -272,6 +273,66 @@ observaciones.MapPost("/{observacionId:guid}/ubicacion", async (Guid observacion
     return r.EsExito ? Results.NoContent() : MapeoErrores.AProblema(r.Codigo);
 });
 
+// --- Provisión de credenciales (BT-23) ---
+usuarios.MapPost("/{id:guid}/credencial", async (Guid id, EstablecerCredencialRequest req, ClaimsPrincipal admin, ProvisionCredencialService provision, CancellationToken ct) =>
+{
+    if (!TryGetUsuarioId(admin, out var adminId))
+    {
+        return Results.Unauthorized();
+    }
+
+    var r = await provision.EstablecerCredencialAsync(adminId, id, req.NombreUsuario, req.Clave, ct);
+    return r.EsExito ? Results.NoContent() : MapeoErrores.AProblema(r.Codigo);
+});
+
+// --- Revisión sobre mapa y gestión de marcador (CU-08, CU-09; US-15/21/22) ---
+relevamientos.MapGet("/{relevamientoId:guid}/revision", async (Guid relevamientoId, ClaimsPrincipal solicitante, IMediador mediador, CancellationToken ct) =>
+{
+    if (!TryGetUsuarioId(solicitante, out var id))
+    {
+        return Results.Unauthorized();
+    }
+
+    var revision = await mediador.EnviarAsync(new RevisarRelevamientoQuery(id, relevamientoId), ct);
+    return revision is null ? Results.NotFound() : Results.Ok(AMapaRevision(revision));
+});
+
+var marcadores = app.MapGroup("/api/v1/marcadores").RequireAuthorization();
+marcadores.MapPost("/{marcadorId:guid}/comentarios", async (Guid marcadorId, AgregarComentarioRequest req, ClaimsPrincipal usuario, IMediador mediador, CancellationToken ct) =>
+{
+    if (!TryGetUsuarioId(usuario, out var usuarioId))
+    {
+        return Results.Unauthorized();
+    }
+
+    var r = await mediador.EnviarAsync(new AgregarComentarioCommand(usuarioId, marcadorId, req.FotoId, req.Texto), ct);
+    return r.EsExito ? Results.NoContent() : MapeoErrores.AProblema(r.Codigo);
+});
+
+var fotos = app.MapGroup("/api/v1/fotos").RequireAuthorization();
+fotos.MapPost("/{fotoId:guid}/etiquetas", async (Guid fotoId, EtiquetarRequest req, ClaimsPrincipal usuario, IMediador mediador, CancellationToken ct) =>
+{
+    if (!TryGetUsuarioId(usuario, out var usuarioId))
+    {
+        return Results.Unauthorized();
+    }
+
+    var r = await mediador.EnviarAsync(new EtiquetarFotoCommand(usuarioId, fotoId, req.Etiqueta), ct);
+    return r.EsExito ? Results.NoContent() : MapeoErrores.AProblema(r.Codigo);
+});
+
+var comentarios = app.MapGroup("/api/v1/comentarios").RequireAuthorization();
+comentarios.MapPost("/{comentarioId:guid}/etiquetas", async (Guid comentarioId, EtiquetarRequest req, ClaimsPrincipal usuario, IMediador mediador, CancellationToken ct) =>
+{
+    if (!TryGetUsuarioId(usuario, out var usuarioId))
+    {
+        return Results.Unauthorized();
+    }
+
+    var r = await mediador.EnviarAsync(new EtiquetarComentarioCommand(usuarioId, comentarioId, req.Etiqueta), ct);
+    return r.EsExito ? Results.NoContent() : MapeoErrores.AProblema(r.Codigo);
+});
+
 app.Run();
 
 static bool TryGetUsuarioId(ClaimsPrincipal principal, out Guid id)
@@ -288,6 +349,16 @@ static RelevamientoDto AMapaRelevamiento(Relevamiento r) =>
 
 static ObservacionDto AMapaObservacion(Observacion o) =>
     new(o.ObservacionId, o.RelevamientoId, o.MarcadorId, o.AgenteUsuarioId, o.SinGeorreferenciar);
+
+static RevisionRelevamientoDto AMapaRevision(RevisionRelevamiento r) =>
+    new(
+        r.RelevamientoId,
+        r.Estado,
+        r.Marcadores.Select(m => new RevisionMarcadorDto(
+            m.MarcadorId, m.Latitud, m.Longitud, m.EnConflicto,
+            m.Fotos.Select(f => new RevisionFotoDto(f.FotoId, f.ReferenciaArchivo, f.Etiquetas)).ToList(),
+            m.Comentarios.Select(c => new RevisionComentarioDto(c.ComentarioId, c.Texto, c.FotoId, c.Etiquetas)).ToList())).ToList(),
+        r.ObservacionesSinGeorreferenciar);
 
 /// <summary>Punto de entrada expuesto para pruebas de integración (WebApplicationFactory).</summary>
 public partial class Program;

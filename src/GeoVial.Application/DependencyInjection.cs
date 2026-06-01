@@ -1,6 +1,7 @@
 using GeoVial.Application.Captura;
 using GeoVial.Application.Cqrs;
 using GeoVial.Application.Relevamientos;
+using GeoVial.Application.Revision;
 using GeoVial.Application.Servicios;
 using GeoVial.Domain;
 using Microsoft.Extensions.DependencyInjection;
@@ -15,6 +16,7 @@ public static class DependencyInjection
         servicios.AddScoped<GestionUsuariosService>();
         servicios.AddScoped<AccesoService>();
         servicios.AddScoped<AutorizacionService>();
+        servicios.AddScoped<ProvisionCredencialService>();
 
         // CQRS ligero del módulo de relevamientos (ADR-01, PROJECT-README §3).
         servicios.AddScoped<IMediador, Mediador>();
@@ -29,6 +31,12 @@ public static class DependencyInjection
         servicios.AddScoped<IManejador<CapturarObservacionCommand, Resultado<ResultadoCaptura>>, CapturarObservacionHandler>();
         servicios.AddScoped<IManejador<UbicarObservacionManualCommand, Resultado>, UbicarObservacionManualHandler>();
         servicios.AddScoped<IManejador<ListarObservacionesQuery, IReadOnlyList<Observacion>>, ListarObservacionesHandler>();
+
+        // Módulo de revisión sobre mapa y gestión de marcador (CU-08, CU-09).
+        servicios.AddScoped<IManejador<AgregarComentarioCommand, Resultado>, AgregarComentarioHandler>();
+        servicios.AddScoped<IManejador<EtiquetarFotoCommand, Resultado>, EtiquetarFotoHandler>();
+        servicios.AddScoped<IManejador<EtiquetarComentarioCommand, Resultado>, EtiquetarComentarioHandler>();
+        servicios.AddScoped<IManejador<RevisarRelevamientoQuery, RevisionRelevamiento?>, RevisarRelevamientoHandler>();
 
         return servicios;
     }
