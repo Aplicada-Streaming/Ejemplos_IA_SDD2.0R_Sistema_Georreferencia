@@ -115,4 +115,24 @@ public class ApiAccesoUsuariosTests : IClassFixture<WebApplicationFactory<Progra
         var resp = await cliente.GetAsync("/api/v1/relevamientos");
         resp.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
     }
+
+    [Fact] // CU-04: captura sin token → 401
+    public async Task Capturar_observacion_sin_token_devuelve_401()
+    {
+        var cliente = _factory.CreateClient();
+        var resp = await cliente.PostAsJsonAsync(
+            $"/api/v1/relevamientos/{Guid.NewGuid()}/observaciones",
+            new CapturarObservacionRequest("foto.jpg", -34.6m, -58.4m));
+        resp.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
+    }
+
+    [Fact] // CU-05: ubicación manual sin token → 401
+    public async Task Ubicar_manual_sin_token_devuelve_401()
+    {
+        var cliente = _factory.CreateClient();
+        var resp = await cliente.PostAsJsonAsync(
+            $"/api/v1/observaciones/{Guid.NewGuid()}/ubicacion",
+            new UbicarManualRequest(-34.6m, -58.4m));
+        resp.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
+    }
 }

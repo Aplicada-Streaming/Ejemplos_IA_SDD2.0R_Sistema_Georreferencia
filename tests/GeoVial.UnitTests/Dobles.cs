@@ -68,6 +68,70 @@ internal sealed class FakeRelevamientoRepository : IRelevamientoRepository
     public Task GuardarCambiosAsync(CancellationToken ct = default) => Task.CompletedTask;
 }
 
+internal sealed class FakeMarcadorRepository : IMarcadorRepository
+{
+    private readonly List<Marcador> _datos;
+
+    public FakeMarcadorRepository(params Marcador[] iniciales) => _datos = iniciales.ToList();
+
+    public Task<IReadOnlyList<Marcador>> ListarPorRelevamientoAsync(Guid relevamientoId, CancellationToken ct = default) =>
+        Task.FromResult<IReadOnlyList<Marcador>>(_datos.Where(m => m.RelevamientoId == relevamientoId).ToList());
+
+    public Task AgregarAsync(Marcador marcador, CancellationToken ct = default)
+    {
+        _datos.Add(marcador);
+        return Task.CompletedTask;
+    }
+}
+
+internal sealed class FakeObservacionRepository : IObservacionRepository
+{
+    private readonly Dictionary<Guid, Observacion> _datos = new();
+
+    public FakeObservacionRepository(params Observacion[] iniciales)
+    {
+        foreach (var o in iniciales)
+        {
+            _datos[o.ObservacionId] = o;
+        }
+    }
+
+    public Task<Observacion?> ObtenerPorIdAsync(Guid observacionId, CancellationToken ct = default) =>
+        Task.FromResult(_datos.GetValueOrDefault(observacionId));
+
+    public Task<IReadOnlyList<Observacion>> ListarPorRelevamientoAsync(Guid relevamientoId, CancellationToken ct = default) =>
+        Task.FromResult<IReadOnlyList<Observacion>>(_datos.Values.Where(o => o.RelevamientoId == relevamientoId).ToList());
+
+    public Task AgregarAsync(Observacion observacion, CancellationToken ct = default)
+    {
+        _datos[observacion.ObservacionId] = observacion;
+        return Task.CompletedTask;
+    }
+
+    public Task GuardarCambiosAsync(CancellationToken ct = default) => Task.CompletedTask;
+}
+
+internal sealed class FakeFotoRepository : IFotoRepository
+{
+    private readonly List<Foto> _datos;
+
+    public FakeFotoRepository(params Foto[] iniciales) => _datos = iniciales.ToList();
+
+    public Task<Foto?> ObtenerPorObservacionAsync(Guid observacionId, CancellationToken ct = default) =>
+        Task.FromResult<Foto?>(_datos.FirstOrDefault(f => f.ObservacionId == observacionId));
+
+    public Task AgregarAsync(Foto foto, CancellationToken ct = default)
+    {
+        _datos.Add(foto);
+        return Task.CompletedTask;
+    }
+}
+
+internal sealed class FakeReloj : IRelojUtc
+{
+    public DateTime AhoraUtc => new(2026, 6, 1, 12, 0, 0, DateTimeKind.Utc);
+}
+
 internal sealed class FakeCredencialRepository : ICredencialRepository
 {
     private readonly Dictionary<string, Credencial> _datos;

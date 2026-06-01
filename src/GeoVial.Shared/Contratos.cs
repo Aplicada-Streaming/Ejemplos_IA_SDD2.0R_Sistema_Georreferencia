@@ -43,3 +43,18 @@ public sealed record RelevamientoDto(
     decimal RadioAgrupacionMetros,
     Guid AreaId,
     IReadOnlyList<Guid> AgentesVigentes);
+
+// --- Captura y georreferenciación (CU-04, CU-05; US-11/12/13/14) ---
+
+public sealed record CapturarObservacionRequest(string ReferenciaArchivo, decimal? LatitudExif, decimal? LongitudExif);
+
+public sealed record UbicarManualRequest(decimal Latitud, decimal Longitud);
+
+public sealed record CapturaResponse(Guid ObservacionId, Guid? MarcadorId, bool SinGeorreferenciar);
+
+public sealed record ObservacionDto(
+    Guid ObservacionId,
+    Guid RelevamientoId,
+    Guid? MarcadorId,
+    Guid AgenteUsuarioId,
+    bool SinGeorreferenciar);

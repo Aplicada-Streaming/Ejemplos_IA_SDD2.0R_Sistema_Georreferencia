@@ -27,6 +27,9 @@ public static class DependencyInjection
         servicios.AddScoped<IUsuarioRepository, UsuarioRepository>();
         servicios.AddScoped<IAreaRepository, AreaRepository>();
         servicios.AddScoped<IRelevamientoRepository, RelevamientoRepository>();
+        servicios.AddScoped<IMarcadorRepository, MarcadorRepository>();
+        servicios.AddScoped<IObservacionRepository, ObservacionRepository>();
+        servicios.AddScoped<IFotoRepository, FotoRepository>();
         servicios.AddScoped<ICredencialRepository, CredencialRepository>();
         servicios.AddScoped<IServicioAuditoria, ServicioAuditoria>();
         servicios.AddSingleton<IHasherClave, HasherClavePbkdf2>();

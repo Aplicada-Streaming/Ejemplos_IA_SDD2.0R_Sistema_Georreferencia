@@ -2,6 +2,7 @@ using System.Security.Claims;
 using System.Text;
 using GeoVial.Api;
 using GeoVial.Application;
+using GeoVial.Application.Captura;
 using GeoVial.Application.Cqrs;
 using GeoVial.Application.Relevamientos;
 using GeoVial.Application.Servicios;
@@ -226,6 +227,51 @@ relevamientos.MapGet("/", async (ClaimsPrincipal solicitante, IMediador mediador
     return Results.Ok(lista.Select(AMapaRelevamiento));
 });
 
+// --- Captura y georreferenciación (CU-04, CU-05; US-11/12/13/14) ---
+relevamientos.MapPost("/{relevamientoId:guid}/observaciones", async (Guid relevamientoId, CapturarObservacionRequest req, ClaimsPrincipal agente, IMediador mediador, CancellationToken ct) =>
+{
+    if (!TryGetUsuarioId(agente, out var agenteId))
+    {
+        return Results.Unauthorized();
+    }
+
+    var r = await mediador.EnviarAsync(
+        new CapturarObservacionCommand(agenteId, relevamientoId, req.ReferenciaArchivo, req.LatitudExif, req.LongitudExif), ct);
+    if (!r.EsExito)
+    {
+        return MapeoErrores.AProblema(r.Codigo);
+    }
+
+    var capt = r.Valor!;
+    return Results.Created(
+        $"/api/v1/relevamientos/{relevamientoId}/observaciones/{capt.ObservacionId}",
+        new CapturaResponse(capt.ObservacionId, capt.MarcadorId, capt.SinGeorreferenciar));
+});
+
+relevamientos.MapGet("/{relevamientoId:guid}/observaciones", async (Guid relevamientoId, ClaimsPrincipal solicitante, IMediador mediador, CancellationToken ct) =>
+{
+    if (!TryGetUsuarioId(solicitante, out var id))
+    {
+        return Results.Unauthorized();
+    }
+
+    var lista = await mediador.EnviarAsync(new ListarObservacionesQuery(id, relevamientoId), ct);
+    return Results.Ok(lista.Select(AMapaObservacion));
+});
+
+var observaciones = app.MapGroup("/api/v1/observaciones").RequireAuthorization();
+
+observaciones.MapPost("/{observacionId:guid}/ubicacion", async (Guid observacionId, UbicarManualRequest req, ClaimsPrincipal usuario, IMediador mediador, CancellationToken ct) =>
+{
+    if (!TryGetUsuarioId(usuario, out var usuarioId))
+    {
+        return Results.Unauthorized();
+    }
+
+    var r = await mediador.EnviarAsync(new UbicarObservacionManualCommand(usuarioId, observacionId, req.Latitud, req.Longitud), ct);
+    return r.EsExito ? Results.NoContent() : MapeoErrores.AProblema(r.Codigo);
+});
+
 app.Run();
 
 static bool TryGetUsuarioId(ClaimsPrincipal principal, out Guid id)
@@ -239,6 +285,9 @@ static UsuarioDto AMapa(Usuario u) =>
 
 static RelevamientoDto AMapaRelevamiento(Relevamiento r) =>
     new(r.RelevamientoId, r.IdentificacionObra, (int)r.Estado, r.RadioAgrupacionMetros, r.AreaId, r.AgentesVigentes());
+
+static ObservacionDto AMapaObservacion(Observacion o) =>
+    new(o.ObservacionId, o.RelevamientoId, o.MarcadorId, o.AgenteUsuarioId, o.SinGeorreferenciar);
 
 /// <summary>Punto de entrada expuesto para pruebas de integración (WebApplicationFactory).</summary>
 public partial class Program;

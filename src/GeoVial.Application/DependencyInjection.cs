@@ -1,3 +1,4 @@
+using GeoVial.Application.Captura;
 using GeoVial.Application.Cqrs;
 using GeoVial.Application.Relevamientos;
 using GeoVial.Application.Servicios;
@@ -23,6 +24,11 @@ public static class DependencyInjection
         servicios.AddScoped<IManejador<TransicionarEstadoCommand, Resultado>, TransicionarEstadoHandler>();
         servicios.AddScoped<IManejador<ReabrirRelevamientoCommand, Resultado>, ReabrirRelevamientoHandler>();
         servicios.AddScoped<IManejador<ListarRelevamientosQuery, IReadOnlyList<Relevamiento>>, ListarRelevamientosHandler>();
+
+        // Módulo de captura y georreferenciación (CU-04, CU-05).
+        servicios.AddScoped<IManejador<CapturarObservacionCommand, Resultado<ResultadoCaptura>>, CapturarObservacionHandler>();
+        servicios.AddScoped<IManejador<UbicarObservacionManualCommand, Resultado>, UbicarObservacionManualHandler>();
+        servicios.AddScoped<IManejador<ListarObservacionesQuery, IReadOnlyList<Observacion>>, ListarObservacionesHandler>();
 
         return servicios;
     }

@@ -24,6 +24,26 @@ public interface IRelevamientoRepository
     Task GuardarCambiosAsync(CancellationToken ct = default);
 }
 
+public interface IMarcadorRepository
+{
+    Task<IReadOnlyList<Marcador>> ListarPorRelevamientoAsync(Guid relevamientoId, CancellationToken ct = default);
+    Task AgregarAsync(Marcador marcador, CancellationToken ct = default);
+}
+
+public interface IObservacionRepository
+{
+    Task<Observacion?> ObtenerPorIdAsync(Guid observacionId, CancellationToken ct = default);
+    Task<IReadOnlyList<Observacion>> ListarPorRelevamientoAsync(Guid relevamientoId, CancellationToken ct = default);
+    Task AgregarAsync(Observacion observacion, CancellationToken ct = default);
+    Task GuardarCambiosAsync(CancellationToken ct = default);
+}
+
+public interface IFotoRepository
+{
+    Task<Foto?> ObtenerPorObservacionAsync(Guid observacionId, CancellationToken ct = default);
+    Task AgregarAsync(Foto foto, CancellationToken ct = default);
+}
+
 public interface ICredencialRepository
 {
     Task<Credencial?> ObtenerPorNombreUsuarioAsync(string nombreUsuario, CancellationToken ct = default);

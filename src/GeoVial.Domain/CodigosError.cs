@@ -33,4 +33,11 @@ public static class CodigosError
     public const string TransicionInvalida = "TRANSICION_INVALIDA";
     public const string ReaperturaNoAutorizada = "REAPERTURA_NO_AUTORIZADA";
     public const string RelevamientoInexistente = "RELEVAMIENTO_INEXISTENTE";
+
+    // Captura y georreferenciación (CU-04, CU-05; RN-02, RN-03)
+    public const string ObservacionSinGeorreferencia = "OBSERVACION_SIN_GEORREFERENCIA";
+    public const string FuenteUbicacionIncorrecta = "FUENTE_UBICACION_INCORRECTA";
+    public const string ObservacionInexistente = "OBSERVACION_INEXISTENTE";
+    public const string MarcadorInexistente = "MARCADOR_INEXISTENTE";
+    public const string AgenteNoAsignado = "AGENTE_NO_ASIGNADO";
 }

@@ -19,6 +19,9 @@ public sealed class GeoVialDbContext : DbContext
     public DbSet<Credencial> Credenciales => Set<Credencial>();
     public DbSet<RegistroAuditoria> RegistrosAuditoria => Set<RegistroAuditoria>();
     public DbSet<Relevamiento> Relevamientos => Set<Relevamiento>();
+    public DbSet<Marcador> Marcadores => Set<Marcador>();
+    public DbSet<Observacion> Observaciones => Set<Observacion>();
+    public DbSet<Foto> Fotos => Set<Foto>();
 
     protected override void OnModelCreating(ModelBuilder modelo)
     {
@@ -76,6 +79,37 @@ public sealed class GeoVialDbContext : DbContext
             e.HasKey(a => a.AsignacionAgenteId);
             e.Property(a => a.Vigente).IsRequired();
             e.HasIndex(a => new { a.RelevamientoId, a.AgenteUsuarioId }).IsUnique().HasDatabaseName("UX_AsignacionAgente");
+        });
+
+        modelo.Entity<Marcador>(e =>
+        {
+            e.ToTable("Marcador");
+            e.HasKey(m => m.MarcadorId);
+            e.Ignore(m => m.Coordenada);
+            e.Property(m => m.Latitud).HasColumnType("decimal(9,6)").IsRequired();
+            e.Property(m => m.Longitud).HasColumnType("decimal(9,6)").IsRequired();
+            e.Property(m => m.EnConflicto).IsRequired();
+            e.HasIndex(m => m.RelevamientoId).HasDatabaseName("IX_Marcador_Relevamiento");
+        });
+
+        modelo.Entity<Observacion>(e =>
+        {
+            e.ToTable("Observacion");
+            e.HasKey(o => o.ObservacionId);
+            e.Property(o => o.MomentoCaptura).IsRequired();
+            e.Property(o => o.SinGeorreferenciar).IsRequired();
+            e.HasIndex(o => o.RelevamientoId).HasDatabaseName("IX_Observacion_Relevamiento");
+            e.HasIndex(o => o.MarcadorId).HasDatabaseName("IX_Observacion_Marcador");
+        });
+
+        modelo.Entity<Foto>(e =>
+        {
+            e.ToTable("Foto");
+            e.HasKey(f => f.FotoId);
+            e.Property(f => f.ReferenciaArchivo).HasMaxLength(1024).IsRequired();
+            e.Property(f => f.TieneMetadatosUbicacion).IsRequired();
+            e.Property(f => f.Fuente).HasConversion<byte?>();
+            e.HasIndex(f => f.ObservacionId).HasDatabaseName("IX_Foto_Observacion");
         });
     }
 }

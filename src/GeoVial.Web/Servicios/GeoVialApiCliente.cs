@@ -124,6 +124,44 @@ public sealed class GeoVialApiCliente
     public Task<(bool Ok, string Mensaje)> AsignarAgentesAsync(Guid id, IReadOnlyList<Guid> agentes, CancellationToken ct = default) =>
         EnviarAsync(HttpMethod.Post, $"api/v1/relevamientos/{id}/agentes", new AsignarAgentesRequest(agentes), "Agentes asignados.", ct);
 
+    // --- Captura y georreferenciación (CU-04, CU-05) ---
+
+    public async Task<IReadOnlyList<ObservacionDto>> ListarObservacionesAsync(Guid relevamientoId, CancellationToken ct = default)
+    {
+        using var req = new HttpRequestMessage(HttpMethod.Get, $"api/v1/relevamientos/{relevamientoId}/observaciones");
+        Autorizar(req);
+        var resp = await _http.SendAsync(req, ct);
+        if (!resp.IsSuccessStatusCode)
+        {
+            return Array.Empty<ObservacionDto>();
+        }
+
+        return await resp.Content.ReadFromJsonAsync<List<ObservacionDto>>(ct) ?? new List<ObservacionDto>();
+    }
+
+    public async Task<(bool Ok, string Mensaje)> CapturarObservacionAsync(
+        Guid relevamientoId, string referencia, decimal? latitud, decimal? longitud, CancellationToken ct = default)
+    {
+        using var req = new HttpRequestMessage(HttpMethod.Post, $"api/v1/relevamientos/{relevamientoId}/observaciones")
+        {
+            Content = JsonContent.Create(new CapturarObservacionRequest(referencia, latitud, longitud)),
+        };
+        Autorizar(req);
+
+        var resp = await _http.SendAsync(req, ct);
+        if (resp.IsSuccessStatusCode)
+        {
+            var capt = await resp.Content.ReadFromJsonAsync<CapturaResponse>(ct);
+            return (true, capt!.SinGeorreferenciar ? "Observación en bandeja sin georreferenciar." : "Observación georreferenciada.");
+        }
+
+        var problema = await resp.Content.ReadFromJsonAsync<ProblemaApi>(ct);
+        return (false, problema?.Codigo ?? $"Error {(int)resp.StatusCode}");
+    }
+
+    public Task<(bool Ok, string Mensaje)> UbicarManualAsync(Guid observacionId, decimal latitud, decimal longitud, CancellationToken ct = default) =>
+        EnviarAsync(HttpMethod.Post, $"api/v1/observaciones/{observacionId}/ubicacion", new UbicarManualRequest(latitud, longitud), "Observación ubicada.", ct);
+
     private async Task<(bool Ok, string Mensaje)> EnviarAsync<TBody>(HttpMethod metodo, string ruta, TBody? cuerpo, string exito, CancellationToken ct)
     {
         using var req = new HttpRequestMessage(metodo, ruta);

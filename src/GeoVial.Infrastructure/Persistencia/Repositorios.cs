@@ -53,6 +53,50 @@ public sealed class RelevamientoRepository : IRelevamientoRepository
     public Task GuardarCambiosAsync(CancellationToken ct = default) => _db.SaveChangesAsync(ct);
 }
 
+public sealed class MarcadorRepository : IMarcadorRepository
+{
+    private readonly GeoVialDbContext _db;
+
+    public MarcadorRepository(GeoVialDbContext db) => _db = db;
+
+    public async Task<IReadOnlyList<Marcador>> ListarPorRelevamientoAsync(Guid relevamientoId, CancellationToken ct = default) =>
+        await _db.Marcadores.AsNoTracking().Where(m => m.RelevamientoId == relevamientoId).ToListAsync(ct);
+
+    public async Task AgregarAsync(Marcador marcador, CancellationToken ct = default) =>
+        await _db.Marcadores.AddAsync(marcador, ct);
+}
+
+public sealed class ObservacionRepository : IObservacionRepository
+{
+    private readonly GeoVialDbContext _db;
+
+    public ObservacionRepository(GeoVialDbContext db) => _db = db;
+
+    public Task<Observacion?> ObtenerPorIdAsync(Guid observacionId, CancellationToken ct = default) =>
+        _db.Observaciones.FirstOrDefaultAsync(o => o.ObservacionId == observacionId, ct);
+
+    public async Task<IReadOnlyList<Observacion>> ListarPorRelevamientoAsync(Guid relevamientoId, CancellationToken ct = default) =>
+        await _db.Observaciones.AsNoTracking().Where(o => o.RelevamientoId == relevamientoId).ToListAsync(ct);
+
+    public async Task AgregarAsync(Observacion observacion, CancellationToken ct = default) =>
+        await _db.Observaciones.AddAsync(observacion, ct);
+
+    public Task GuardarCambiosAsync(CancellationToken ct = default) => _db.SaveChangesAsync(ct);
+}
+
+public sealed class FotoRepository : IFotoRepository
+{
+    private readonly GeoVialDbContext _db;
+
+    public FotoRepository(GeoVialDbContext db) => _db = db;
+
+    public Task<Foto?> ObtenerPorObservacionAsync(Guid observacionId, CancellationToken ct = default) =>
+        _db.Fotos.FirstOrDefaultAsync(f => f.ObservacionId == observacionId, ct);
+
+    public async Task AgregarAsync(Foto foto, CancellationToken ct = default) =>
+        await _db.Fotos.AddAsync(foto, ct);
+}
+
 public sealed class CredencialRepository : ICredencialRepository
 {
     private readonly GeoVialDbContext _db;
