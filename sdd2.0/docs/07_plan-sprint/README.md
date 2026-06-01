@@ -12,7 +12,7 @@
 
 | Sprint | Estado | Fechas | Plan |
 | --- | --- | --- | --- |
-| Sprint 05 | Por planificar | — | — |
+| Sprint 06 | Por planificar | — | — |
 
 ## Histórico de sprints cerrados
 
@@ -23,6 +23,7 @@
 | Sprint 02 (relevamientos) | Cerrado (Cumplido; velocity 27) | [plan-iteracion-sprint-02_v1.0.md](plan-iteracion-sprint-02_v1.0.md) | [sprint-review-sprint-02_v1.0.md](sprint-review-sprint-02_v1.0.md) | [sprint-retrospectiva-sprint-02_v1.0.md](sprint-retrospectiva-sprint-02_v1.0.md) |
 | Sprint 03 (captura y georreferenciación) | Cerrado (Cumplido; velocity 28) | [plan-iteracion-sprint-03_v1.0.md](plan-iteracion-sprint-03_v1.0.md) | [sprint-review-sprint-03_v1.0.md](sprint-review-sprint-03_v1.0.md) | [sprint-retrospectiva-sprint-03_v1.0.md](sprint-retrospectiva-sprint-03_v1.0.md) |
 | Sprint 04 (revisión sobre mapa) | Cerrado (Cumplido; velocity 24) | [plan-iteracion-sprint-04_v1.0.md](plan-iteracion-sprint-04_v1.0.md) | [sprint-review-sprint-04_v1.0.md](sprint-review-sprint-04_v1.0.md) | [sprint-retrospectiva-sprint-04_v1.0.md](sprint-retrospectiva-sprint-04_v1.0.md) |
+| Sprint 05 (resolución de conflictos) | Cerrado (Cumplido; velocity 13) | [plan-iteracion-sprint-05_v1.0.md](plan-iteracion-sprint-05_v1.0.md) | [sprint-review-sprint-05_v1.0.md](sprint-review-sprint-05_v1.0.md) | [sprint-retrospectiva-sprint-05_v1.0.md](sprint-retrospectiva-sprint-05_v1.0.md) |
 
 ## Plantillas reusables
 
