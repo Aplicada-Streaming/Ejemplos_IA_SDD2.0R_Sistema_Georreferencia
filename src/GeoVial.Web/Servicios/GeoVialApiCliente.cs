@@ -222,6 +222,45 @@ public sealed class GeoVialApiCliente
             new ResolverConflictoRequest(decision, marcadorResultanteId),
             decision == 1 ? "Marcadores unificados." : "Marcadores mantenidos separados.", ct);
 
+    // --- Exportación e importación del relevamiento completo (CU-08 §5.A/§5.B) ---
+
+    public async Task<(byte[]? Contenido, string Nombre, string Mensaje)> ExportarRelevamientoAsync(Guid relevamientoId, CancellationToken ct = default)
+    {
+        using var req = new HttpRequestMessage(HttpMethod.Get, $"api/v1/relevamientos/{relevamientoId}/export");
+        Autorizar(req);
+        var resp = await _http.SendAsync(req, ct);
+        if (!resp.IsSuccessStatusCode)
+        {
+            var problema = await resp.Content.ReadFromJsonAsync<ProblemaApi>(ct);
+            return (null, string.Empty, problema?.Codigo ?? $"Error {(int)resp.StatusCode}");
+        }
+
+        var bytes = await resp.Content.ReadAsByteArrayAsync(ct);
+        var nombre = resp.Content.Headers.ContentDisposition?.FileName?.Trim('"') ?? $"relevamiento-{relevamientoId}.zip";
+        return (bytes, nombre, $"Relevamiento exportado ({bytes.Length} bytes).");
+    }
+
+    public async Task<(bool Ok, string Mensaje, Guid? Id)> ImportarRelevamientoAsync(byte[] contenido, string nombre, CancellationToken ct = default)
+    {
+        using var formulario = new MultipartFormDataContent();
+        var archivo = new ByteArrayContent(contenido);
+        archivo.Headers.ContentType = new MediaTypeHeaderValue("application/zip");
+        formulario.Add(archivo, "archivo", string.IsNullOrWhiteSpace(nombre) ? "relevamiento.zip" : nombre);
+
+        using var req = new HttpRequestMessage(HttpMethod.Post, "api/v1/relevamientos/import") { Content = formulario };
+        Autorizar(req);
+
+        var resp = await _http.SendAsync(req, ct);
+        if (resp.IsSuccessStatusCode)
+        {
+            var creado = await resp.Content.ReadFromJsonAsync<ImportadoApi>(ct);
+            return (true, "Relevamiento importado.", creado?.RelevamientoId);
+        }
+
+        var problema = await resp.Content.ReadFromJsonAsync<ProblemaApi>(ct);
+        return (false, problema?.Codigo ?? $"Error {(int)resp.StatusCode}", null);
+    }
+
     private async Task<(bool Ok, string Mensaje)> EnviarAsync<TBody>(HttpMethod metodo, string ruta, TBody? cuerpo, string exito, CancellationToken ct)
     {
         using var req = new HttpRequestMessage(metodo, ruta);
@@ -250,4 +289,6 @@ public sealed class GeoVialApiCliente
     }
 
     private sealed record ProblemaApi(string? Codigo, string? Title);
+
+    private sealed record ImportadoApi(Guid RelevamientoId);
 }

@@ -1,4 +1,5 @@
 using GeoVial.Application.Abstracciones;
+using GeoVial.Infrastructure.ExportImport;
 using GeoVial.Infrastructure.Persistencia;
 using GeoVial.Infrastructure.Seguridad;
 using Microsoft.EntityFrameworkCore;
@@ -35,6 +36,7 @@ public static class DependencyInjection
         servicios.AddScoped<IConflictoRepository, ConflictoRepository>();
         servicios.AddScoped<ICredencialRepository, CredencialRepository>();
         servicios.AddScoped<IServicioAuditoria, ServicioAuditoria>();
+        servicios.AddSingleton<IEmpaquetadorRelevamiento, EmpaquetadorZip>();
         servicios.AddSingleton<IHasherClave, HasherClavePbkdf2>();
         servicios.AddScoped<IServicioToken, ServicioTokenJwt>();
         servicios.AddSingleton<IRelojUtc, RelojUtc>();

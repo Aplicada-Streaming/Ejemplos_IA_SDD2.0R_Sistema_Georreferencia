@@ -134,3 +134,15 @@ public interface IRelojUtc
 {
     DateTime AhoraUtc { get; }
 }
+
+/// <summary>
+/// Empaqueta y desempaqueta el manifiesto de un relevamiento en el archivo físico de exportación
+/// (ZIP + JSON, CU-08 §5.A/§5.B). Aísla el formato del archivo de la capa de aplicación (ADR-08, ADR-02).
+/// </summary>
+public interface IEmpaquetadorRelevamiento
+{
+    byte[] Empaquetar(GeoVial.Application.ExportImport.ManifiestoRelevamiento manifiesto);
+
+    /// <summary>Devuelve el manifiesto, o null si el archivo no es legible como exportación válida.</summary>
+    GeoVial.Application.ExportImport.ManifiestoRelevamiento? Desempaquetar(byte[] archivo);
+}

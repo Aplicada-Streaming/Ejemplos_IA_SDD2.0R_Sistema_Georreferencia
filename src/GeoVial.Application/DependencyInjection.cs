@@ -1,6 +1,7 @@
 using GeoVial.Application.Captura;
 using GeoVial.Application.Conflictos;
 using GeoVial.Application.Cqrs;
+using GeoVial.Application.ExportImport;
 using GeoVial.Application.Relevamientos;
 using GeoVial.Application.Revision;
 using GeoVial.Application.Servicios;
@@ -44,6 +45,10 @@ public static class DependencyInjection
         servicios.AddScoped<IManejador<AjustarRadioCommand, Resultado>, AjustarRadioHandler>();
         servicios.AddScoped<IManejador<ResolverConflictoCommand, Resultado>, ResolverConflictoHandler>();
         servicios.AddScoped<IManejador<ConflictosPendientesQuery, IReadOnlyList<ConflictoPendiente>>, ConflictosPendientesHandler>();
+
+        // Módulo de exportación e importación del relevamiento completo (CU-08 §5.A/§5.B; EP-07).
+        servicios.AddScoped<IManejador<ExportarRelevamientoCommand, Resultado<ArchivoExportado>>, ExportarRelevamientoHandler>();
+        servicios.AddScoped<IManejador<ImportarRelevamientoCommand, Resultado<Guid>>, ImportarRelevamientoHandler>();
 
         return servicios;
     }

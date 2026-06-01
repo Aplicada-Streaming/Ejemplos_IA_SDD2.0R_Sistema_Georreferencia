@@ -1,0 +1,118 @@
+@page "/exportacion"
+@rendermode InteractiveServer
+@using GeoVial.Web.Servicios
+@inject GeoVialApiCliente Api
+
+<PageTitle>GeoVial — Exportar / Importar</PageTitle>
+
+<h1>Exportar e importar relevamiento</h1>
+<p>Slice del Sprint 06: exportación del relevamiento completo en un único archivo ZIP e importación que lo reconstruye, autorizado por área y auditado (CU-08 §5.A/§5.B).</p>
+
+@if (!Api.Autenticado)
+{
+    <section>
+        <h2>Iniciar sesión</h2>
+        <div><label>Usuario: <input @bind="usuario" /></label></div>
+        <div><label>Clave: <input type="password" @bind="clave" /></label></div>
+        <button @onclick="Login">Ingresar</button>
+        @if (mensaje is not null)
+        {
+            <p role="alert">@mensaje</p>
+        }
+    </section>
+}
+else
+{
+    <section>
+        <button @onclick="Salir">Cerrar sesión</button>
+
+        <h2>Exportar</h2>
+        <div><label>Relevamiento (GUID): <input @bind="relevamientoId" size="40" /></label></div>
+        <button @onclick="Exportar">Exportar</button>
+        @if (descargaHref is not null)
+        {
+            <p><a href="@descargaHref" download="@descargaNombre">Descargar @descargaNombre</a></p>
+        }
+
+        <h2>Importar</h2>
+        <p>Seleccioná un archivo ZIP de relevamiento exportado:</p>
+        <InputFile OnChange="Importar" accept=".zip" />
+        @if (importadoId is not null)
+        {
+            <p>Nuevo relevamiento importado: <code>@importadoId</code></p>
+        }
+
+        @if (mensaje is not null)
+        {
+            <p role="alert">@mensaje</p>
+        }
+    </section>
+}
+
+@code {
+    private string usuario = "raiz";
+    private string clave = "";
+    private string? mensaje;
+
+    private string relevamientoId = "";
+    private string? descargaHref;
+    private string? descargaNombre;
+    private Guid? importadoId;
+
+    private const long LimiteBytes = 25 * 1024 * 1024; // 25 MB
+
+    private async Task Login()
+    {
+        mensaje = null;
+        if (!await Api.LoginAsync(usuario, clave))
+        {
+            mensaje = "Credenciales inválidas.";
+        }
+    }
+
+    private void Salir()
+    {
+        Api.CerrarSesion();
+        descargaHref = null;
+        importadoId = null;
+        mensaje = null;
+    }
+
+    private async Task Exportar()
+    {
+        descargaHref = null;
+        importadoId = null;
+        if (!Guid.TryParse(relevamientoId, out var id))
+        {
+            mensaje = "Relevamiento inválido (se espera un GUID).";
+            return;
+        }
+
+        var (contenido, nombre, msg) = await Api.ExportarRelevamientoAsync(id);
+        mensaje = msg;
+        if (contenido is not null)
+        {
+            descargaNombre = nombre;
+            descargaHref = $"data:application/zip;base64,{Convert.ToBase64String(contenido)}";
+        }
+    }
+
+    private async Task Importar(InputFileChangeEventArgs e)
+    {
+        mensaje = null;
+        importadoId = null;
+        var archivo = e.File;
+        if (archivo.Size > LimiteBytes)
+        {
+            mensaje = "El archivo supera el límite de 25 MB.";
+            return;
+        }
+
+        using var memoria = new MemoryStream();
+        await archivo.OpenReadStream(LimiteBytes).CopyToAsync(memoria);
+
+        var (ok, msg, id) = await Api.ImportarRelevamientoAsync(memoria.ToArray(), archivo.Name);
+        mensaje = ok ? msg : $"No se pudo importar: {msg}";
+        importadoId = id;
+    }
+}

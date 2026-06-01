@@ -52,6 +52,23 @@ public sealed class Relevamiento
     }
 
     /// <summary>
+    /// Reconstruye un relevamiento al importarlo (CU-08 §5.B), preservando su estado. Genera un identificador
+    /// nuevo (el contenido se reconstruye con identificadores nuevos para no colisionar con datos existentes).
+    /// Valida las mismas invariantes que <see cref="Crear"/> (RN-02).
+    /// </summary>
+    public static Resultado<Relevamiento> Importar(string identificacionObra, decimal radioAgrupacionMetros, Guid areaId, EstadoRelevamiento estado)
+    {
+        var creado = Crear(identificacionObra, radioAgrupacionMetros, areaId);
+        if (!creado.EsExito)
+        {
+            return creado;
+        }
+
+        creado.Valor!.Estado = estado;
+        return creado;
+    }
+
+    /// <summary>
     /// Transición de estado (RN-05). Solo recolección → revisión y revisión → cierre.
     /// El intento de cerrado → recolección por la vía normal exige la reapertura explícita.
     /// </summary>
