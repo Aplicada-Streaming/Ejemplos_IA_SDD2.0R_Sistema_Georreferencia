@@ -55,7 +55,7 @@ Permitir que un usuario administrador del sistema dé de alta y de baja usuarios
 | --- | --- | --- | --- |
 | CA-01 | Un jefe general autenticado | Da de alta un jefe de área asociado al área "Zona Norte" | El sistema crea al jefe de área vigente, asociado a "Zona Norte", y registra el alta en auditoría |
 | CA-02 | Un jefe de área autenticado | Intenta dar de alta a otro jefe de área | El sistema rechaza con el código `ACCESO_NO_AUTORIZADO` |
-| CA-03 | Un jefe general | Intenta dar de alta un agente asociado a un área inexistente "Zona X" | El sistema rechaza con el código `AREA_INEXISTENTE` |
+| CA-03 | Un jefe general | Intenta dar de alta un jefe de área asociado a un área inexistente "Zona X" | El sistema rechaza con el código `AREA_INEXISTENTE` |
 
 ## 9. Trazabilidad
 
@@ -77,6 +77,7 @@ Permitir que un usuario administrador del sistema dé de alta y de baja usuarios
 | Versión | Fecha | Descripción |
 | --- | --- | --- |
 | 1.0 | 2026-06-01 | Versión inicial generada por AG-02 a partir de NB-01 |
+| 1.0 | 2026-06-01 | Corrección de CA-03 durante la codificación del Sprint 01: el objetivo pasa de "agente" a "jefe de área", coherente con la invariante de nivel inmediato inferior del jefe general (§3, BT-02). El alta de agentes la administra el jefe de área. |
 
 ## 13. Interacción multiusuario y concurrencia
 

@@ -12,17 +12,14 @@
 
 | Sprint | Estado | Fechas | Plan |
 | --- | --- | --- | --- |
-| Sprint 00 (arranque, walking skeleton) | Propuesto | 2026-06-02 a 2026-06-06 | [plan-iteracion-sprint-00_v1.0.md](plan-iteracion-sprint-00_v1.0.md) |
-
-## Próximo sprint
-
-| Sprint | Estado | Fechas | Plan |
-| --- | --- | --- | --- |
-| Sprint 01 (primer slice end-to-end de jerarquía y usuarios) | Propuesto | 2026-06-09 a 2026-06-20 | [plan-iteracion-sprint-01_v1.0.md](plan-iteracion-sprint-01_v1.0.md) |
+| Sprint 02 | Por planificar | — | — |
 
 ## Histórico de sprints cerrados
 
-Sin sprints cerrados todavía. El proyecto arranca con el Sprint 00; esta sección se poblará a medida que cada sprint cierre con su review y su retrospectiva.
+| Sprint | Estado | Plan | Review | Retrospectiva |
+| --- | --- | --- | --- | --- |
+| Sprint 00 (walking skeleton) | Cerrado (velocity 21; BT-07 parcial) | [plan-iteracion-sprint-00_v1.0.md](plan-iteracion-sprint-00_v1.0.md) | — | — |
+| Sprint 01 (jerarquía y usuarios) | Cerrado (Cumplido; velocity 40) | [plan-iteracion-sprint-01_v1.0.md](plan-iteracion-sprint-01_v1.0.md) | [sprint-review-sprint-01_v1.0.md](sprint-review-sprint-01_v1.0.md) | [sprint-retrospectiva-sprint-01_v1.0.md](sprint-retrospectiva-sprint-01_v1.0.md) |
 
 ## Plantillas reusables
 
@@ -38,4 +35,4 @@ Tracking acumulado de velocity sprint a sprint con promedio móvil de 3 sprints:
 ## Trazabilidad y referencias
 
 - Upstream: backlog técnico y product backlog en `../06_backlog-tecnico/` (US-01..US-32, BT-01..BT-22); CU-01..CU-14 en `../02_especificacion_funcional/`; NB-01..NB-06 en `../01_necesidades_negocio/`; ADR-01..ADR-14 en `../05_arquitectura_tecnica/adrs/`.
-- Definition of Done canónica del proyecto: `../08_calidad_y_pruebas/definition-of-done_v1.0.md` (categoría 08, por generar). Los planes la referencian, no la redefinen.
+- Definition of Done canónica del proyecto: `../08_calidad_y_pruebas/definition-of-done_v1.0.md`. Los planes la referencian, no la redefinen.

@@ -20,8 +20,8 @@ NB-01 organiza el trabajo por áreas administrativas de vialidad. CU-03 valida q
 
 ## 3. Criterios de aceptación
 
-- Given un jefe general que da de alta un agente, When asocia el agente al área "Zona Norte" existente, Then el sistema crea el agente asociado a "Zona Norte".
-- Given un jefe general, When intenta dar de alta un agente asociado a un área inexistente "Zona X", Then el sistema rechaza con `AREA_INEXISTENTE` y no crea el usuario.
+- Given un jefe de área que da de alta un agente de su área, When asocia el agente al área "Zona Norte" existente (su propia área), Then el sistema crea el agente asociado a "Zona Norte".
+- Given un jefe general que da de alta un jefe de área, When lo asocia a un área inexistente "Zona X", Then el sistema rechaza con `AREA_INEXISTENTE` y no crea el usuario.
 
 ## 4. Trazabilidad
 
@@ -48,3 +48,5 @@ Must: la pertenencia a área es precondición de toda autorización acotada. 3 S
 ## 7. Notas y supuestos
 
 La geometría detallada del área es un dato del dominio; aquí solo se exige que el área referenciada exista y sea coherente con el nivel del usuario.
+
+Corrección (Sprint 01): los criterios de aceptación se ajustaron para respetar la invariante de nivel inmediato inferior (CU-03 §3, BT-02). El alta de un agente la administra el jefe de área (no el jefe general); el camino `AREA_INEXISTENTE` se ilustra con el jefe general dando de alta un jefe de área con un área inexistente, que es la combinación autorizada que alcanza la validación de existencia del área.
