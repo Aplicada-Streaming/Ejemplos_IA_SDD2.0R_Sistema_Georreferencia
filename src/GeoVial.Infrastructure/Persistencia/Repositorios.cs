@@ -119,8 +119,13 @@ public sealed class FotoRepository : IFotoRepository
     public async Task<IReadOnlyList<Foto>> ListarPorMarcadorParaEdicionAsync(Guid marcadorId, CancellationToken ct = default) =>
         await _db.Fotos.Where(f => f.MarcadorId == marcadorId).ToListAsync(ct);
 
+    public Task<Foto?> ObtenerParaEdicionAsync(Guid fotoId, CancellationToken ct = default) =>
+        _db.Fotos.FirstOrDefaultAsync(f => f.FotoId == fotoId, ct);
+
     public async Task AgregarAsync(Foto foto, CancellationToken ct = default) =>
         await _db.Fotos.AddAsync(foto, ct);
+
+    public Task GuardarCambiosAsync(CancellationToken ct = default) => _db.SaveChangesAsync(ct);
 }
 
 public sealed class CredencialRepository : ICredencialRepository

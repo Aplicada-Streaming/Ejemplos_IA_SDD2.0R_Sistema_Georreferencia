@@ -27,3 +27,10 @@ public sealed record UbicarObservacionManualCommand(
 
 public sealed record ListarObservacionesQuery(Guid SolicitanteId, Guid RelevamientoId)
     : IPeticion<IReadOnlyList<Observacion>>;
+
+/// <summary>
+/// Sube el binario de una foto al backend de alojamiento y asienta en la foto la referencia devuelta
+/// (CU-04, ADR-08). La base persiste solo la referencia; el binario vive en el backend activo.
+/// </summary>
+public sealed record SubirContenidoFotoCommand(Guid UsuarioId, Guid FotoId, string NombreArchivo, byte[] Contenido)
+    : IPeticion<Resultado>;

@@ -2,6 +2,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\GeoVial.Domain\GeoVial.Domain.csproj" />
+    <ProjectReference Include="..\GeoVial.FileHosting\GeoVial.FileHosting.csproj" />
     <ProjectReference Include="..\GeoVial.Shared\GeoVial.Shared.csproj" />
   </ItemGroup>
 

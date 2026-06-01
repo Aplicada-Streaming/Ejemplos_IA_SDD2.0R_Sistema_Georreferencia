@@ -5,6 +5,7 @@ using GeoVial.Application;
 using GeoVial.Application.Captura;
 using GeoVial.Application.Conflictos;
 using GeoVial.Application.Cqrs;
+using GeoVial.Application.ExportImport;
 using GeoVial.Application.Relevamientos;
 using GeoVial.Application.Revision;
 using GeoVial.Application.Servicios;
@@ -322,6 +323,21 @@ fotos.MapPost("/{fotoId:guid}/etiquetas", async (Guid fotoId, EtiquetarRequest r
     return r.EsExito ? Results.NoContent() : MapeoErrores.AProblema(r.Codigo);
 });
 
+// Subida del binario de una foto al backend de alojamiento (CU-04, ADR-08; BT-20).
+fotos.MapPost("/{fotoId:guid}/contenido", async (Guid fotoId, IFormFile archivo, ClaimsPrincipal usuario, IMediador mediador, CancellationToken ct) =>
+{
+    if (!TryGetUsuarioId(usuario, out var usuarioId))
+    {
+        return Results.Unauthorized();
+    }
+
+    using var memoria = new MemoryStream();
+    await archivo.CopyToAsync(memoria, ct);
+
+    var r = await mediador.EnviarAsync(new SubirContenidoFotoCommand(usuarioId, fotoId, archivo.FileName, memoria.ToArray()), ct);
+    return r.EsExito ? Results.NoContent() : MapeoErrores.AProblema(r.Codigo);
+}).DisableAntiforgery();
+
 var comentarios = app.MapGroup("/api/v1/comentarios").RequireAuthorization();
 comentarios.MapPost("/{comentarioId:guid}/etiquetas", async (Guid comentarioId, EtiquetarRequest req, ClaimsPrincipal usuario, IMediador mediador, CancellationToken ct) =>
 {
@@ -382,6 +398,36 @@ conflictos.MapPost("/{conflictoId:guid}/resolucion", async (Guid conflictoId, Re
         new ResolverConflictoCommand(usuarioId, conflictoId, (DecisionConflicto)req.Decision, req.MarcadorResultanteId), ct);
     return r.EsExito ? Results.NoContent() : MapeoErrores.AProblema(r.Codigo);
 });
+
+// --- Exportación e importación del relevamiento completo (CU-08 §5.A/§5.B; US-27/US-28) ---
+relevamientos.MapGet("/{relevamientoId:guid}/export", async (Guid relevamientoId, ClaimsPrincipal usuario, IMediador mediador, CancellationToken ct) =>
+{
+    if (!TryGetUsuarioId(usuario, out var usuarioId))
+    {
+        return Results.Unauthorized();
+    }
+
+    var r = await mediador.EnviarAsync(new ExportarRelevamientoCommand(usuarioId, relevamientoId), ct);
+    return r.EsExito
+        ? Results.File(r.Valor!.Contenido, "application/zip", r.Valor!.NombreArchivo)
+        : MapeoErrores.AProblema(r.Codigo);
+});
+
+relevamientos.MapPost("/import", async (IFormFile archivo, ClaimsPrincipal usuario, IMediador mediador, CancellationToken ct) =>
+{
+    if (!TryGetUsuarioId(usuario, out var usuarioId))
+    {
+        return Results.Unauthorized();
+    }
+
+    using var memoria = new MemoryStream();
+    await archivo.CopyToAsync(memoria, ct);
+
+    var r = await mediador.EnviarAsync(new ImportarRelevamientoCommand(usuarioId, memoria.ToArray()), ct);
+    return r.EsExito
+        ? Results.Created($"/api/v1/relevamientos/{r.Valor}", new { relevamientoId = r.Valor })
+        : MapeoErrores.AProblema(r.Codigo);
+}).DisableAntiforgery();
 
 app.Run();
 
