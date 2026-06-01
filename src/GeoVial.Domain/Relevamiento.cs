@@ -78,6 +78,23 @@ public sealed class Relevamiento
         return Resultado.Exito();
     }
 
+    /// <summary>Ajusta el radio de agrupación del relevamiento (CU-11 §5.A); valida que sea positivo (RN-02).</summary>
+    public Resultado AjustarRadio(decimal nuevoRadioMetros)
+    {
+        if (EsSoloLectura)
+        {
+            return Resultado.Fallo(CodigosError.RelevamientoSoloLectura);
+        }
+
+        if (nuevoRadioMetros <= 0)
+        {
+            return Resultado.Fallo(CodigosError.RadioInvalido);
+        }
+
+        RadioAgrupacionMetros = nuevoRadioMetros;
+        return Resultado.Exito();
+    }
+
     /// <summary>Reapertura explícita del jefe de área: cerrado → recolección (RN-05, CU-10 §5.A).</summary>
     public Resultado Reabrir()
     {

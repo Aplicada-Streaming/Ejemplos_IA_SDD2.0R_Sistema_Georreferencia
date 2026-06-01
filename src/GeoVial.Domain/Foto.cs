@@ -38,4 +38,7 @@ public sealed class Foto
         Fuente = fuente;
         MarcadorId = marcadorId;
     }
+
+    /// <summary>Reasigna la foto a otro marcador al unificar marcadores en conflicto (CU-12 §5.A).</summary>
+    public void ReasignarMarcador(Guid marcadorId) => MarcadorId = marcadorId;
 }

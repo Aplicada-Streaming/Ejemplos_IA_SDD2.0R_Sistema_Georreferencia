@@ -26,6 +26,7 @@ public sealed class GeoVialDbContext : DbContext
     public DbSet<Etiqueta> Etiquetas => Set<Etiqueta>();
     public DbSet<FotoEtiqueta> FotoEtiquetas => Set<FotoEtiqueta>();
     public DbSet<ComentarioEtiqueta> ComentarioEtiquetas => Set<ComentarioEtiqueta>();
+    public DbSet<ConflictoSync> ConflictosSync => Set<ConflictoSync>();
 
     protected override void OnModelCreating(ModelBuilder modelo)
     {
@@ -144,6 +145,16 @@ public sealed class GeoVialDbContext : DbContext
         {
             e.ToTable("ComentarioEtiqueta");
             e.HasKey(u => new { u.ComentarioId, u.EtiquetaId });
+        });
+
+        modelo.Entity<ConflictoSync>(e =>
+        {
+            e.ToTable("ConflictoSync");
+            e.HasKey(c => c.ConflictoSyncId);
+            e.Property(c => c.Tipo).HasConversion<byte>().IsRequired();
+            e.Property(c => c.RecursosInvolucrados).HasMaxLength(100).IsRequired();
+            e.Property(c => c.EstadoResolucion).HasConversion<byte>().IsRequired();
+            e.HasIndex(c => new { c.RelevamientoId, c.EstadoResolucion }).HasDatabaseName("IX_ConflictoSync_Relevamiento_Estado");
         });
     }
 }

@@ -51,4 +51,8 @@ public static class CodigosError
     public const string ComentarioInexistente = "COMENTARIO_INEXISTENTE";
     public const string FotoInexistente = "FOTO_INEXISTENTE";
     public const string EtiquetaRequerida = "ETIQUETA_REQUERIDA";
+
+    // Resolución de conflictos (CU-11, CU-12; RN-02, RN-04)
+    public const string ConflictoInexistente = "CONFLICTO_INEXISTENTE";
+    public const string UnificacionNoAutorizada = "UNIFICACION_NO_AUTORIZADA";
 }

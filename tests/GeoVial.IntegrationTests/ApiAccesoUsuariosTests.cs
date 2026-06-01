@@ -135,4 +135,47 @@ public class ApiAccesoUsuariosTests : IClassFixture<WebApplicationFactory<Progra
             new UbicarManualRequest(-34.6m, -58.4m));
         resp.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
     }
+
+    [Fact] // CU-11: detección de conflictos sin token → 401
+    public async Task Detectar_conflictos_sin_token_devuelve_401()
+    {
+        var cliente = _factory.CreateClient();
+        var resp = await cliente.PostAsync($"/api/v1/relevamientos/{Guid.NewGuid()}/conflictos/deteccion", null);
+        resp.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
+    }
+
+    [Fact] // CU-12: resolución de conflicto sin token → 401
+    public async Task Resolver_conflicto_sin_token_devuelve_401()
+    {
+        var cliente = _factory.CreateClient();
+        var resp = await cliente.PostAsJsonAsync(
+            $"/api/v1/conflictos/{Guid.NewGuid()}/resolucion", new ResolverConflictoRequest(2, null));
+        resp.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
+    }
+
+    [Fact] // CU-11 / RN-01: el raíz no es jefe de área, no detecta conflictos de un relevamiento inexistente → 403/404
+    public async Task Detectar_conflictos_por_raiz_no_es_exito()
+    {
+        var cliente = _factory.CreateClient();
+        var token = await LoginRaizAsync(cliente);
+        cliente.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+
+        var resp = await cliente.PostAsync($"/api/v1/relevamientos/{Guid.NewGuid()}/conflictos/deteccion", null);
+
+        resp.IsSuccessStatusCode.Should().BeFalse();
+        resp.StatusCode.Should().Be(HttpStatusCode.NotFound);
+    }
+
+    [Fact] // CU-12: resolver un conflicto inexistente con token del raíz → 404
+    public async Task Resolver_conflicto_inexistente_devuelve_404()
+    {
+        var cliente = _factory.CreateClient();
+        var token = await LoginRaizAsync(cliente);
+        cliente.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+
+        var resp = await cliente.PostAsJsonAsync(
+            $"/api/v1/conflictos/{Guid.NewGuid()}/resolucion", new ResolverConflictoRequest(2, null));
+
+        resp.StatusCode.Should().Be(HttpStatusCode.NotFound);
+    }
 }

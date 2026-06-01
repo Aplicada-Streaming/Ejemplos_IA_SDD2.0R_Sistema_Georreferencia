@@ -31,4 +31,7 @@ public sealed class Marcador
 
     /// <summary>Marca el conflicto por decisión humana (RN-02); nunca de forma automática.</summary>
     public void MarcarConflicto() => EnConflicto = true;
+
+    /// <summary>Levanta la marca de conflicto al resolverlo desde la web (CU-12, RN-02).</summary>
+    public void LevantarConflicto() => EnConflicto = false;
 }

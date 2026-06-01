@@ -1,0 +1,154 @@
+@page "/conflictos"
+@rendermode InteractiveServer
+@using GeoVial.Shared
+@using GeoVial.Web.Servicios
+@inject GeoVialApiCliente Api
+
+<PageTitle>GeoVial — Conflictos</PageTitle>
+
+<h1>Resolución de conflictos por radio</h1>
+<p>Slice del Sprint 05: detección de marcadores dentro del radio y resolución manual —unificar o mantener separados— sin que el sistema unifique nada de forma automática (CU-11, CU-12; RN-02).</p>
+
+@if (!Api.Autenticado)
+{
+    <section>
+        <h2>Iniciar sesión</h2>
+        <div><label>Usuario: <input @bind="usuario" /></label></div>
+        <div><label>Clave: <input type="password" @bind="clave" /></label></div>
+        <button @onclick="Login">Ingresar</button>
+        @if (mensaje is not null)
+        {
+            <p role="alert">@mensaje</p>
+        }
+    </section>
+}
+else
+{
+    <section>
+        <button @onclick="Salir">Cerrar sesión</button>
+
+        <h2>Relevamiento</h2>
+        <div><label>Relevamiento (GUID): <input @bind="relevamientoId" size="40" /></label></div>
+        <button @onclick="Cargar">Cargar conflictos</button>
+
+        <h3>Radio de agrupación</h3>
+        <label>Nuevo radio (metros): <input type="number" step="0.01" @bind="nuevoRadio" /></label>
+        <button @onclick="AjustarRadio">Ajustar radio</button>
+        <button @onclick="Detectar">Detectar conflictos</button>
+
+        @if (mensaje is not null)
+        {
+            <p role="alert">@mensaje</p>
+        }
+
+        @if (cargado)
+        {
+            <h3>Conflictos pendientes (@conflictos.Count)</h3>
+            @if (conflictos.Count == 0)
+            {
+                <p>No hay conflictos pendientes.</p>
+            }
+            else
+            {
+                @foreach (var c in conflictos)
+                {
+                    <article style="border:1px solid #ccc; margin:8px 0; padding:8px;">
+                        <h4>Conflicto @c.ConflictoSyncId</h4>
+                        <p>Marcador A: @c.MarcadorA</p>
+                        <p>Marcador B: @c.MarcadorB</p>
+                        <button @onclick="() => Unificar(c.ConflictoSyncId, c.MarcadorA)">Unificar en A</button>
+                        <button @onclick="() => Unificar(c.ConflictoSyncId, c.MarcadorB)">Unificar en B</button>
+                        <button @onclick="() => MantenerSeparados(c.ConflictoSyncId)">Mantener separados</button>
+                    </article>
+                }
+            }
+        }
+    </section>
+}
+
+@code {
+    private string usuario = "raiz";
+    private string clave = "";
+    private string? mensaje;
+
+    private string relevamientoId = "";
+    private decimal nuevoRadio = 15m;
+    private bool cargado;
+    private IReadOnlyList<ConflictoPendienteDto> conflictos = Array.Empty<ConflictoPendienteDto>();
+
+    private async Task Login()
+    {
+        mensaje = null;
+        if (!await Api.LoginAsync(usuario, clave))
+        {
+            mensaje = "Credenciales inválidas.";
+        }
+    }
+
+    private void Salir()
+    {
+        Api.CerrarSesion();
+        cargado = false;
+        conflictos = Array.Empty<ConflictoPendienteDto>();
+        mensaje = null;
+    }
+
+    private bool TryRelevamiento(out Guid id)
+    {
+        if (!Guid.TryParse(relevamientoId, out id))
+        {
+            mensaje = "Relevamiento inválido (se espera un GUID).";
+            return false;
+        }
+
+        return true;
+    }
+
+    private async Task Cargar()
+    {
+        if (!TryRelevamiento(out var id))
+        {
+            return;
+        }
+
+        conflictos = await Api.ListarConflictosAsync(id);
+        cargado = true;
+    }
+
+    private async Task Detectar()
+    {
+        if (!TryRelevamiento(out var id))
+        {
+            return;
+        }
+
+        var (ok, msg) = await Api.DetectarConflictosAsync(id);
+        mensaje = ok ? msg : $"No se pudo detectar: {msg}";
+        await Cargar();
+    }
+
+    private async Task AjustarRadio()
+    {
+        if (!TryRelevamiento(out var id))
+        {
+            return;
+        }
+
+        var (ok, msg) = await Api.AjustarRadioAsync(id, nuevoRadio);
+        mensaje = ok ? msg : $"No se pudo ajustar el radio: {msg}";
+    }
+
+    private async Task Unificar(Guid conflictoId, Guid marcadorResultante)
+    {
+        var (ok, msg) = await Api.ResolverConflictoAsync(conflictoId, 1, marcadorResultante);
+        mensaje = ok ? msg : $"No se pudo unificar: {msg}";
+        await Cargar();
+    }
+
+    private async Task MantenerSeparados(Guid conflictoId)
+    {
+        var (ok, msg) = await Api.ResolverConflictoAsync(conflictoId, 2, null);
+        mensaje = ok ? msg : $"No se pudo resolver: {msg}";
+        await Cargar();
+    }
+}

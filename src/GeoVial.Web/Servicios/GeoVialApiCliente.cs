@@ -183,6 +183,45 @@ public sealed class GeoVialApiCliente
     public Task<(bool Ok, string Mensaje)> EtiquetarFotoAsync(Guid fotoId, string etiqueta, CancellationToken ct = default) =>
         EnviarAsync(HttpMethod.Post, $"api/v1/fotos/{fotoId}/etiquetas", new EtiquetarRequest(etiqueta), "Foto etiquetada.", ct);
 
+    // --- Detección y resolución de conflictos por radio (CU-11, CU-12) ---
+
+    public async Task<IReadOnlyList<ConflictoPendienteDto>> ListarConflictosAsync(Guid relevamientoId, CancellationToken ct = default)
+    {
+        using var req = new HttpRequestMessage(HttpMethod.Get, $"api/v1/relevamientos/{relevamientoId}/conflictos");
+        Autorizar(req);
+        var resp = await _http.SendAsync(req, ct);
+        if (!resp.IsSuccessStatusCode)
+        {
+            return Array.Empty<ConflictoPendienteDto>();
+        }
+
+        return await resp.Content.ReadFromJsonAsync<List<ConflictoPendienteDto>>(ct) ?? new List<ConflictoPendienteDto>();
+    }
+
+    public async Task<(bool Ok, string Mensaje)> DetectarConflictosAsync(Guid relevamientoId, CancellationToken ct = default)
+    {
+        using var req = new HttpRequestMessage(HttpMethod.Post, $"api/v1/relevamientos/{relevamientoId}/conflictos/deteccion");
+        Autorizar(req);
+
+        var resp = await _http.SendAsync(req, ct);
+        if (resp.IsSuccessStatusCode)
+        {
+            var detectados = await resp.Content.ReadFromJsonAsync<List<ConflictoDetectadoDto>>(ct) ?? new List<ConflictoDetectadoDto>();
+            return (true, $"Detección completada: {detectados.Count} conflicto(s) nuevo(s).");
+        }
+
+        var problema = await resp.Content.ReadFromJsonAsync<ProblemaApi>(ct);
+        return (false, problema?.Codigo ?? $"Error {(int)resp.StatusCode}");
+    }
+
+    public Task<(bool Ok, string Mensaje)> AjustarRadioAsync(Guid relevamientoId, decimal radio, CancellationToken ct = default) =>
+        EnviarAsync(HttpMethod.Put, $"api/v1/relevamientos/{relevamientoId}/radio", new AjustarRadioRequest(radio), "Radio ajustado.", ct);
+
+    public Task<(bool Ok, string Mensaje)> ResolverConflictoAsync(Guid conflictoId, int decision, Guid? marcadorResultanteId, CancellationToken ct = default) =>
+        EnviarAsync(HttpMethod.Post, $"api/v1/conflictos/{conflictoId}/resolucion",
+            new ResolverConflictoRequest(decision, marcadorResultanteId),
+            decision == 1 ? "Marcadores unificados." : "Marcadores mantenidos separados.", ct);
+
     private async Task<(bool Ok, string Mensaje)> EnviarAsync<TBody>(HttpMethod metodo, string ruta, TBody? cuerpo, string exito, CancellationToken ct)
     {
         using var req = new HttpRequestMessage(metodo, ruta);
