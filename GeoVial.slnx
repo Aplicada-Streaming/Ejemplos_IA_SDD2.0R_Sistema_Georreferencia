@@ -1,0 +1,14 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/GeoVial.Api/GeoVial.Api.csproj" />
+    <Project Path="src/GeoVial.Application/GeoVial.Application.csproj" />
+    <Project Path="src/GeoVial.Domain/GeoVial.Domain.csproj" />
+    <Project Path="src/GeoVial.Infrastructure/GeoVial.Infrastructure.csproj" />
+    <Project Path="src/GeoVial.Shared/GeoVial.Shared.csproj" />
+    <Project Path="src/GeoVial.Web/GeoVial.Web.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/GeoVial.IntegrationTests/GeoVial.IntegrationTests.csproj" />
+    <Project Path="tests/GeoVial.UnitTests/GeoVial.UnitTests.csproj" />
+  </Folder>
+</Solution>
