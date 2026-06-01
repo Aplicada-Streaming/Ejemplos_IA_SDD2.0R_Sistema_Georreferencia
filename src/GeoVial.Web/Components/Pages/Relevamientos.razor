@@ -1,0 +1,140 @@
+@page "/relevamientos"
+@rendermode InteractiveServer
+@using GeoVial.Shared
+@using GeoVial.Web.Servicios
+@inject GeoVialApiCliente Api
+
+<PageTitle>GeoVial — Relevamientos</PageTitle>
+
+<h1>Relevamientos</h1>
+<p>Slice del Sprint 02: creación de relevamientos, asignación de agentes y ciclo de estados (CU-01, CU-10).</p>
+
+@if (!Api.Autenticado)
+{
+    <section>
+        <h2>Iniciar sesión</h2>
+        <div><label>Usuario: <input @bind="usuario" /></label></div>
+        <div><label>Clave: <input type="password" @bind="clave" /></label></div>
+        <button @onclick="Login">Ingresar</button>
+        <p>O gestioná la jerarquía en <a href="/usuarios">usuarios</a>.</p>
+        @if (mensaje is not null)
+        {
+            <p role="alert">@mensaje</p>
+        }
+    </section>
+}
+else
+{
+    <section>
+        <button @onclick="Salir">Cerrar sesión</button>
+
+        <h2>Crear relevamiento</h2>
+        <p>Requiere rol de jefe de área. El relevamiento se crea en estado recolección, en el área del jefe.</p>
+        <div><label>Identificación de obra: <input @bind="nuevaObra" /></label></div>
+        <div><label>Radio de agrupación (metros): <input type="number" @bind="nuevoRadio" /></label></div>
+        <button @onclick="Crear">Crear</button>
+        @if (mensaje is not null)
+        {
+            <p role="alert">@mensaje</p>
+        }
+
+        <h2>Relevamientos visibles</h2>
+        <button @onclick="Refrescar">Refrescar</button>
+        <table>
+            <thead>
+                <tr><th>Obra</th><th>Estado</th><th>Radio (m)</th><th>Agentes</th><th>Acciones</th></tr>
+            </thead>
+            <tbody>
+                @foreach (var r in relevamientos)
+                {
+                    <tr>
+                        <td>@r.IdentificacionObra</td>
+                        <td>@NombreEstado(r.Estado)</td>
+                        <td>@r.RadioAgrupacionMetros</td>
+                        <td>@r.AgentesVigentes.Count</td>
+                        <td>
+                            @if (r.Estado == 1)
+                            {
+                                <button @onclick="() => Transicionar(r.RelevamientoId, 2)">Pasar a revisión</button>
+                            }
+                            @if (r.Estado == 2)
+                            {
+                                <button @onclick="() => Transicionar(r.RelevamientoId, 3)">Cerrar</button>
+                            }
+                            @if (r.Estado == 3)
+                            {
+                                <button @onclick="() => Reabrir(r.RelevamientoId)">Reabrir</button>
+                            }
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </section>
+}
+
+@code {
+    private string usuario = "raiz";
+    private string clave = "";
+    private string? mensaje;
+
+    private string nuevaObra = "";
+    private decimal nuevoRadio = 15m;
+
+    private IReadOnlyList<RelevamientoDto> relevamientos = Array.Empty<RelevamientoDto>();
+
+    private async Task Login()
+    {
+        mensaje = null;
+        if (await Api.LoginAsync(usuario, clave))
+        {
+            await Refrescar();
+        }
+        else
+        {
+            mensaje = "Credenciales inválidas.";
+        }
+    }
+
+    private void Salir()
+    {
+        Api.CerrarSesion();
+        relevamientos = Array.Empty<RelevamientoDto>();
+        mensaje = null;
+    }
+
+    private async Task Refrescar() => relevamientos = await Api.ListarRelevamientosAsync();
+
+    private async Task Crear()
+    {
+        var (ok, msg) = await Api.CrearRelevamientoAsync(nuevaObra, nuevoRadio);
+        mensaje = ok ? msg : $"No se pudo crear: {msg}";
+        if (ok)
+        {
+            nuevaObra = "";
+            await Refrescar();
+        }
+    }
+
+    private async Task Transicionar(Guid id, int destino)
+    {
+        var (ok, msg) = await Api.TransicionarAsync(id, destino);
+        mensaje = ok ? msg : $"No se pudo cambiar el estado: {msg}";
+        await Refrescar();
+    }
+
+    private async Task Reabrir(Guid id)
+    {
+        var (ok, msg) = await Api.ReabrirAsync(id);
+        mensaje = ok ? msg : $"No se pudo reabrir: {msg}";
+        await Refrescar();
+    }
+
+    private static string NombreEstado(int estado) => estado switch
+    {
+        1 => "Recolección",
+        2 => "Revisión",
+        3 => "Cerrado",
+        _ => "Desconocido",
+    };
+}

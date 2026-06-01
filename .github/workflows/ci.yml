@@ -1,0 +1,41 @@
+name: CI
+
+# Pipeline CI inicial (Sprint 00, BT-09; gobernado por 09_devops/pipeline-ci-cd_v1.0.md).
+# Stages del walking skeleton: restore, build (sin warnings tratados como error), tests con cobertura.
+# Las etapas posteriores (SCA, SBOM, firma, publish de imágenes y del paquete de sincronización)
+# se incorporan en fases siguientes según 09_devops.
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build-test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+
+      - name: Restore
+        run: dotnet restore
+
+      - name: Build (gate: sin warnings tratados como error)
+        run: dotnet build --no-restore --configuration Release
+
+      - name: Test con cobertura (gate: dominio/aplicación líneas >= 80%, branches >= 70%)
+        run: dotnet test --no-build --configuration Release --collect:"XPlat Code Coverage"
+
+      - name: Publicar resultados de cobertura
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: cobertura
+          path: '**/TestResults/**/coverage.cobertura.xml'
+          if-no-files-found: ignore

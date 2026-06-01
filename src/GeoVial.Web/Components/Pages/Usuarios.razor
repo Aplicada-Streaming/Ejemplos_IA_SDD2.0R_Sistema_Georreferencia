@@ -1,0 +1,180 @@
+@page "/usuarios"
+@rendermode InteractiveServer
+@using GeoVial.Shared
+@using GeoVial.Web.Servicios
+@inject GeoVialApiCliente Api
+
+<PageTitle>GeoVial — Usuarios</PageTitle>
+
+<h1>Gestión de usuarios y jerarquía</h1>
+<p>Slice del Sprint 01: jerarquía de usuarios, login y autorización por rol y área (CU-02, CU-03, CU-14).</p>
+
+@if (!Api.Autenticado)
+{
+    <section>
+        <h2>Iniciar sesión</h2>
+        <div>
+            <label>Usuario: <input @bind="usuario" /></label>
+        </div>
+        <div>
+            <label>Clave: <input type="password" @bind="clave" /></label>
+        </div>
+        <button @onclick="Login">Ingresar</button>
+        @if (mensaje is not null)
+        {
+            <p role="alert">@mensaje</p>
+        }
+    </section>
+}
+else
+{
+    <section>
+        <button @onclick="Salir">Cerrar sesión</button>
+
+        <h2>Alta de usuario</h2>
+        <div>
+            <label>Nombre: <input @bind="nuevoNombre" /></label>
+        </div>
+        <div>
+            <label>Rol:
+                <select @bind="nuevoRol">
+                    <option value="2">Jefe general</option>
+                    <option value="3">Jefe de área</option>
+                    <option value="4">Agente de campo</option>
+                </select>
+            </label>
+        </div>
+        <div>
+            <label>Área (GUID, requerida para jefe de área y agente): <input @bind="nuevoArea" /></label>
+        </div>
+        <button @onclick="Alta">Dar de alta</button>
+        @if (mensaje is not null)
+        {
+            <p role="alert">@mensaje</p>
+        }
+
+        <h2>Usuarios visibles</h2>
+        <button @onclick="Refrescar">Refrescar</button>
+        <table>
+            <thead>
+                <tr><th>Nombre</th><th>Rol</th><th>Área</th><th>Vigente</th><th>Acciones</th></tr>
+            </thead>
+            <tbody>
+                @foreach (var u in usuarios)
+                {
+                    <tr>
+                        <td>@u.Nombre</td>
+                        <td>@NombreRol(u.Rol)</td>
+                        <td>@(u.AreaId?.ToString() ?? "—")</td>
+                        <td>@(u.Vigente ? "Sí" : "No")</td>
+                        <td>
+                            @if (u.Vigente)
+                            {
+                                <button @onclick="() => Baja(u.UsuarioId)">Dar de baja</button>
+                            }
+                            <input placeholder="Área (GUID)" @bind="areaPorUsuario[u.UsuarioId]" />
+                            <button @onclick="() => Asociar(u.UsuarioId)">Asociar área</button>
+                            <input placeholder="usuario" @bind="credUsuario[u.UsuarioId]" size="10" />
+                            <input placeholder="clave" type="password" @bind="credClave[u.UsuarioId]" size="10" />
+                            <button @onclick="() => Credencial(u.UsuarioId)">Dar credencial</button>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </section>
+}
+
+@code {
+    private string usuario = "raiz";
+    private string clave = "";
+    private string? mensaje;
+
+    private string nuevoNombre = "";
+    private int nuevoRol = 2;
+    private string nuevoArea = "";
+
+    private IReadOnlyList<UsuarioDto> usuarios = Array.Empty<UsuarioDto>();
+    private readonly Dictionary<Guid, string> areaPorUsuario = new();
+    private readonly Dictionary<Guid, string> credUsuario = new();
+    private readonly Dictionary<Guid, string> credClave = new();
+
+    private async Task Login()
+    {
+        mensaje = null;
+        if (await Api.LoginAsync(usuario, clave))
+        {
+            await Refrescar();
+        }
+        else
+        {
+            mensaje = "Credenciales inválidas.";
+        }
+    }
+
+    private void Salir()
+    {
+        Api.CerrarSesion();
+        usuarios = Array.Empty<UsuarioDto>();
+        mensaje = null;
+    }
+
+    private async Task Refrescar()
+    {
+        usuarios = await Api.ListarUsuariosAsync();
+        foreach (var u in usuarios)
+        {
+            areaPorUsuario.TryAdd(u.UsuarioId, string.Empty);
+            credUsuario.TryAdd(u.UsuarioId, string.Empty);
+            credClave.TryAdd(u.UsuarioId, string.Empty);
+        }
+    }
+
+    private async Task Credencial(Guid usuarioId)
+    {
+        var (ok, msg) = await Api.EstablecerCredencialAsync(
+            usuarioId, credUsuario.GetValueOrDefault(usuarioId, ""), credClave.GetValueOrDefault(usuarioId, ""));
+        mensaje = ok ? msg : $"No se pudo dar credencial: {msg}";
+    }
+
+    private async Task Baja(Guid id)
+    {
+        var (ok, msg) = await Api.BajaUsuarioAsync(id);
+        mensaje = ok ? msg : $"No se pudo dar de baja: {msg}";
+        await Refrescar();
+    }
+
+    private async Task Asociar(Guid id)
+    {
+        if (!Guid.TryParse(areaPorUsuario.GetValueOrDefault(id), out var area))
+        {
+            mensaje = "Área inválida (se espera un GUID).";
+            return;
+        }
+
+        var (ok, msg) = await Api.AsociarAreaAsync(id, area);
+        mensaje = ok ? msg : $"No se pudo asociar: {msg}";
+        await Refrescar();
+    }
+
+    private async Task Alta()
+    {
+        Guid? area = Guid.TryParse(nuevoArea, out var g) ? g : null;
+        var (ok, msg) = await Api.AltaUsuarioAsync(nuevoNombre, nuevoRol, area);
+        mensaje = ok ? msg : $"No se pudo crear: {msg}";
+        if (ok)
+        {
+            nuevoNombre = "";
+            await Refrescar();
+        }
+    }
+
+    private static string NombreRol(int rol) => rol switch
+    {
+        1 => "Raíz",
+        2 => "Jefe general",
+        3 => "Jefe de área",
+        4 => "Agente de campo",
+        _ => "Desconocido",
+    };
+}

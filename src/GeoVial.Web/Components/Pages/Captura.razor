@@ -1,0 +1,147 @@
+@page "/captura"
+@rendermode InteractiveServer
+@using GeoVial.Shared
+@using GeoVial.Web.Servicios
+@inject GeoVialApiCliente Api
+
+<PageTitle>GeoVial — Captura</PageTitle>
+
+<h1>Captura de observaciones</h1>
+<p>Slice del Sprint 03: captura georreferenciada, agrupación por radio y bandeja sin georreferenciar (CU-04, CU-05).</p>
+
+@if (!Api.Autenticado)
+{
+    <section>
+        <h2>Iniciar sesión</h2>
+        <div><label>Usuario: <input @bind="usuario" /></label></div>
+        <div><label>Clave: <input type="password" @bind="clave" /></label></div>
+        <button @onclick="Login">Ingresar</button>
+        @if (mensaje is not null)
+        {
+            <p role="alert">@mensaje</p>
+        }
+    </section>
+}
+else
+{
+    <section>
+        <button @onclick="Salir">Cerrar sesión</button>
+
+        <h2>Capturar</h2>
+        <p>Requiere ser un agente asignado al relevamiento. Si se dejan vacías las coordenadas, la observación queda sin georreferenciar.</p>
+        <div><label>Relevamiento (GUID): <input @bind="relevamientoId" size="40" /></label></div>
+        <div><label>Referencia de archivo: <input @bind="referencia" /></label></div>
+        <div><label>Latitud (opcional): <input @bind="latitud" /></label></div>
+        <div><label>Longitud (opcional): <input @bind="longitud" /></label></div>
+        <button @onclick="Capturar">Capturar</button>
+        @if (mensaje is not null)
+        {
+            <p role="alert">@mensaje</p>
+        }
+
+        <h2>Observaciones del relevamiento</h2>
+        <button @onclick="Refrescar">Refrescar</button>
+        <table>
+            <thead>
+                <tr><th>Observación</th><th>Marcador</th><th>Sin georreferenciar</th><th>Ubicar manual</th></tr>
+            </thead>
+            <tbody>
+                @foreach (var o in observaciones)
+                {
+                    <tr>
+                        <td>@o.ObservacionId</td>
+                        <td>@(o.MarcadorId?.ToString() ?? "—")</td>
+                        <td>@(o.SinGeorreferenciar ? "Sí" : "No")</td>
+                        <td>
+                            @if (o.SinGeorreferenciar)
+                            {
+                                <input placeholder="lat" @bind="latPorObs[o.ObservacionId]" size="10" />
+                                <input placeholder="lon" @bind="lonPorObs[o.ObservacionId]" size="10" />
+                                <button @onclick="() => Ubicar(o.ObservacionId)">Ubicar</button>
+                            }
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </section>
+}
+
+@code {
+    private string usuario = "raiz";
+    private string clave = "";
+    private string? mensaje;
+
+    private string relevamientoId = "";
+    private string referencia = "foto.jpg";
+    private string latitud = "";
+    private string longitud = "";
+
+    private IReadOnlyList<ObservacionDto> observaciones = Array.Empty<ObservacionDto>();
+    private readonly Dictionary<Guid, string> latPorObs = new();
+    private readonly Dictionary<Guid, string> lonPorObs = new();
+
+    private async Task Login()
+    {
+        mensaje = null;
+        if (!await Api.LoginAsync(usuario, clave))
+        {
+            mensaje = "Credenciales inválidas.";
+        }
+    }
+
+    private void Salir()
+    {
+        Api.CerrarSesion();
+        observaciones = Array.Empty<ObservacionDto>();
+        mensaje = null;
+    }
+
+    private async Task Refrescar()
+    {
+        if (!Guid.TryParse(relevamientoId, out var id))
+        {
+            mensaje = "Relevamiento inválido (se espera un GUID).";
+            return;
+        }
+
+        observaciones = await Api.ListarObservacionesAsync(id);
+        foreach (var o in observaciones)
+        {
+            latPorObs.TryAdd(o.ObservacionId, "");
+            lonPorObs.TryAdd(o.ObservacionId, "");
+        }
+    }
+
+    private async Task Capturar()
+    {
+        if (!Guid.TryParse(relevamientoId, out var id))
+        {
+            mensaje = "Relevamiento inválido (se espera un GUID).";
+            return;
+        }
+
+        decimal? lat = decimal.TryParse(latitud, out var la) ? la : null;
+        decimal? lon = decimal.TryParse(longitud, out var lo) ? lo : null;
+        var (ok, msg) = await Api.CapturarObservacionAsync(id, referencia, lat, lon);
+        mensaje = ok ? msg : $"No se pudo capturar: {msg}";
+        if (ok)
+        {
+            await Refrescar();
+        }
+    }
+
+    private async Task Ubicar(Guid observacionId)
+    {
+        if (!decimal.TryParse(latPorObs.GetValueOrDefault(observacionId), out var lat) ||
+            !decimal.TryParse(lonPorObs.GetValueOrDefault(observacionId), out var lon))
+        {
+            mensaje = "Coordenadas inválidas.";
+            return;
+        }
+
+        var (ok, msg) = await Api.UbicarManualAsync(observacionId, lat, lon);
+        mensaje = ok ? msg : $"No se pudo ubicar: {msg}";
+        await Refrescar();
+    }
+}
