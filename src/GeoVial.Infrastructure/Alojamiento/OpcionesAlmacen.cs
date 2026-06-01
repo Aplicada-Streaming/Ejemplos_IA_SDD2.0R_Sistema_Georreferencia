@@ -22,3 +22,15 @@ public sealed class OpcionesAlmacen
 
     public bool EsS3 => string.Equals(Backend, "S3", StringComparison.OrdinalIgnoreCase);
 }
+
+/// <summary>Configuración del pipeline de imágenes (BT-19, arquitectura-solución §8). Límites por defecto razonables.</summary>
+public sealed class OpcionesImagen
+{
+    public const string Seccion = "Imagen";
+
+    /// <summary>Lado máximo (px) al que se redimensiona la foto hacia abajo.</summary>
+    public int MaxDimension { get; set; } = 1920;
+
+    /// <summary>Calidad JPEG de recodificación (1–100).</summary>
+    public int CalidadJpeg { get; set; } = 80;
+}

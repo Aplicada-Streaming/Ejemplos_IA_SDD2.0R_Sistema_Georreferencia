@@ -242,4 +242,32 @@ public class ApiAccesoUsuariosTests : IClassFixture<WebApplicationFactory<Progra
 
         resp.StatusCode.Should().Be(HttpStatusCode.NotFound);
     }
+
+    [Fact] // CU-09 / US-24: descargar el contenido de una foto sin token → 401
+    public async Task Descargar_contenido_foto_sin_token_devuelve_401()
+    {
+        var cliente = _factory.CreateClient();
+        var resp = await cliente.GetAsync($"/api/v1/fotos/{Guid.NewGuid()}/contenido");
+        resp.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
+    }
+
+    [Fact] // CU-09 / US-24: descargar el contenido de una foto inexistente con token del raíz → 404
+    public async Task Descargar_contenido_foto_inexistente_devuelve_404()
+    {
+        var cliente = _factory.CreateClient();
+        var token = await LoginRaizAsync(cliente);
+        cliente.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+
+        var resp = await cliente.GetAsync($"/api/v1/fotos/{Guid.NewGuid()}/contenido");
+
+        resp.StatusCode.Should().Be(HttpStatusCode.NotFound);
+    }
+
+    [Fact] // CU-08 / US-23: la revisión con filtro de etiquetas sin token → 401
+    public async Task Revision_con_filtro_sin_token_devuelve_401()
+    {
+        var cliente = _factory.CreateClient();
+        var resp = await cliente.GetAsync($"/api/v1/relevamientos/{Guid.NewGuid()}/revision?etiquetas=fisura");
+        resp.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
+    }
 }

@@ -4,6 +4,22 @@ using GeoVial.FileHosting;
 
 namespace GeoVial.UnitTests;
 
+/// <summary>Pipeline de imágenes de prueba: por defecto pasa el binario tal cual; puede simular compresión.</summary>
+internal sealed class FakePipelineImagen : IPipelineImagen
+{
+    private readonly byte[]? _salidaFija;
+
+    public FakePipelineImagen(byte[]? salidaFija = null) => _salidaFija = salidaFija;
+
+    public int Invocaciones { get; private set; }
+
+    public Task<byte[]> ProcesarAsync(byte[] original, CancellationToken ct = default)
+    {
+        Invocaciones++;
+        return Task.FromResult(_salidaFija ?? original);
+    }
+}
+
 /// <summary>Backend de alojamiento en memoria para pruebas (sustituye a local/S3, ADR-08).</summary>
 internal sealed class FakeAlmacenFotos : IAlmacenFotos
 {

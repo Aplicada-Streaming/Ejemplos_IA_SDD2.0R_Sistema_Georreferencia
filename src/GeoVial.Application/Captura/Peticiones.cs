@@ -34,3 +34,10 @@ public sealed record ListarObservacionesQuery(Guid SolicitanteId, Guid Relevamie
 /// </summary>
 public sealed record SubirContenidoFotoCommand(Guid UsuarioId, Guid FotoId, string NombreArchivo, byte[] Contenido)
     : IPeticion<Resultado>;
+
+/// <summary>
+/// Descarga el binario de una foto del backend de alojamiento para el visor a pantalla completa (CU-09, US-24).
+/// Devuelve null si no se autoriza (RN-01) o si el binario no está disponible.
+/// </summary>
+public sealed record DescargarContenidoFotoQuery(Guid SolicitanteId, Guid FotoId)
+    : IPeticion<byte[]?>;

@@ -285,6 +285,34 @@ public sealed class RevisarRelevamientoHandler : IManejador<RevisarRelevamientoQ
         var observaciones = await _observaciones.ListarPorRelevamientoAsync(query.RelevamientoId, ct);
         var sinGeorreferenciar = observaciones.Where(o => o.SinGeorreferenciar).Select(o => o.ObservacionId).ToList();
 
+        if (query.Etiquetas.Count > 0)
+        {
+            // US-23 / CU-08 §5.C: filtra fotos y comentarios por etiqueta y descarta los marcadores sin coincidencias.
+            revisionMarcadores = FiltrarPorEtiquetas(revisionMarcadores, query.Etiquetas);
+            sinGeorreferenciar = new List<Guid>(); // las observaciones sin georreferenciar no tienen etiquetas
+        }
+
         return new RevisionRelevamiento((relevamiento.RelevamientoId), (int)relevamiento.Estado, revisionMarcadores, sinGeorreferenciar);
+    }
+
+    private static List<RevisionMarcador> FiltrarPorEtiquetas(List<RevisionMarcador> marcadores, IReadOnlyList<string> etiquetas)
+    {
+        var buscadas = new HashSet<string>(etiquetas, StringComparer.OrdinalIgnoreCase);
+        bool Coincide(IReadOnlyList<string> propias) => propias.Any(buscadas.Contains);
+
+        var filtrados = new List<RevisionMarcador>();
+        foreach (var m in marcadores)
+        {
+            var fotos = m.Fotos.Where(f => Coincide(f.Etiquetas)).ToList();
+            var comentarios = m.Comentarios.Where(c => Coincide(c.Etiquetas)).ToList();
+            if (fotos.Count == 0 && comentarios.Count == 0)
+            {
+                continue;
+            }
+
+            filtrados.Add(m with { Fotos = fotos, Comentarios = comentarios });
+        }
+
+        return filtrados;
     }
 }

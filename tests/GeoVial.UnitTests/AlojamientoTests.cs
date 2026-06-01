@@ -8,9 +8,58 @@ using GeoVial.FileHosting;
 using GeoVial.Infrastructure.Alojamiento;
 using NSubstitute;
 using NSubstitute.ExceptionExtensions;
+using SkiaSharp;
 using Xunit;
 
 namespace GeoVial.UnitTests;
+
+/// <summary>Pipeline de imágenes: compresión y redimensión al subir (BT-19, arquitectura-solución §8).</summary>
+public class PipelineImagenSkiaTests
+{
+    private static byte[] ImagenPng(int ancho, int alto)
+    {
+        using var bitmap = new SKBitmap(ancho, alto);
+        using (var canvas = new SKCanvas(bitmap))
+        {
+            canvas.Clear(SKColors.SteelBlue);
+        }
+
+        using var imagen = SKImage.FromBitmap(bitmap);
+        using var datos = imagen.Encode(SKEncodedImageFormat.Png, 100);
+        return datos.ToArray();
+    }
+
+    [Fact] // BT-19: una imagen grande se redimensiona hacia abajo preservando la relación de aspecto
+    public async Task Procesar_redimensiona_imagen_grande()
+    {
+        var original = ImagenPng(4000, 3000);
+        var procesado = await new PipelineImagenSkia(maxDimension: 1920, calidadJpeg: 80).ProcesarAsync(original);
+
+        using var resultado = SKBitmap.Decode(procesado);
+        resultado.Should().NotBeNull();
+        Math.Max(resultado.Width, resultado.Height).Should().BeLessThanOrEqualTo(1920);
+        resultado.Width.Should().Be(1920);
+        resultado.Height.Should().Be(1440); // 4:3 preservado
+    }
+
+    [Fact] // una imagen pequeña no se agranda (solo redimensión hacia abajo)
+    public async Task Procesar_imagen_pequena_no_se_agranda()
+    {
+        var original = ImagenPng(100, 80);
+        var procesado = await new PipelineImagenSkia(1920, 80).ProcesarAsync(original);
+
+        using var resultado = SKBitmap.Decode(procesado);
+        resultado.Width.Should().Be(100);
+        resultado.Height.Should().Be(80);
+    }
+
+    [Fact] // un binario que no es imagen se aloja tal cual
+    public async Task Procesar_binario_no_imagen_devuelve_original()
+    {
+        var basura = new byte[] { 1, 2, 3, 4, 5 };
+        (await new PipelineImagenSkia(1920, 80).ProcesarAsync(basura)).Should().Equal(basura);
+    }
+}
 
 /// <summary>Backend de alojamiento local sobre el sistema de archivos (ADR-08, BT-20).</summary>
 public sealed class AlmacenLocalTests : IDisposable
@@ -129,8 +178,9 @@ public class SubirContenidoFotoTests
             new FakeObservacionRepository(obs), new FakeRelevamientoRepository(rel));
     }
 
-    private static SubirContenidoFotoHandler Handler(Escenario e, FakeAuditoria? auditoria = null) =>
-        new(new FakeUsuarioRepository(e.Jefe), e.Relevamientos, e.Observaciones, e.Fotos, e.Almacen, auditoria ?? new FakeAuditoria());
+    private static SubirContenidoFotoHandler Handler(Escenario e, FakeAuditoria? auditoria = null, FakePipelineImagen? pipeline = null) =>
+        new(new FakeUsuarioRepository(e.Jefe), e.Relevamientos, e.Observaciones, e.Fotos, e.Almacen,
+            pipeline ?? new FakePipelineImagen(), auditoria ?? new FakeAuditoria());
 
     [Fact] // CU-04: subir el contenido persiste el binario y asienta la referencia en la foto
     public async Task Subir_contenido_persiste_y_asienta_referencia()
@@ -145,6 +195,21 @@ public class SubirContenidoFotoTests
         e.Foto.ReferenciaArchivo.Should().NotBe("pendiente");
         (await e.Almacen.RecuperarAsync(e.Foto.ReferenciaArchivo)).Should().Equal(Contenido);
         auditoria.Registros.Should().Contain(x => x.StartsWith("SUBIR_CONTENIDO_FOTO:"));
+    }
+
+    [Fact] // BT-19: el binario pasa por el pipeline de imágenes antes de alojarse
+    public async Task Subir_contenido_pasa_por_el_pipeline()
+    {
+        var e = Armar();
+        var procesado = new byte[] { 42, 42, 42 };
+        var pipeline = new FakePipelineImagen(salidaFija: procesado);
+
+        var r = await Handler(e, pipeline: pipeline).ManejarAsync(
+            new SubirContenidoFotoCommand(e.Jefe.UsuarioId, e.Foto.FotoId, "f.jpg", Contenido));
+
+        r.EsExito.Should().BeTrue();
+        pipeline.Invocaciones.Should().Be(1);
+        (await e.Almacen.RecuperarAsync(e.Foto.ReferenciaArchivo)).Should().Equal(procesado);
     }
 
     [Fact] // el contenido es obligatorio
@@ -177,7 +242,8 @@ public class SubirContenidoFotoTests
         var e = Armar();
         var jefeSur = Usuario.Crear("js", RolJerarquico.JefeArea, AreaSur).Valor!;
         var handler = new SubirContenidoFotoHandler(
-            new FakeUsuarioRepository(jefeSur), e.Relevamientos, e.Observaciones, e.Fotos, e.Almacen, new FakeAuditoria());
+            new FakeUsuarioRepository(jefeSur), e.Relevamientos, e.Observaciones, e.Fotos, e.Almacen,
+            new FakePipelineImagen(), new FakeAuditoria());
 
         var r = await handler.ManejarAsync(new SubirContenidoFotoCommand(jefeSur.UsuarioId, e.Foto.FotoId, "f.jpg", Contenido));
 

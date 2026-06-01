@@ -7,7 +7,7 @@
 <PageTitle>GeoVial — Revisión</PageTitle>
 
 <h1>Revisión sobre mapa</h1>
-<p>Slice del Sprint 04: revisión por marcadores con sus fotos, comentarios y etiquetas (CU-08, CU-09).</p>
+<p>Revisión por marcadores con fotos, comentarios y etiquetas (CU-08, CU-09). Sprint 08: filtrado por etiquetas y visor de fotos a pantalla completa con zoom.</p>
 
 @if (!Api.Autenticado)
 {
@@ -29,7 +29,8 @@ else
 
         <h2>Revisar relevamiento</h2>
         <div><label>Relevamiento (GUID): <input @bind="relevamientoId" size="40" /></label></div>
-        <button @onclick="Cargar">Cargar</button>
+        <div><label>Filtrar por etiquetas (separadas por coma): <input @bind="filtro" placeholder="fisura, grieta" size="30" /></label></div>
+        <button @onclick="Cargar">Cargar / Filtrar</button>
         @if (mensaje is not null)
         {
             <p role="alert">@mensaje</p>
@@ -38,6 +39,11 @@ else
         @if (revision is not null)
         {
             <p>Estado: @NombreEstado(revision.Estado) — Marcadores: @revision.Marcadores.Count — Sin georreferenciar: @revision.ObservacionesSinGeorreferenciar.Count</p>
+
+            @if (revision.Marcadores.Count == 0 && FiltroActivo)
+            {
+                <p><em>No hay observaciones que coincidan con el filtro de etiquetas.</em></p>
+            }
 
             @foreach (var m in revision.Marcadores)
             {
@@ -53,6 +59,7 @@ else
                                 <input placeholder="etiqueta" @bind="etiquetaFoto[f.FotoId]" size="12" />
                                 <button @onclick="() => EtiquetarFoto(f.FotoId)">Etiquetar</button>
                                 <InputFile OnChange="(e) => SubirContenido(f.FotoId, e)" />
+                                <button @onclick="() => AbrirVisor(f.FotoId)">Ver a pantalla completa</button>
                             </li>
                         }
                     </ul>
@@ -71,6 +78,22 @@ else
             }
         }
     </section>
+
+    @if (visorHref is not null)
+    {
+        <div style="position:fixed; inset:0; background:rgba(0,0,0,0.85); display:flex; flex-direction:column; align-items:center; justify-content:center; z-index:1000;">
+            <div style="margin-bottom:8px; color:#fff;">
+                <button @onclick="AlejarVisor">−</button>
+                <span style="margin:0 8px;">Zoom @VisorEscala&times;</span>
+                <button @onclick="AcercarVisor">+</button>
+                <button @onclick="CerrarVisor" style="margin-left:16px;">Cerrar</button>
+            </div>
+            <div style="overflow:auto; max-width:95vw; max-height:85vh;">
+                <img src="@visorHref" alt="Foto a pantalla completa"
+                     style="transform:scale(@VisorEscala); transform-origin:top left;" />
+            </div>
+        </div>
+    }
 }
 
 @code {
@@ -79,10 +102,16 @@ else
     private string? mensaje;
 
     private string relevamientoId = "";
+    private string filtro = "";
+    private bool FiltroActivo => !string.IsNullOrWhiteSpace(filtro);
     private RevisionRelevamientoDto? revision;
 
     private readonly Dictionary<Guid, string> comentarioMarcador = new();
     private readonly Dictionary<Guid, string> etiquetaFoto = new();
+
+    private string? visorHref;
+    private double visorZoom = 1.0;
+    private string VisorEscala => visorZoom.ToString("0.##", System.Globalization.CultureInfo.InvariantCulture);
 
     private async Task Login()
     {
@@ -108,7 +137,8 @@ else
             return;
         }
 
-        revision = await Api.RevisarRelevamientoAsync(id);
+        var etiquetas = filtro.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+        revision = await Api.RevisarRelevamientoAsync(id, etiquetas);
         if (revision is null)
         {
             mensaje = "No se pudo cargar la revisión (acceso o relevamiento inválido).";
@@ -157,6 +187,25 @@ else
         var (ok, msg) = await Api.SubirContenidoFotoAsync(fotoId, memoria.ToArray(), archivo.Name);
         mensaje = ok ? msg : $"No se pudo subir el contenido: {msg}";
     }
+
+    private async Task AbrirVisor(Guid fotoId)
+    {
+        var contenido = await Api.DescargarContenidoFotoAsync(fotoId);
+        if (contenido is null)
+        {
+            mensaje = "La foto todavía no tiene contenido subido.";
+            return;
+        }
+
+        visorZoom = 1.0;
+        visorHref = $"data:image/jpeg;base64,{Convert.ToBase64String(contenido)}";
+    }
+
+    private void CerrarVisor() => visorHref = null;
+
+    private void AcercarVisor() => visorZoom = Math.Min(5.0, visorZoom + 0.25);
+
+    private void AlejarVisor() => visorZoom = Math.Max(0.25, visorZoom - 0.25);
 
     private static string NombreEstado(int estado) => estado switch
     {

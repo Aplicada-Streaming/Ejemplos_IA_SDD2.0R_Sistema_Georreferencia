@@ -288,14 +288,18 @@ usuarios.MapPost("/{id:guid}/credencial", async (Guid id, EstablecerCredencialRe
 });
 
 // --- Revisión sobre mapa y gestión de marcador (CU-08, CU-09; US-15/21/22) ---
-relevamientos.MapGet("/{relevamientoId:guid}/revision", async (Guid relevamientoId, ClaimsPrincipal solicitante, IMediador mediador, CancellationToken ct) =>
+relevamientos.MapGet("/{relevamientoId:guid}/revision", async (Guid relevamientoId, string? etiquetas, ClaimsPrincipal solicitante, IMediador mediador, CancellationToken ct) =>
 {
     if (!TryGetUsuarioId(solicitante, out var id))
     {
         return Results.Unauthorized();
     }
 
-    var revision = await mediador.EnviarAsync(new RevisarRelevamientoQuery(id, relevamientoId), ct);
+    var filtro = string.IsNullOrWhiteSpace(etiquetas)
+        ? Array.Empty<string>()
+        : etiquetas.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+
+    var revision = await mediador.EnviarAsync(new RevisarRelevamientoQuery(id, relevamientoId, filtro), ct);
     return revision is null ? Results.NotFound() : Results.Ok(AMapaRevision(revision));
 });
 
@@ -337,6 +341,18 @@ fotos.MapPost("/{fotoId:guid}/contenido", async (Guid fotoId, IFormFile archivo,
     var r = await mediador.EnviarAsync(new SubirContenidoFotoCommand(usuarioId, fotoId, archivo.FileName, memoria.ToArray()), ct);
     return r.EsExito ? Results.NoContent() : MapeoErrores.AProblema(r.Codigo);
 }).DisableAntiforgery();
+
+// Descarga del binario de una foto para el visor a pantalla completa (CU-09, US-24).
+fotos.MapGet("/{fotoId:guid}/contenido", async (Guid fotoId, ClaimsPrincipal usuario, IMediador mediador, CancellationToken ct) =>
+{
+    if (!TryGetUsuarioId(usuario, out var usuarioId))
+    {
+        return Results.Unauthorized();
+    }
+
+    var contenido = await mediador.EnviarAsync(new DescargarContenidoFotoQuery(usuarioId, fotoId), ct);
+    return contenido is null ? Results.NotFound() : Results.File(contenido, "image/jpeg");
+});
 
 var comentarios = app.MapGroup("/api/v1/comentarios").RequireAuthorization();
 comentarios.MapPost("/{comentarioId:guid}/etiquetas", async (Guid comentarioId, EtiquetarRequest req, ClaimsPrincipal usuario, IMediador mediador, CancellationToken ct) =>

@@ -34,6 +34,7 @@ public static class DependencyInjection
         servicios.AddScoped<IManejador<UbicarObservacionManualCommand, Resultado>, UbicarObservacionManualHandler>();
         servicios.AddScoped<IManejador<ListarObservacionesQuery, IReadOnlyList<Observacion>>, ListarObservacionesHandler>();
         servicios.AddScoped<IManejador<SubirContenidoFotoCommand, Resultado>, SubirContenidoFotoHandler>();
+        servicios.AddScoped<IManejador<DescargarContenidoFotoQuery, byte[]?>, DescargarContenidoFotoHandler>();
 
         // Módulo de revisión sobre mapa y gestión de marcador (CU-08, CU-09).
         servicios.AddScoped<IManejador<AgregarComentarioCommand, Resultado>, AgregarComentarioHandler>();
