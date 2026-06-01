@@ -1,4 +1,5 @@
 using GeoVial.Application.Captura;
+using GeoVial.Application.Conflictos;
 using GeoVial.Application.Cqrs;
 using GeoVial.Application.Relevamientos;
 using GeoVial.Application.Revision;
@@ -37,6 +38,12 @@ public static class DependencyInjection
         servicios.AddScoped<IManejador<EtiquetarFotoCommand, Resultado>, EtiquetarFotoHandler>();
         servicios.AddScoped<IManejador<EtiquetarComentarioCommand, Resultado>, EtiquetarComentarioHandler>();
         servicios.AddScoped<IManejador<RevisarRelevamientoQuery, RevisionRelevamiento?>, RevisarRelevamientoHandler>();
+
+        // Módulo de detección y resolución de conflictos por radio (CU-11, CU-12; EP-06).
+        servicios.AddScoped<IManejador<DetectarConflictosCommand, Resultado<IReadOnlyList<ConflictoDetectado>>>, DetectarConflictosHandler>();
+        servicios.AddScoped<IManejador<AjustarRadioCommand, Resultado>, AjustarRadioHandler>();
+        servicios.AddScoped<IManejador<ResolverConflictoCommand, Resultado>, ResolverConflictoHandler>();
+        servicios.AddScoped<IManejador<ConflictosPendientesQuery, IReadOnlyList<ConflictoPendiente>>, ConflictosPendientesHandler>();
 
         return servicios;
     }

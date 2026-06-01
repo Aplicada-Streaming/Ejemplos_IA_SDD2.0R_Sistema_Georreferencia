@@ -86,3 +86,14 @@ public sealed record RevisionRelevamientoDto(
     int Estado,
     IReadOnlyList<RevisionMarcadorDto> Marcadores,
     IReadOnlyList<Guid> ObservacionesSinGeorreferenciar);
+
+// --- Detección y resolución de conflictos por radio (CU-11, CU-12; US-25/26) ---
+
+public sealed record AjustarRadioRequest(decimal RadioMetros);
+
+/// <summary>Decisión: 1 = unificar (requiere MarcadorResultanteId), 2 = mantener separados.</summary>
+public sealed record ResolverConflictoRequest(int Decision, Guid? MarcadorResultanteId);
+
+public sealed record ConflictoDetectadoDto(Guid ConflictoSyncId, Guid MarcadorA, Guid MarcadorB, double DistanciaMetros);
+
+public sealed record ConflictoPendienteDto(Guid ConflictoSyncId, int Tipo, Guid MarcadorA, Guid MarcadorB);

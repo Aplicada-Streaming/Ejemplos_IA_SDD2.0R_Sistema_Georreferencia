@@ -37,6 +37,8 @@ public static class MapeoErrores
         CodigosError.TransicionInvalida => Problema(codigo, StatusCodes.Status409Conflict, "Transición de estado inválida"),
         CodigosError.ReaperturaNoAutorizada => Problema(codigo, StatusCodes.Status409Conflict, "Reapertura no autorizada"),
         CodigosError.AccionNoAuditada => Problema(codigo, StatusCodes.Status503ServiceUnavailable, "La acción no pudo auditarse"),
+        CodigosError.ConflictoInexistente => Problema(codigo, StatusCodes.Status404NotFound, "Conflicto inexistente o ya resuelto"),
+        CodigosError.UnificacionNoAutorizada => Problema(codigo, StatusCodes.Status400BadRequest, "El marcador resultante no pertenece al conflicto"),
         _ => Problema(codigo ?? "ERROR_DESCONOCIDO", StatusCodes.Status500InternalServerError, "Error"),
     };
 

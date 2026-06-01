@@ -67,6 +67,17 @@ public sealed class MarcadorRepository : IMarcadorRepository
 
     public async Task AgregarAsync(Marcador marcador, CancellationToken ct = default) =>
         await _db.Marcadores.AddAsync(marcador, ct);
+
+    public Task<Marcador?> ObtenerParaEdicionAsync(Guid marcadorId, CancellationToken ct = default) =>
+        _db.Marcadores.FirstOrDefaultAsync(m => m.MarcadorId == marcadorId, ct);
+
+    public Task EliminarAsync(Marcador marcador, CancellationToken ct = default)
+    {
+        _db.Marcadores.Remove(marcador);
+        return Task.CompletedTask;
+    }
+
+    public Task GuardarCambiosAsync(CancellationToken ct = default) => _db.SaveChangesAsync(ct);
 }
 
 public sealed class ObservacionRepository : IObservacionRepository
@@ -80,6 +91,9 @@ public sealed class ObservacionRepository : IObservacionRepository
 
     public async Task<IReadOnlyList<Observacion>> ListarPorRelevamientoAsync(Guid relevamientoId, CancellationToken ct = default) =>
         await _db.Observaciones.AsNoTracking().Where(o => o.RelevamientoId == relevamientoId).ToListAsync(ct);
+
+    public async Task<IReadOnlyList<Observacion>> ListarPorMarcadorParaEdicionAsync(Guid marcadorId, CancellationToken ct = default) =>
+        await _db.Observaciones.Where(o => o.MarcadorId == marcadorId).ToListAsync(ct);
 
     public async Task AgregarAsync(Observacion observacion, CancellationToken ct = default) =>
         await _db.Observaciones.AddAsync(observacion, ct);
@@ -101,6 +115,9 @@ public sealed class FotoRepository : IFotoRepository
 
     public async Task<IReadOnlyList<Foto>> ListarPorMarcadorAsync(Guid marcadorId, CancellationToken ct = default) =>
         await _db.Fotos.AsNoTracking().Where(f => f.MarcadorId == marcadorId).ToListAsync(ct);
+
+    public async Task<IReadOnlyList<Foto>> ListarPorMarcadorParaEdicionAsync(Guid marcadorId, CancellationToken ct = default) =>
+        await _db.Fotos.Where(f => f.MarcadorId == marcadorId).ToListAsync(ct);
 
     public async Task AgregarAsync(Foto foto, CancellationToken ct = default) =>
         await _db.Fotos.AddAsync(foto, ct);
@@ -139,8 +156,38 @@ public sealed class ComentarioRepository : IComentarioRepository
     public async Task<IReadOnlyList<Comentario>> ListarPorMarcadorAsync(Guid marcadorId, CancellationToken ct = default) =>
         await _db.Comentarios.AsNoTracking().Where(c => c.MarcadorId == marcadorId).ToListAsync(ct);
 
+    public async Task<IReadOnlyList<Comentario>> ListarPorMarcadorParaEdicionAsync(Guid marcadorId, CancellationToken ct = default) =>
+        await _db.Comentarios.Where(c => c.MarcadorId == marcadorId).ToListAsync(ct);
+
     public async Task AgregarAsync(Comentario comentario, CancellationToken ct = default) =>
         await _db.Comentarios.AddAsync(comentario, ct);
+
+    public Task GuardarCambiosAsync(CancellationToken ct = default) => _db.SaveChangesAsync(ct);
+}
+
+public sealed class ConflictoRepository : IConflictoRepository
+{
+    private readonly GeoVialDbContext _db;
+
+    public ConflictoRepository(GeoVialDbContext db) => _db = db;
+
+    public Task<ConflictoSync?> ObtenerPorIdAsync(Guid conflictoSyncId, CancellationToken ct = default) =>
+        _db.ConflictosSync.FirstOrDefaultAsync(c => c.ConflictoSyncId == conflictoSyncId, ct);
+
+    public async Task<IReadOnlyList<ConflictoSync>> ListarPendientesPorRelevamientoAsync(Guid relevamientoId, CancellationToken ct = default) =>
+        await _db.ConflictosSync.AsNoTracking()
+            .Where(c => c.RelevamientoId == relevamientoId && c.EstadoResolucion == EstadoResolucionConflicto.Pendiente)
+            .ToListAsync(ct);
+
+    public Task<bool> ExistePendienteAsync(Guid relevamientoId, string recursosInvolucrados, CancellationToken ct = default) =>
+        _db.ConflictosSync.AnyAsync(
+            c => c.RelevamientoId == relevamientoId
+                 && c.RecursosInvolucrados == recursosInvolucrados
+                 && c.EstadoResolucion == EstadoResolucionConflicto.Pendiente,
+            ct);
+
+    public async Task AgregarAsync(ConflictoSync conflicto, CancellationToken ct = default) =>
+        await _db.ConflictosSync.AddAsync(conflicto, ct);
 
     public Task GuardarCambiosAsync(CancellationToken ct = default) => _db.SaveChangesAsync(ct);
 }

@@ -29,12 +29,24 @@ public interface IMarcadorRepository
     Task<Marcador?> ObtenerPorIdAsync(Guid marcadorId, CancellationToken ct = default);
     Task<IReadOnlyList<Marcador>> ListarPorRelevamientoAsync(Guid relevamientoId, CancellationToken ct = default);
     Task AgregarAsync(Marcador marcador, CancellationToken ct = default);
+
+    /// <summary>Carga el marcador con seguimiento de cambios para modificarlo (resolución de conflictos, CU-12).</summary>
+    Task<Marcador?> ObtenerParaEdicionAsync(Guid marcadorId, CancellationToken ct = default);
+
+    /// <summary>Elimina el marcador absorbido al unificar (CU-12 §5.A).</summary>
+    Task EliminarAsync(Marcador marcador, CancellationToken ct = default);
+
+    Task GuardarCambiosAsync(CancellationToken ct = default);
 }
 
 public interface IObservacionRepository
 {
     Task<Observacion?> ObtenerPorIdAsync(Guid observacionId, CancellationToken ct = default);
     Task<IReadOnlyList<Observacion>> ListarPorRelevamientoAsync(Guid relevamientoId, CancellationToken ct = default);
+
+    /// <summary>Lista las observaciones del marcador con seguimiento de cambios para reasignarlas (CU-12 §5.A).</summary>
+    Task<IReadOnlyList<Observacion>> ListarPorMarcadorParaEdicionAsync(Guid marcadorId, CancellationToken ct = default);
+
     Task AgregarAsync(Observacion observacion, CancellationToken ct = default);
     Task GuardarCambiosAsync(CancellationToken ct = default);
 }
@@ -44,6 +56,10 @@ public interface IFotoRepository
     Task<Foto?> ObtenerPorObservacionAsync(Guid observacionId, CancellationToken ct = default);
     Task<Foto?> ObtenerPorIdAsync(Guid fotoId, CancellationToken ct = default);
     Task<IReadOnlyList<Foto>> ListarPorMarcadorAsync(Guid marcadorId, CancellationToken ct = default);
+
+    /// <summary>Lista las fotos del marcador con seguimiento de cambios para reasignarlas (CU-12 §5.A).</summary>
+    Task<IReadOnlyList<Foto>> ListarPorMarcadorParaEdicionAsync(Guid marcadorId, CancellationToken ct = default);
+
     Task AgregarAsync(Foto foto, CancellationToken ct = default);
 }
 
@@ -51,7 +67,23 @@ public interface IComentarioRepository
 {
     Task<Comentario?> ObtenerPorIdAsync(Guid comentarioId, CancellationToken ct = default);
     Task<IReadOnlyList<Comentario>> ListarPorMarcadorAsync(Guid marcadorId, CancellationToken ct = default);
+
+    /// <summary>Lista los comentarios del marcador con seguimiento de cambios para reasignarlos (CU-12 §5.A).</summary>
+    Task<IReadOnlyList<Comentario>> ListarPorMarcadorParaEdicionAsync(Guid marcadorId, CancellationToken ct = default);
+
     Task AgregarAsync(Comentario comentario, CancellationToken ct = default);
+    Task GuardarCambiosAsync(CancellationToken ct = default);
+}
+
+public interface IConflictoRepository
+{
+    Task<ConflictoSync?> ObtenerPorIdAsync(Guid conflictoSyncId, CancellationToken ct = default);
+    Task<IReadOnlyList<ConflictoSync>> ListarPendientesPorRelevamientoAsync(Guid relevamientoId, CancellationToken ct = default);
+
+    /// <summary>Idempotencia de la detección (RN-02): true si ya existe un conflicto pendiente para esos recursos.</summary>
+    Task<bool> ExistePendienteAsync(Guid relevamientoId, string recursosInvolucrados, CancellationToken ct = default);
+
+    Task AgregarAsync(ConflictoSync conflicto, CancellationToken ct = default);
     Task GuardarCambiosAsync(CancellationToken ct = default);
 }
 

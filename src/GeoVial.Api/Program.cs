@@ -3,6 +3,7 @@ using System.Text;
 using GeoVial.Api;
 using GeoVial.Application;
 using GeoVial.Application.Captura;
+using GeoVial.Application.Conflictos;
 using GeoVial.Application.Cqrs;
 using GeoVial.Application.Relevamientos;
 using GeoVial.Application.Revision;
@@ -330,6 +331,55 @@ comentarios.MapPost("/{comentarioId:guid}/etiquetas", async (Guid comentarioId, 
     }
 
     var r = await mediador.EnviarAsync(new EtiquetarComentarioCommand(usuarioId, comentarioId, req.Etiqueta), ct);
+    return r.EsExito ? Results.NoContent() : MapeoErrores.AProblema(r.Codigo);
+});
+
+// --- Detección y resolución de conflictos por radio (CU-11, CU-12; US-25/26) ---
+relevamientos.MapPost("/{relevamientoId:guid}/conflictos/deteccion", async (Guid relevamientoId, ClaimsPrincipal usuario, IMediador mediador, CancellationToken ct) =>
+{
+    if (!TryGetUsuarioId(usuario, out var usuarioId))
+    {
+        return Results.Unauthorized();
+    }
+
+    var r = await mediador.EnviarAsync(new DetectarConflictosCommand(usuarioId, relevamientoId), ct);
+    return r.EsExito
+        ? Results.Ok(r.Valor!.Select(c => new ConflictoDetectadoDto(c.ConflictoSyncId, c.MarcadorA, c.MarcadorB, c.DistanciaMetros)))
+        : MapeoErrores.AProblema(r.Codigo);
+});
+
+relevamientos.MapGet("/{relevamientoId:guid}/conflictos", async (Guid relevamientoId, ClaimsPrincipal usuario, IMediador mediador, CancellationToken ct) =>
+{
+    if (!TryGetUsuarioId(usuario, out var usuarioId))
+    {
+        return Results.Unauthorized();
+    }
+
+    var lista = await mediador.EnviarAsync(new ConflictosPendientesQuery(usuarioId, relevamientoId), ct);
+    return Results.Ok(lista.Select(c => new ConflictoPendienteDto(c.ConflictoSyncId, c.Tipo, c.MarcadorA, c.MarcadorB)));
+});
+
+relevamientos.MapPut("/{relevamientoId:guid}/radio", async (Guid relevamientoId, AjustarRadioRequest req, ClaimsPrincipal usuario, IMediador mediador, CancellationToken ct) =>
+{
+    if (!TryGetUsuarioId(usuario, out var usuarioId))
+    {
+        return Results.Unauthorized();
+    }
+
+    var r = await mediador.EnviarAsync(new AjustarRadioCommand(usuarioId, relevamientoId, req.RadioMetros), ct);
+    return r.EsExito ? Results.NoContent() : MapeoErrores.AProblema(r.Codigo);
+});
+
+var conflictos = app.MapGroup("/api/v1/conflictos").RequireAuthorization();
+conflictos.MapPost("/{conflictoId:guid}/resolucion", async (Guid conflictoId, ResolverConflictoRequest req, ClaimsPrincipal usuario, IMediador mediador, CancellationToken ct) =>
+{
+    if (!TryGetUsuarioId(usuario, out var usuarioId))
+    {
+        return Results.Unauthorized();
+    }
+
+    var r = await mediador.EnviarAsync(
+        new ResolverConflictoCommand(usuarioId, conflictoId, (DecisionConflicto)req.Decision, req.MarcadorResultanteId), ct);
     return r.EsExito ? Results.NoContent() : MapeoErrores.AProblema(r.Codigo);
 });
 

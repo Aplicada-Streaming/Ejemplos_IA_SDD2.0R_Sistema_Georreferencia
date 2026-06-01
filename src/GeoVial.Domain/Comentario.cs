@@ -38,4 +38,7 @@ public sealed class Comentario
 
         return Resultado<Comentario>.Exito(new Comentario(marcadorId, fotoId, autorUsuarioId, texto.Trim(), momento));
     }
+
+    /// <summary>Reasigna el comentario a otro marcador al unificar marcadores en conflicto (CU-12 §5.A).</summary>
+    public void ReasignarMarcador(Guid marcadorId) => MarcadorId = marcadorId;
 }

@@ -85,6 +85,17 @@ internal sealed class FakeMarcadorRepository : IMarcadorRepository
         _datos.Add(marcador);
         return Task.CompletedTask;
     }
+
+    public Task<Marcador?> ObtenerParaEdicionAsync(Guid marcadorId, CancellationToken ct = default) =>
+        Task.FromResult(_datos.FirstOrDefault(m => m.MarcadorId == marcadorId));
+
+    public Task EliminarAsync(Marcador marcador, CancellationToken ct = default)
+    {
+        _datos.Remove(marcador);
+        return Task.CompletedTask;
+    }
+
+    public Task GuardarCambiosAsync(CancellationToken ct = default) => Task.CompletedTask;
 }
 
 internal sealed class FakeObservacionRepository : IObservacionRepository
@@ -104,6 +115,9 @@ internal sealed class FakeObservacionRepository : IObservacionRepository
 
     public Task<IReadOnlyList<Observacion>> ListarPorRelevamientoAsync(Guid relevamientoId, CancellationToken ct = default) =>
         Task.FromResult<IReadOnlyList<Observacion>>(_datos.Values.Where(o => o.RelevamientoId == relevamientoId).ToList());
+
+    public Task<IReadOnlyList<Observacion>> ListarPorMarcadorParaEdicionAsync(Guid marcadorId, CancellationToken ct = default) =>
+        Task.FromResult<IReadOnlyList<Observacion>>(_datos.Values.Where(o => o.MarcadorId == marcadorId).ToList());
 
     public Task AgregarAsync(Observacion observacion, CancellationToken ct = default)
     {
@@ -129,6 +143,9 @@ internal sealed class FakeFotoRepository : IFotoRepository
     public Task<IReadOnlyList<Foto>> ListarPorMarcadorAsync(Guid marcadorId, CancellationToken ct = default) =>
         Task.FromResult<IReadOnlyList<Foto>>(_datos.Where(f => f.MarcadorId == marcadorId).ToList());
 
+    public Task<IReadOnlyList<Foto>> ListarPorMarcadorParaEdicionAsync(Guid marcadorId, CancellationToken ct = default) =>
+        Task.FromResult<IReadOnlyList<Foto>>(_datos.Where(f => f.MarcadorId == marcadorId).ToList());
+
     public Task AgregarAsync(Foto foto, CancellationToken ct = default)
     {
         _datos.Add(foto);
@@ -152,6 +169,9 @@ internal sealed class FakeComentarioRepository : IComentarioRepository
         Task.FromResult(_datos.GetValueOrDefault(comentarioId));
 
     public Task<IReadOnlyList<Comentario>> ListarPorMarcadorAsync(Guid marcadorId, CancellationToken ct = default) =>
+        Task.FromResult<IReadOnlyList<Comentario>>(_datos.Values.Where(c => c.MarcadorId == marcadorId).ToList());
+
+    public Task<IReadOnlyList<Comentario>> ListarPorMarcadorParaEdicionAsync(Guid marcadorId, CancellationToken ct = default) =>
         Task.FromResult<IReadOnlyList<Comentario>>(_datos.Values.Where(c => c.MarcadorId == marcadorId).ToList());
 
     public Task AgregarAsync(Comentario comentario, CancellationToken ct = default)
@@ -205,6 +225,34 @@ internal sealed class FakeEtiquetaRepository : IEtiquetaRepository
         Task.FromResult<IReadOnlyList<string>>(
             _comentarioEtiquetas.Where(u => u.ComentarioId == comentarioId)
                 .Select(u => _etiquetas.Values.First(e => e.EtiquetaId == u.EtiquetaId).Nombre).ToList());
+
+    public Task GuardarCambiosAsync(CancellationToken ct = default) => Task.CompletedTask;
+}
+
+internal sealed class FakeConflictoRepository : IConflictoRepository
+{
+    private readonly List<ConflictoSync> _datos;
+
+    public FakeConflictoRepository(params ConflictoSync[] iniciales) => _datos = iniciales.ToList();
+
+    public IReadOnlyList<ConflictoSync> Todos => _datos;
+
+    public Task<ConflictoSync?> ObtenerPorIdAsync(Guid conflictoSyncId, CancellationToken ct = default) =>
+        Task.FromResult(_datos.FirstOrDefault(c => c.ConflictoSyncId == conflictoSyncId));
+
+    public Task<IReadOnlyList<ConflictoSync>> ListarPendientesPorRelevamientoAsync(Guid relevamientoId, CancellationToken ct = default) =>
+        Task.FromResult<IReadOnlyList<ConflictoSync>>(
+            _datos.Where(c => c.RelevamientoId == relevamientoId && c.EstaPendiente).ToList());
+
+    public Task<bool> ExistePendienteAsync(Guid relevamientoId, string recursosInvolucrados, CancellationToken ct = default) =>
+        Task.FromResult(_datos.Any(c =>
+            c.RelevamientoId == relevamientoId && c.RecursosInvolucrados == recursosInvolucrados && c.EstaPendiente));
+
+    public Task AgregarAsync(ConflictoSync conflicto, CancellationToken ct = default)
+    {
+        _datos.Add(conflicto);
+        return Task.CompletedTask;
+    }
 
     public Task GuardarCambiosAsync(CancellationToken ct = default) => Task.CompletedTask;
 }
