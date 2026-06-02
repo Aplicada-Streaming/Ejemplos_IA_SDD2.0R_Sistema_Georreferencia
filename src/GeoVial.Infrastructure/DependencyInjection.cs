@@ -38,10 +38,12 @@ public static class DependencyInjection
         servicios.AddScoped<IComentarioRepository, ComentarioRepository>();
         servicios.AddScoped<IEtiquetaRepository, EtiquetaRepository>();
         servicios.AddScoped<IConflictoRepository, ConflictoRepository>();
+        servicios.AddScoped<ICambioAplicadoRepository, CambioAplicadoRepository>();
         servicios.AddScoped<ICredencialRepository, CredencialRepository>();
         servicios.AddScoped<IServicioAuditoria, ServicioAuditoria>();
         servicios.AddSingleton<IEmpaquetadorRelevamiento, EmpaquetadorZip>();
         RegistrarAlojamiento(servicios, configuracion);
+        RegistrarPipelineImagen(servicios, configuracion);
         servicios.AddSingleton<IHasherClave, HasherClavePbkdf2>();
         servicios.AddScoped<IServicioToken, ServicioTokenJwt>();
         servicios.AddSingleton<IRelojUtc, RelojUtc>();
@@ -73,5 +75,23 @@ public static class DependencyInjection
         {
             servicios.AddSingleton<IAlmacenFotos>(new AlmacenLocal(opciones.RutaLocal));
         }
+    }
+
+    /// <summary>Registra el pipeline de imágenes que comprime/redimensiona las fotos al subirlas (BT-19).</summary>
+    private static void RegistrarPipelineImagen(IServiceCollection servicios, IConfiguration configuracion)
+    {
+        var seccion = configuracion.GetSection(OpcionesImagen.Seccion);
+        var opciones = new OpcionesImagen();
+        if (int.TryParse(seccion["MaxDimension"], out var maxDimension) && maxDimension > 0)
+        {
+            opciones.MaxDimension = maxDimension;
+        }
+
+        if (int.TryParse(seccion["CalidadJpeg"], out var calidad) && calidad is > 0 and <= 100)
+        {
+            opciones.CalidadJpeg = calidad;
+        }
+
+        servicios.AddSingleton<IPipelineImagen>(new PipelineImagenSkia(opciones.MaxDimension, opciones.CalidadJpeg));
     }
 }

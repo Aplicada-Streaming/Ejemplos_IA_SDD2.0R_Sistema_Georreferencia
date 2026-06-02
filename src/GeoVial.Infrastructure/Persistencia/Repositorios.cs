@@ -164,8 +164,29 @@ public sealed class ComentarioRepository : IComentarioRepository
     public async Task<IReadOnlyList<Comentario>> ListarPorMarcadorParaEdicionAsync(Guid marcadorId, CancellationToken ct = default) =>
         await _db.Comentarios.Where(c => c.MarcadorId == marcadorId).ToListAsync(ct);
 
+    public async Task<IReadOnlyList<Comentario>> ListarActualizadosDesdeAsync(Guid relevamientoId, DateTime desde, CancellationToken ct = default) =>
+        await _db.Comentarios.AsNoTracking()
+            .Where(c => c.MarcaUltimaEdicion > desde
+                        && _db.Marcadores.Any(m => m.MarcadorId == c.MarcadorId && m.RelevamientoId == relevamientoId))
+            .ToListAsync(ct);
+
     public async Task AgregarAsync(Comentario comentario, CancellationToken ct = default) =>
         await _db.Comentarios.AddAsync(comentario, ct);
+
+    public Task GuardarCambiosAsync(CancellationToken ct = default) => _db.SaveChangesAsync(ct);
+}
+
+public sealed class CambioAplicadoRepository : ICambioAplicadoRepository
+{
+    private readonly GeoVialDbContext _db;
+
+    public CambioAplicadoRepository(GeoVialDbContext db) => _db = db;
+
+    public Task<bool> ExisteAsync(Guid cambioId, CancellationToken ct = default) =>
+        _db.CambiosAplicados.AnyAsync(c => c.CambioId == cambioId, ct);
+
+    public async Task AgregarAsync(CambioAplicado cambio, CancellationToken ct = default) =>
+        await _db.CambiosAplicados.AddAsync(cambio, ct);
 
     public Task GuardarCambiosAsync(CancellationToken ct = default) => _db.SaveChangesAsync(ct);
 }

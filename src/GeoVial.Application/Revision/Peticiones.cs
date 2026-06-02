@@ -14,8 +14,18 @@ public sealed record EtiquetarFotoCommand(Guid UsuarioId, Guid FotoId, string Et
 public sealed record EtiquetarComentarioCommand(Guid UsuarioId, Guid ComentarioId, string Etiqueta)
     : IPeticion<Resultado>;
 
-public sealed record RevisarRelevamientoQuery(Guid SolicitanteId, Guid RelevamientoId)
-    : IPeticion<RevisionRelevamiento?>;
+/// <summary>
+/// Revisión del relevamiento (US-21). Si <paramref name="Etiquetas"/> no está vacío, filtra fotos y
+/// comentarios por esas etiquetas y descarta los marcadores sin contenido coincidente (US-23, CU-08 §5.C).
+/// </summary>
+public sealed record RevisarRelevamientoQuery(Guid SolicitanteId, Guid RelevamientoId, IReadOnlyList<string> Etiquetas)
+    : IPeticion<RevisionRelevamiento?>
+{
+    public RevisarRelevamientoQuery(Guid solicitanteId, Guid relevamientoId)
+        : this(solicitanteId, relevamientoId, Array.Empty<string>())
+    {
+    }
+}
 
 // --- Proyección de la revisión consolidada (US-21) ---
 

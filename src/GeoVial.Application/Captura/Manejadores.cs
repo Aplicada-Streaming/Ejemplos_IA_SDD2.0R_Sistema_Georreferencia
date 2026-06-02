@@ -188,17 +188,19 @@ public sealed class SubirContenidoFotoHandler : IManejador<SubirContenidoFotoCom
     private readonly IObservacionRepository _observaciones;
     private readonly IFotoRepository _fotos;
     private readonly IAlmacenFotos _almacen;
+    private readonly IPipelineImagen _pipeline;
     private readonly IServicioAuditoria _auditoria;
 
     public SubirContenidoFotoHandler(
         IUsuarioRepository usuarios, IRelevamientoRepository relevamientos, IObservacionRepository observaciones,
-        IFotoRepository fotos, IAlmacenFotos almacen, IServicioAuditoria auditoria)
+        IFotoRepository fotos, IAlmacenFotos almacen, IPipelineImagen pipeline, IServicioAuditoria auditoria)
     {
         _usuarios = usuarios;
         _relevamientos = relevamientos;
         _observaciones = observaciones;
         _fotos = fotos;
         _almacen = almacen;
+        _pipeline = pipeline;
         _auditoria = auditoria;
     }
 
@@ -238,7 +240,9 @@ public sealed class SubirContenidoFotoHandler : IManejador<SubirContenidoFotoCom
             return Resultado.Fallo(CodigosError.AccesoNoAutorizado);
         }
 
-        var referencia = await _almacen.GuardarAsync(cmd.NombreArchivo, cmd.Contenido, ct);
+        // BT-19: se comprime/redimensiona el binario antes de alojarlo para acotar el payload.
+        var procesado = await _pipeline.ProcesarAsync(cmd.Contenido, ct);
+        var referencia = await _almacen.GuardarAsync(cmd.NombreArchivo, procesado, ct);
         foto.AsignarReferencia(referencia);
 
         if (!await _auditoria.RegistrarAsync(cmd.UsuarioId, "SUBIR_CONTENIDO_FOTO", $"foto={cmd.FotoId}", ct))
@@ -248,6 +252,50 @@ public sealed class SubirContenidoFotoHandler : IManejador<SubirContenidoFotoCom
 
         await _fotos.GuardarCambiosAsync(ct);
         return Resultado.Exito();
+    }
+}
+
+public sealed class DescargarContenidoFotoHandler : IManejador<DescargarContenidoFotoQuery, byte[]?>
+{
+    private readonly IUsuarioRepository _usuarios;
+    private readonly IRelevamientoRepository _relevamientos;
+    private readonly IObservacionRepository _observaciones;
+    private readonly IFotoRepository _fotos;
+    private readonly IAlmacenFotos _almacen;
+
+    public DescargarContenidoFotoHandler(
+        IUsuarioRepository usuarios, IRelevamientoRepository relevamientos, IObservacionRepository observaciones,
+        IFotoRepository fotos, IAlmacenFotos almacen)
+    {
+        _usuarios = usuarios;
+        _relevamientos = relevamientos;
+        _observaciones = observaciones;
+        _fotos = fotos;
+        _almacen = almacen;
+    }
+
+    public async Task<byte[]?> ManejarAsync(DescargarContenidoFotoQuery query, CancellationToken ct = default)
+    {
+        var foto = await _fotos.ObtenerPorIdAsync(query.FotoId, ct);
+        if (foto is null || string.IsNullOrEmpty(foto.ReferenciaArchivo))
+        {
+            return null;
+        }
+
+        var observacion = await _observaciones.ObtenerPorIdAsync(foto.ObservacionId, ct);
+        if (observacion is null)
+        {
+            return null;
+        }
+
+        var relevamiento = await _relevamientos.ObtenerPorIdAsync(observacion.RelevamientoId, ct);
+        var usuario = await _usuarios.ObtenerPorIdAsync(query.SolicitanteId, ct);
+        if (relevamiento is null || usuario is null || !Autorizacion.PuedeAccederArea(usuario, relevamiento.AreaId))
+        {
+            return null;
+        }
+
+        return await _almacen.RecuperarAsync(foto.ReferenciaArchivo, ct);
     }
 }
 

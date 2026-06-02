@@ -4,6 +4,22 @@ using GeoVial.FileHosting;
 
 namespace GeoVial.UnitTests;
 
+/// <summary>Pipeline de imágenes de prueba: por defecto pasa el binario tal cual; puede simular compresión.</summary>
+internal sealed class FakePipelineImagen : IPipelineImagen
+{
+    private readonly byte[]? _salidaFija;
+
+    public FakePipelineImagen(byte[]? salidaFija = null) => _salidaFija = salidaFija;
+
+    public int Invocaciones { get; private set; }
+
+    public Task<byte[]> ProcesarAsync(byte[] original, CancellationToken ct = default)
+    {
+        Invocaciones++;
+        return Task.FromResult(_salidaFija ?? original);
+    }
+}
+
 /// <summary>Backend de alojamiento en memoria para pruebas (sustituye a local/S3, ADR-08).</summary>
 internal sealed class FakeAlmacenFotos : IAlmacenFotos
 {
@@ -210,9 +226,32 @@ internal sealed class FakeComentarioRepository : IComentarioRepository
     public Task<IReadOnlyList<Comentario>> ListarPorMarcadorParaEdicionAsync(Guid marcadorId, CancellationToken ct = default) =>
         Task.FromResult<IReadOnlyList<Comentario>>(_datos.Values.Where(c => c.MarcadorId == marcadorId).ToList());
 
+    // El doble filtra solo por marca de edición; el join con el relevamiento lo resuelve el repo real (un solo relevamiento por escenario).
+    public Task<IReadOnlyList<Comentario>> ListarActualizadosDesdeAsync(Guid relevamientoId, DateTime desde, CancellationToken ct = default) =>
+        Task.FromResult<IReadOnlyList<Comentario>>(_datos.Values.Where(c => c.MarcaUltimaEdicion > desde).ToList());
+
     public Task AgregarAsync(Comentario comentario, CancellationToken ct = default)
     {
         _datos[comentario.ComentarioId] = comentario;
+        return Task.CompletedTask;
+    }
+
+    public Task GuardarCambiosAsync(CancellationToken ct = default) => Task.CompletedTask;
+}
+
+internal sealed class FakeCambioAplicadoRepository : ICambioAplicadoRepository
+{
+    private readonly HashSet<Guid> _aplicados;
+
+    public FakeCambioAplicadoRepository(params Guid[] aplicados) => _aplicados = new HashSet<Guid>(aplicados);
+
+    public IReadOnlyCollection<Guid> Aplicados => _aplicados;
+
+    public Task<bool> ExisteAsync(Guid cambioId, CancellationToken ct = default) => Task.FromResult(_aplicados.Contains(cambioId));
+
+    public Task AgregarAsync(CambioAplicado cambio, CancellationToken ct = default)
+    {
+        _aplicados.Add(cambio.CambioId);
         return Task.CompletedTask;
     }
 
@@ -296,6 +335,18 @@ internal sealed class FakeConflictoRepository : IConflictoRepository
 internal sealed class FakeReloj : IRelojUtc
 {
     public DateTime AhoraUtc => new(2026, 6, 1, 12, 0, 0, DateTimeKind.Utc);
+}
+
+/// <summary>Mediador de prueba que no despacha (la detección de radio reutilizada se prueba aparte en Sprint 05).</summary>
+internal sealed class FakeMediador : GeoVial.Application.Cqrs.IMediador
+{
+    public int Despachos { get; private set; }
+
+    public Task<TResultado> EnviarAsync<TResultado>(GeoVial.Application.Cqrs.IPeticion<TResultado> peticion, CancellationToken ct = default)
+    {
+        Despachos++;
+        return Task.FromResult<TResultado>(default!);
+    }
 }
 
 internal sealed class FakeCredencialRepository : ICredencialRepository

@@ -27,6 +27,7 @@ public sealed class GeoVialDbContext : DbContext
     public DbSet<FotoEtiqueta> FotoEtiquetas => Set<FotoEtiqueta>();
     public DbSet<ComentarioEtiqueta> ComentarioEtiquetas => Set<ComentarioEtiqueta>();
     public DbSet<ConflictoSync> ConflictosSync => Set<ConflictoSync>();
+    public DbSet<CambioAplicado> CambiosAplicados => Set<CambioAplicado>();
 
     protected override void OnModelCreating(ModelBuilder modelo)
     {
@@ -124,6 +125,7 @@ public sealed class GeoVialDbContext : DbContext
             e.HasKey(c => c.ComentarioId);
             e.Property(c => c.Texto).HasMaxLength(2000).IsRequired();
             e.Property(c => c.Momento).IsRequired();
+            e.Property(c => c.MarcaUltimaEdicion).IsRequired();
             e.HasIndex(c => c.MarcadorId).HasDatabaseName("IX_Comentario_Marcador");
         });
 
@@ -155,6 +157,14 @@ public sealed class GeoVialDbContext : DbContext
             e.Property(c => c.RecursosInvolucrados).HasMaxLength(100).IsRequired();
             e.Property(c => c.EstadoResolucion).HasConversion<byte>().IsRequired();
             e.HasIndex(c => new { c.RelevamientoId, c.EstadoResolucion }).HasDatabaseName("IX_ConflictoSync_Relevamiento_Estado");
+        });
+
+        modelo.Entity<CambioAplicado>(e =>
+        {
+            e.ToTable("CambioAplicado");
+            e.HasKey(c => c.CambioId);
+            e.Property(c => c.AplicadoUtc).IsRequired();
+            e.HasIndex(c => c.RelevamientoId).HasDatabaseName("IX_CambioAplicado_Relevamiento");
         });
     }
 }

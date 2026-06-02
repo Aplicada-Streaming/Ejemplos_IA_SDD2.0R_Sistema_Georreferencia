@@ -169,12 +169,26 @@ public sealed class GeoVialApiCliente
 
     // --- Revisión sobre mapa y gestión de marcador (CU-08, CU-09) ---
 
-    public async Task<RevisionRelevamientoDto?> RevisarRelevamientoAsync(Guid relevamientoId, CancellationToken ct = default)
+    public async Task<RevisionRelevamientoDto?> RevisarRelevamientoAsync(Guid relevamientoId, IReadOnlyList<string>? etiquetas = null, CancellationToken ct = default)
     {
-        using var req = new HttpRequestMessage(HttpMethod.Get, $"api/v1/relevamientos/{relevamientoId}/revision");
+        var ruta = $"api/v1/relevamientos/{relevamientoId}/revision";
+        if (etiquetas is { Count: > 0 })
+        {
+            ruta += $"?etiquetas={Uri.EscapeDataString(string.Join(",", etiquetas))}";
+        }
+
+        using var req = new HttpRequestMessage(HttpMethod.Get, ruta);
         Autorizar(req);
         var resp = await _http.SendAsync(req, ct);
         return resp.IsSuccessStatusCode ? await resp.Content.ReadFromJsonAsync<RevisionRelevamientoDto>(ct) : null;
+    }
+
+    public async Task<byte[]?> DescargarContenidoFotoAsync(Guid fotoId, CancellationToken ct = default)
+    {
+        using var req = new HttpRequestMessage(HttpMethod.Get, $"api/v1/fotos/{fotoId}/contenido");
+        Autorizar(req);
+        var resp = await _http.SendAsync(req, ct);
+        return resp.IsSuccessStatusCode ? await resp.Content.ReadAsByteArrayAsync(ct) : null;
     }
 
     public Task<(bool Ok, string Mensaje)> AgregarComentarioAsync(Guid marcadorId, Guid? fotoId, string texto, CancellationToken ct = default) =>
