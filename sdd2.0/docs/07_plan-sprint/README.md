@@ -12,7 +12,7 @@
 
 | Sprint | Estado | Fechas | Plan |
 | --- | --- | --- | --- |
-| Sprint 20 | Por planificar (pulido transversal del MVP: mapa interactivo, caché de fotos, pruebas E2E, endurecimiento para release) | — | — |
+| Sprint 21 | Por planificar (primer release: tag v1.0.0 de la librería y endurecimiento; o pulido restante: mapa interactivo, caché, E2E de conflictos) | — | — |
 
 ## Histórico de sprints cerrados
 
@@ -38,6 +38,7 @@
 | Sprint 17 (revisión sobre mapa móvil) | Cerrado (Cumplido; velocity 10) | [plan-iteracion-sprint-17_v1.0.md](plan-iteracion-sprint-17_v1.0.md) | [sprint-review-sprint-17_v1.0.md](sprint-review-sprint-17_v1.0.md) | [sprint-retrospectiva-sprint-17_v1.0.md](sprint-retrospectiva-sprint-17_v1.0.md) |
 | Sprint 18 (cierre US-26: conflictos web) | Cerrado (Cumplido; velocity 8) | [plan-iteracion-sprint-18_v1.0.md](plan-iteracion-sprint-18_v1.0.md) | [sprint-review-sprint-18_v1.0.md](sprint-review-sprint-18_v1.0.md) | [sprint-retrospectiva-sprint-18_v1.0.md](sprint-retrospectiva-sprint-18_v1.0.md) |
 | Sprint 19 (edición sobre el marcador móvil) | Cerrado (Cumplido; velocity 8) | [plan-iteracion-sprint-19_v1.0.md](plan-iteracion-sprint-19_v1.0.md) | [sprint-review-sprint-19_v1.0.md](sprint-review-sprint-19_v1.0.md) | [sprint-retrospectiva-sprint-19_v1.0.md](sprint-retrospectiva-sprint-19_v1.0.md) |
+| Sprint 20 (endurecimiento E2E del MVP) | Cerrado (Cumplido; velocity 8) | [plan-iteracion-sprint-20_v1.0.md](plan-iteracion-sprint-20_v1.0.md) | [sprint-review-sprint-20_v1.0.md](sprint-review-sprint-20_v1.0.md) | [sprint-retrospectiva-sprint-20_v1.0.md](sprint-retrospectiva-sprint-20_v1.0.md) |
 
 ## Plantillas reusables
 
