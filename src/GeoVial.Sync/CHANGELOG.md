@@ -9,10 +9,11 @@ Todas las novedades relevantes de la librería de sincronización. El formato si
 
 _(sin cambios pendientes)_
 
-## [1.0.0] — pendiente de tag `v1.0.0`
+## [1.0.0] — 2026-06-02
 
-Primer release **stable** de la librería de sincronización. La superficie pública (`Abstractions`) queda
-congelada bajo SemVer: a partir de aquí, todo cambio incompatible bumpea MAJOR (ADR-07, estrategia-versionado §6).
+Primer release **stable** de la librería de sincronización (tag `v1.0.0`). La superficie pública
+(`Abstractions`) queda congelada bajo SemVer: a partir de aquí, todo cambio incompatible bumpea MAJOR
+(ADR-07, estrategia-versionado §6).
 
 ### Added
 - Empaquetado NuGet de la librería (PackageId `GeoVial.Sync`) con versionado automático por MinVer y
@@ -33,5 +34,9 @@ congelada bajo SemVer: a partir de aquí, todo cambio incompatible bumpea MAJOR 
 - Excepciones: `ConsolidationException`, `ConflictNotMarkedException`, `SyncInterruptedException`,
   `AlmacenamientoLocalInsuficienteException`.
 
-> El primer release **stable** (`v1.0.0`) se materializa al crear el tag `v1.0.0` sobre `main`
-> (estrategia-versionado §3, §5). Hasta entonces, los artefactos son del canal **preview** (prerelease).
+> Materializado al crear el tag `v1.0.0` sobre `main` (estrategia-versionado §3, §5): el push del tag dispara
+> `publish-sync.yml` (paquete a GitHub Packages, canal **stable**, con SBOM CycloneDX + firma cosign keyless)
+> y `publish-images.yml` (las tres imágenes Docker a GHCR, con SBOM + firma). En la primera ejecución del
+> tag, `publish-sync.yml` falló con NU5026 (interacción de `GeneratePackageOnBuild` con `dotnet pack` en
+> checkout limpio); se corrigió el step de empaquetado (`-p:GeneratePackageOnBuild=false`) y la publicación
+> stable se completa re-disparando el tag sobre `main` con el fix.

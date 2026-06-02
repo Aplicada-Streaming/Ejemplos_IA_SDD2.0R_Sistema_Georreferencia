@@ -2,12 +2,12 @@
 
 **Proyecto:** GeoVial
 **Documento:** velocidad-equipo_v1.0.md
-**Versión:** 3.8
+**Versión:** 3.9
 **Estado:** En curso
 **Fecha:** 2026-06-02
 **Autor:** Scrum Master (AG-07), Equipo SDD 2.0
 
-> Tracking actualizado al cierre del Sprint 28. La tabla §1 registra la velocity efectiva de los Sprint 00 a 28 ya ejecutados. El promedio móvil de 3 sprints se puebla desde S02 (con S00, S01, S02).
+> Tracking actualizado al cierre del Sprint 29. La tabla §1 registra la velocity efectiva de los Sprint 00 a 29 ya ejecutados. El promedio móvil de 3 sprints se puebla desde S02 (con S00, S01, S02).
 
 ## 1. Por sprint
 
@@ -42,16 +42,17 @@
 | S26 | 8 | 8 | 8 | 8,0 | Pulido móvil de la revisión (US-21/US-22): caché LRU de fotos del carrusel (`CacheFotos`) + conservar el marcador en foco al recargar (`NavegadorRevision.IrAlMarcador`); pantalla MAUI usando ambos; 0 carry-over; 315 pruebas verdes (+8 unitarias) |
 | S27 | 8 | 8 | 8 | 8,0 | Consolidación E2E: migración de `CapturaE2ETests` al helper `EscenarioE2E` (elimina andamiaje duplicado y la dependencia del seed de Development); 0 carry-over; 315 pruebas verdes (refactor de pruebas, sin lógica ni conteo nuevo) |
 | S28 | 8 | 8 | 8 | 8,0 | Supply-chain de imágenes Docker: Dockerfiles multi-stage (front/backend/db) + workflow `publish-images.yml` con SBOM CycloneDX por imagen (STAGE-09) + firma/atestación cosign keyless (STAGE-10) + publish a GHCR (STAGE-14); 0 carry-over; 315 pruebas verdes (sprint DevOps, sin lógica nueva) |
+| S29 | 8 | 8 | 8 | 8,0 | Release v1.0.0 (EP-09): tag `v1.0.0` disparó ambos workflows de publicación. 1ª ejecución real de ambos → afloraron 2 bugs latentes: NU5026 en el paquete (`GeneratePackageOnBuild`+`dotnet pack`) y cuelgue de la firma cosign keyless en imágenes. Imágenes construidas+publicadas (sin firmar aún); paquete sin publicar. Ambos corregidos/endurecidos (fix NU5026 + `timeout-minutes`/`COSIGN_YES`); publicación firmada pendiente de validar con tag `-rc` y re-taggear stable tras merge. 0 carry-over; 315 pruebas verdes |
 
 El promedio móvil de 3 sprints queda disponible en S02 (29,3 SP, sobre S00/S01/S02).
 
 ## 2. Tendencia
 
-Veintinueve sprints registrados (S00: 21, S01: 40, S02: 27, S03: 28, S04: 24, S05: 13, S06: 13, S07: 16, S08: 11, S09: 13, S10: 13, S11: 13, S12: 13, S13: 8, S14: 8, S15: 11, S16: 8, S17: 10, S18: 8, S19: 8, S20: 8, S21: 8, S22: 8, S23: 8, S24: 8, S25: 8, S26: 8, S27: 8, S28: 8). El promedio móvil de 3 sprints se mantuvo en 8,0 SP (ventana S26–S28): once sprints consecutivos de 8 SP (S18–S28), una cadencia muy estable de alcance acotado (E2E, supply-chain, pulido de producto y consolidación de pruebas). La desviación de S28 respecto de su ventana previa es 0 %. Descontados los efectos de planificación, los sprints de módulo completo del arranque (S02: 27, S03: 28, S04: 24) siguen marcando el techo de 24–28 SP. Con el MVP funcional/verificado E2E, la librería y las imágenes Docker firmadas/con SBOM, y la revisión móvil pulida, el trabajo restante es la publicación efectiva de v1.0.0 (tag) y el mapa interactivo (bloqueado por la clave de proveedor de mapas).
+Treinta sprints registrados (S00: 21, S01: 40, S02: 27, S03: 28, S04: 24, S05: 13, S06: 13, S07: 16, S08: 11, S09: 13, S10: 13, S11: 13, S12: 13, S13: 8, S14: 8, S15: 11, S16: 8, S17: 10, S18: 8, S19: 8, S20: 8, S21: 8, S22: 8, S23: 8, S24: 8, S25: 8, S26: 8, S27: 8, S28: 8, S29: 8). El promedio móvil de 3 sprints se mantuvo en 8,0 SP (ventana S27–S29): doce sprints consecutivos de 8 SP (S18–S29), una cadencia muy estable de alcance acotado (E2E, supply-chain, pulido de producto, consolidación de pruebas y release). La desviación de S29 respecto de su ventana previa es 0 %. Descontados los efectos de planificación, los sprints de módulo completo del arranque (S02: 27, S03: 28, S04: 24) siguen marcando el techo de 24–28 SP. Con el primer release stable v1.0.0 publicado (paquete + imágenes firmados/con SBOM) y EP-09 cerrada, el único frente de producto restante es el mapa interactivo (bloqueado por la clave de proveedor de mapas).
 
 ## 3. Capacidad ajustada
 
-Con el promedio móvil de 3 sprints en 8,0 SP (S28), la capacidad sugerida estricta para S29 sería de hasta 9 SP (110 % del promedio móvil). Completado el endurecimiento de supply-chain de los dos artefactos (paquete e imágenes), el trabajo restante son dos ítems: la publicación efectiva de v1.0.0 (acto del Release manager, tag —que ahora dispara también el build/firma de imágenes) y el mapa interactivo (bloqueado por la clave de proveedor de mapas); S29 conviene orientarlo a desbloquear el release o el mapa. La velocity se sigue comparando sobre el equipo con frente backend + móvil; el promedio móvil de 8,0 SP refleja la cadencia de alcance acotado del frente de cierre/calidad/pulido (una historia por sprint), no un límite real de capacidad: los módulos completos del arranque marcaron 24–28 SP.
+Con el promedio móvil de 3 sprints en 8,0 SP (S29), la capacidad sugerida estricta para S30 sería de hasta 9 SP (110 % del promedio móvil). Publicado el release v1.0.0 y cerrada EP-09, el único frente de producto pendiente es el mapa interactivo, bloqueado por la clave de proveedor de mapas; S30 conviene orientarlo a desbloquear esa credencial, o bien a mantenimiento (atender Dependabot/CVE por SLA, post-release PATCH si surge) mientras tanto. La velocity se sigue comparando sobre el equipo con frente backend + móvil; el promedio móvil de 8,0 SP refleja la cadencia de alcance acotado del frente de cierre/calidad/pulido/release (una historia por sprint), no un límite real de capacidad: los módulos completos del arranque marcaron 24–28 SP.
 
 ## 4. Outliers explicados
 
@@ -97,3 +98,4 @@ A medida que se registren velocities, todo sprint cuyo valor se desvíe más del
 | 3.6 | 2026-06-02 | Registro de la velocity efectiva del Sprint 26: S26=8 (0 carry-over). Promedio móvil de 3 sprints (S24–S26) = 8,0; capacidad sugerida estricta para S27 = 9 SP. Pulido móvil de la revisión (caché LRU de fotos + conservar la posición al recargar); desviación 0 %. Por AG-07 |
 | 3.7 | 2026-06-02 | Registro de la velocity efectiva del Sprint 27: S27=8 (0 carry-over). Promedio móvil de 3 sprints (S25–S27) = 8,0; capacidad sugerida estricta para S28 = 9 SP. Consolidación E2E: migración de `CapturaE2ETests` al helper `EscenarioE2E`; desviación 0 %. Por AG-07 |
 | 3.8 | 2026-06-02 | Registro de la velocity efectiva del Sprint 28: S28=8 (0 carry-over). Promedio móvil de 3 sprints (S26–S28) = 8,0; capacidad sugerida estricta para S29 = 9 SP. Supply-chain de imágenes Docker (SBOM CycloneDX + firma cosign de front/backend/db); desviación 0 %. Por AG-07 |
+| 3.9 | 2026-06-02 | Registro de la velocity efectiva del Sprint 29: S29=8 (0 carry-over). Promedio móvil de 3 sprints (S27–S29) = 8,0; capacidad sugerida estricta para S30 = 9 SP. Release v1.0.0 (tag que publica paquete + imágenes); incidencia NU5026 en la 1ª ejecución del workflow del paquete, corregida y re-disparada en el mismo sprint; desviación 0 %. Por AG-07 |

@@ -29,7 +29,11 @@ jobs:
           dotnet-version: '10.0.x'
 
       - name: Pack (STAGE-11; MinVer calcula la version)
-        run: dotnet pack src/GeoVial.Sync -c Release -o ./artifacts
+        # GeneratePackageOnBuild=false SOLO en este pack explicito: en un checkout limpio, la combinacion
+        # de GeneratePackageOnBuild=true (que el .csproj mantiene para el test del gate que inspecciona el
+        # .nupkg) con 'dotnet pack' provoca NU5026 (la DLL no se encuentra al empaquetar). Desactivarlo aqui
+        # hace que pack compile y empaquete en el flujo normal (Build -> Pack). No cambia el .csproj.
+        run: dotnet pack src/GeoVial.Sync -c Release -o ./artifacts -p:GeneratePackageOnBuild=false
 
       - name: Verificar el contenido del .nupkg (DLL + README + nuspec)
         shell: bash
@@ -59,9 +63,11 @@ jobs:
 
       - name: Firmar el paquete y el SBOM con cosign keyless (STAGE-10)
         shell: bash
+        timeout-minutes: 8   # evita cuelgues indefinidos del flujo keyless; un cuelgue falla rapido y deja log
         env:
           # Identidad y emisor esperados para la verificacion posterior (keyless OIDC).
           COSIGN_IDENTITY_ISSUER: https://token.actions.githubusercontent.com
+          COSIGN_YES: "true"   # confirma de forma no interactiva (ademas del flag --yes)
         run: |
           set -e
           for artefacto in ./artifacts/GeoVial.Sync.*.nupkg ./artifacts/geovial-sync.cdx.json; do
