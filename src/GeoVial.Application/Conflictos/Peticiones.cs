@@ -5,11 +5,12 @@ namespace GeoVial.Application.Conflictos;
 
 /// <summary>Commands y queries de detección y resolución de conflictos por radio (CU-11, CU-12).</summary>
 
-/// <summary>Decisión humana de resolución de un conflicto (CU-12, RN-02).</summary>
+/// <summary>Decisión humana de resolución de un conflicto (CU-12, RN-02/RN-04).</summary>
 public enum DecisionConflicto
 {
     Unificar = 1,
     MantenerSeparados = 2,
+    ConfirmarEdicion = 3,
 }
 
 /// <summary>US-25 / CU-11: detecta los pares de marcadores dentro del radio y los registra como pendientes (RN-02).</summary>
@@ -33,4 +34,5 @@ public sealed record ConflictosPendientesQuery(Guid SolicitanteId, Guid Relevami
 
 public sealed record ConflictoDetectado(Guid ConflictoSyncId, Guid MarcadorA, Guid MarcadorB, double DistanciaMetros);
 
-public sealed record ConflictoPendiente(Guid ConflictoSyncId, int Tipo, Guid MarcadorA, Guid MarcadorB);
+/// <summary>Conflicto pendiente proyectado para la web: marcadores para los de radio, recurso para los de edición.</summary>
+public sealed record ConflictoPendiente(Guid ConflictoSyncId, int Tipo, Guid? MarcadorA, Guid? MarcadorB, Guid? Recurso);

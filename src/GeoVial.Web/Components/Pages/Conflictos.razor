@@ -53,12 +53,22 @@ else
                 @foreach (var c in conflictos)
                 {
                     <article style="border:1px solid #ccc; margin:8px 0; padding:8px;">
-                        <h4>Conflicto @c.ConflictoSyncId</h4>
-                        <p>Marcador A: @c.MarcadorA</p>
-                        <p>Marcador B: @c.MarcadorB</p>
-                        <button @onclick="() => Unificar(c.ConflictoSyncId, c.MarcadorA)">Unificar en A</button>
-                        <button @onclick="() => Unificar(c.ConflictoSyncId, c.MarcadorB)">Unificar en B</button>
-                        <button @onclick="() => MantenerSeparados(c.ConflictoSyncId)">Mantener separados</button>
+                        @if (c.Tipo == 2)
+                        {
+                            <h4>Edición en conflicto @c.ConflictoSyncId</h4>
+                            <p>Recurso: @c.Recurso</p>
+                            <p>El last-write-wins consolidó la última escritura; confirmá para dar por dirimida la edición (RN-04).</p>
+                            <button @onclick="() => ConfirmarEdicion(c.ConflictoSyncId)">Confirmar resolución</button>
+                        }
+                        else
+                        {
+                            <h4>Marcadores en un mismo radio @c.ConflictoSyncId</h4>
+                            <p>Marcador A: @c.MarcadorA</p>
+                            <p>Marcador B: @c.MarcadorB</p>
+                            <button @onclick="() => Unificar(c.ConflictoSyncId, c.MarcadorA!.Value)">Unificar en A</button>
+                            <button @onclick="() => Unificar(c.ConflictoSyncId, c.MarcadorB!.Value)">Unificar en B</button>
+                            <button @onclick="() => MantenerSeparados(c.ConflictoSyncId)">Mantener separados</button>
+                        }
                     </article>
                 }
             }
@@ -149,6 +159,13 @@ else
     {
         var (ok, msg) = await Api.ResolverConflictoAsync(conflictoId, 2, null);
         mensaje = ok ? msg : $"No se pudo resolver: {msg}";
+        await Cargar();
+    }
+
+    private async Task ConfirmarEdicion(Guid conflictoId)
+    {
+        var (ok, msg) = await Api.ResolverConflictoAsync(conflictoId, 3, null);
+        mensaje = ok ? msg : $"No se pudo confirmar: {msg}";
         await Cargar();
     }
 }

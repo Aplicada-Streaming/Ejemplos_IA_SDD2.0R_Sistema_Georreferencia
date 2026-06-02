@@ -395,7 +395,7 @@ relevamientos.MapGet("/{relevamientoId:guid}/conflictos", async (Guid relevamien
     }
 
     var lista = await mediador.EnviarAsync(new ConflictosPendientesQuery(usuarioId, relevamientoId), ct);
-    return Results.Ok(lista.Select(c => new ConflictoPendienteDto(c.ConflictoSyncId, c.Tipo, c.MarcadorA, c.MarcadorB)));
+    return Results.Ok(lista.Select(c => new ConflictoPendienteDto(c.ConflictoSyncId, c.Tipo, c.MarcadorA, c.MarcadorB, c.Recurso)));
 });
 
 relevamientos.MapPut("/{relevamientoId:guid}/radio", async (Guid relevamientoId, AjustarRadioRequest req, ClaimsPrincipal usuario, IMediador mediador, CancellationToken ct) =>

@@ -200,25 +200,17 @@ public sealed class ResolverConflictoHandler : IManejador<ResolverConflictoComma
             return Resultado.Fallo(CodigosError.RelevamientoSoloLectura);
         }
 
-        var (marcadorA, marcadorB) = conflicto.Marcadores();
-
-        if (cmd.Decision == DecisionConflicto.Unificar)
+        // La decisión debe corresponder al tipo de conflicto: radio → unificar/mantener; edición → confirmar.
+        var (resuelto, operacion) = conflicto.Tipo == TipoConflicto.EdicionEnConflicto
+            ? await ResolverEdicionAsync(conflicto, cmd.Decision, ct)
+            : await ResolverRadioAsync(conflicto, cmd.Decision, cmd.MarcadorResultanteId, ct);
+        if (!resuelto.EsExito)
         {
-            var unificacion = await UnificarAsync(cmd.MarcadorResultanteId, marcadorA, marcadorB, ct);
-            if (!unificacion.EsExito)
-            {
-                return unificacion;
-            }
-        }
-        else
-        {
-            await LevantarMarcaAsync(marcadorA, ct);
-            await LevantarMarcaAsync(marcadorB, ct);
+            return resuelto;
         }
 
         conflicto.Resolver(cmd.UsuarioId);
 
-        var operacion = cmd.Decision == DecisionConflicto.Unificar ? "UNIFICAR_MARCADORES" : "MANTENER_SEPARADOS";
         if (!await _auditoria.RegistrarAsync(cmd.UsuarioId, operacion, $"conflicto={cmd.ConflictoSyncId}", ct))
         {
             return Resultado.Fallo(CodigosError.AccionNoAuditada);
@@ -226,6 +218,37 @@ public sealed class ResolverConflictoHandler : IManejador<ResolverConflictoComma
 
         await _conflictos.GuardarCambiosAsync(ct);
         return Resultado.Exito();
+    }
+
+    private async Task<(Resultado, string)> ResolverRadioAsync(ConflictoSync conflicto, DecisionConflicto decision, Guid? resultanteId, CancellationToken ct)
+    {
+        var (marcadorA, marcadorB) = conflicto.Marcadores();
+        if (decision == DecisionConflicto.Unificar)
+        {
+            return (await UnificarAsync(resultanteId, marcadorA, marcadorB, ct), "UNIFICAR_MARCADORES");
+        }
+
+        if (decision == DecisionConflicto.MantenerSeparados)
+        {
+            await LevantarMarcaAsync(marcadorA, ct);
+            await LevantarMarcaAsync(marcadorB, ct);
+            return (Resultado.Exito(), "MANTENER_SEPARADOS");
+        }
+
+        // ConfirmarEdicion no aplica a un conflicto de radio.
+        return (Resultado.Fallo(CodigosError.DecisionConflictoInaplicable), string.Empty);
+    }
+
+    private static Task<(Resultado, string)> ResolverEdicionAsync(ConflictoSync conflicto, DecisionConflicto decision, CancellationToken ct)
+    {
+        // RN-04: el valor consolidado por última escritura ya prevaleció; confirmar da por dirimida la edición.
+        if (decision != DecisionConflicto.ConfirmarEdicion)
+        {
+            return Task.FromResult((Resultado.Fallo(CodigosError.DecisionConflictoInaplicable), string.Empty));
+        }
+
+        _ = conflicto.Recurso(); // recurso dirimido (queda con el valor de última escritura)
+        return Task.FromResult((Resultado.Exito(), "CONFIRMAR_EDICION"));
     }
 
     private async Task<Resultado> UnificarAsync(Guid? resultanteId, Guid marcadorA, Guid marcadorB, CancellationToken ct)
@@ -299,8 +322,14 @@ public sealed class ConflictosPendientesHandler : IManejador<ConflictosPendiente
         var pendientes = await _conflictos.ListarPendientesPorRelevamientoAsync(query.RelevamientoId, ct);
         return pendientes.Select(c =>
         {
-            var (a, b) = c.Marcadores();
-            return new ConflictoPendiente(c.ConflictoSyncId, (int)c.Tipo, a, b);
+            // Los conflictos de radio llevan dos marcadores; los de edición, un único recurso (RN-04).
+            if (c.Tipo == TipoConflicto.MarcadoresEnRadio)
+            {
+                var (a, b) = c.Marcadores();
+                return new ConflictoPendiente(c.ConflictoSyncId, (int)c.Tipo, a, b, null);
+            }
+
+            return new ConflictoPendiente(c.ConflictoSyncId, (int)c.Tipo, null, null, c.Recurso());
         }).ToList();
     }
 }
