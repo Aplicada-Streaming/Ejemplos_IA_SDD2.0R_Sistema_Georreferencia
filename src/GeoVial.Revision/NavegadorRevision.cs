@@ -40,6 +40,25 @@ public sealed class NavegadorRevision
 
     public void AnteriorFoto() => MoverFoto(-1);
 
+    /// <summary>
+    /// Posiciona el carrusel en el marcador indicado (reiniciando la foto en foco), para restaurar la posición
+    /// tras recargar la revisión. Devuelve false si el marcador ya no existe (no cambia la posición).
+    /// </summary>
+    public bool IrAlMarcador(Guid marcadorId)
+    {
+        for (var i = 0; i < _marcadores.Count; i++)
+        {
+            if (_marcadores[i].MarcadorId == marcadorId)
+            {
+                IndiceMarcador = i;
+                IndiceFoto = 0;
+                return true;
+            }
+        }
+
+        return false;
+    }
+
     private void MoverMarcador(int paso)
     {
         if (!HayMarcadores)

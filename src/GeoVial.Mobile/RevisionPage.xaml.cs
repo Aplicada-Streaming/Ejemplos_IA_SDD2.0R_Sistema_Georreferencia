@@ -9,6 +9,7 @@ public partial class RevisionPage : ContentPage
 	private readonly HttpClient _http;
 	private readonly ClienteRevisionHttp _cliente;
 	private readonly ClienteEdicionMarcador _editor;
+	private readonly CacheFotos _cacheFotos = new();
 
 	private NavegadorRevision? _nav;
 	private Guid? _relevamientoId;
@@ -95,7 +96,14 @@ public partial class RevisionPage : ContentPage
 	{
 		try
 		{
-			var bytes = await _http.GetByteArrayAsync($"api/v1/fotos/{fotoId}/contenido");
+			// Sirve la foto en foco desde la caché en memoria para no re-descargarla al navegar el carrusel.
+			var bytes = _cacheFotos.Obtener(fotoId);
+			if (bytes is null)
+			{
+				bytes = await _http.GetByteArrayAsync($"api/v1/fotos/{fotoId}/contenido");
+				_cacheFotos.Guardar(fotoId, bytes);
+			}
+
 			return ImageSource.FromStream(() => new MemoryStream(bytes));
 		}
 		catch
@@ -154,7 +162,7 @@ public partial class RevisionPage : ContentPage
 		}
 	}
 
-	// Recarga la revisión tras una edición para reflejar el cambio (vuelve al primer marcador).
+	// Recarga la revisión tras una edición para reflejar el cambio, conservando el marcador en foco.
 	private async Task RecargarAsync()
 	{
 		if (_relevamientoId is not { } id)
@@ -162,10 +170,17 @@ public partial class RevisionPage : ContentPage
 			return;
 		}
 
+		var marcadorEnFoco = _nav?.MarcadorActual?.MarcadorId;
+
 		var revision = await _cliente.ObtenerAsync(id);
 		if (revision is not null)
 		{
 			_nav = new NavegadorRevision(revision);
+			if (marcadorEnFoco is { } mid)
+			{
+				_nav.IrAlMarcador(mid); // restaura la posición; si el marcador ya no existe, queda en el primero
+			}
+
 			await RenderAsync();
 		}
 	}
