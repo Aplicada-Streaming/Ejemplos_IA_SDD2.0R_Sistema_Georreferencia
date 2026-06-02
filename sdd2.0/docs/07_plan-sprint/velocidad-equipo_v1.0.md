@@ -2,12 +2,12 @@
 
 **Proyecto:** GeoVial
 **Documento:** velocidad-equipo_v1.0.md
-**Versión:** 2.7
+**Versión:** 2.8
 **Estado:** En curso
 **Fecha:** 2026-06-02
 **Autor:** Scrum Master (AG-07), Equipo SDD 2.0
 
-> Tracking actualizado al cierre del Sprint 17. La tabla §1 registra la velocity efectiva de los Sprint 00 a 17 ya ejecutados. El promedio móvil de 3 sprints se puebla desde S02 (con S00, S01, S02).
+> Tracking actualizado al cierre del Sprint 18. La tabla §1 registra la velocity efectiva de los Sprint 00 a 18 ya ejecutados. El promedio móvil de 3 sprints se puebla desde S02 (con S00, S01, S02).
 
 ## 1. Por sprint
 
@@ -31,16 +31,17 @@
 | S15 | 11 | 11 | 11 | 9,0 | Ubicación manual del punto (US-13) + subida del binario de la foto (BT-20) en el cliente, con FotoId expuesto en la captura; 0 carry-over; 282 pruebas verdes |
 | S16 | 8 | 8 | 8 | 9,0 | Publicación de GeoVial.Sync como paquete preview (EP-09): metadatos NuGet + MinVer + workflow/scripts + consumidor samples/01-sync-basico; 0 carry-over; 282 pruebas verdes (sprint de empaquetado, sin lógica de dominio nueva) |
 | S17 | 10 | 10 | 10 | 9,7 | Revisión sobre mapa en el cliente móvil (US-21/US-22, CU-08): cliente de la API de revisión + navegación del carrusel (GeoVial.Revision); pantalla MAUI; 0 carry-over; 289 pruebas verdes |
+| S18 | 8 | 8 | 8 | 8,7 | Cierre de US-26 (EP-06): resolución de ediciones en conflicto desde la web + distinción de tipos + corrección del listado; 0 carry-over; 293 pruebas verdes |
 
 El promedio móvil de 3 sprints queda disponible en S02 (29,3 SP, sobre S00/S01/S02).
 
 ## 2. Tendencia
 
-Dieciocho sprints registrados (S00: 21, S01: 40, S02: 27, S03: 28, S04: 24, S05: 13, S06: 13, S07: 16, S08: 11, S09: 13, S10: 13, S11: 13, S12: 13, S13: 8, S14: 8, S15: 11, S16: 8, S17: 10). El promedio móvil de 3 sprints subió a 9,7 SP (ventana S15–S17): S17 (revisión sobre mapa móvil) cerró en 10 SP. La desviación de S17 respecto de su ventana previa (+11 %) queda dentro del umbral. Descontados los efectos de planificación de los cierres/arranques de alcance acotado, los sprints de módulo completo del arranque (S02: 27, S03: 28, S04: 24) siguen marcando el techo de 24–28 SP. Con la captura y la revisión ya en el cliente móvil, los próximos sprints abordan la resolución de conflictos en la web (US-26) y la edición sobre el marcador desde el móvil.
+Diecinueve sprints registrados (S00: 21, S01: 40, S02: 27, S03: 28, S04: 24, S05: 13, S06: 13, S07: 16, S08: 11, S09: 13, S10: 13, S11: 13, S12: 13, S13: 8, S14: 8, S15: 11, S16: 8, S17: 10, S18: 8). El promedio móvil de 3 sprints quedó en 8,7 SP (ventana S16–S18): S18 (cierre de US-26) fue un sprint de 8 SP de alcance acotado. La desviación de S18 respecto de su ventana previa (−17 %) queda dentro del umbral. Descontados los efectos de planificación de los cierres/arranques de alcance acotado, los sprints de módulo completo del arranque (S02: 27, S03: 28, S04: 24) siguen marcando el techo de 24–28 SP. Cerradas EP-06 (conflictos web) y el frente móvil de captura/revisión, los próximos sprints abordan la edición sobre el marcador desde el móvil (US-15 cliente) y el pulido transversal del MVP.
 
 ## 3. Capacidad ajustada
 
-Con el promedio móvil de 3 sprints en 9,7 SP (S17), la capacidad sugerida estricta para S18 sería de hasta 11 SP (110 % del promedio móvil). Con la captura y la revisión ya en el cliente móvil, S18 puede abordar la resolución de conflictos en la web (US-26) o la edición sobre el marcador desde el móvil (US-15 cliente). La velocity se sigue comparando sobre el equipo con frente backend + móvil; el promedio móvil de 9,7 SP refleja la cadencia de alcance acotado del frente móvil (una a dos historias por sprint), no un límite real de capacidad: los módulos completos del arranque marcaron 24–28 SP.
+Con el promedio móvil de 3 sprints en 8,7 SP (S18), la capacidad sugerida estricta para S19 sería de hasta 10 SP (110 % del promedio móvil). Con EP-06 cerrada (conflictos web), S19 puede abordar la edición sobre el marcador desde el móvil (US-15 cliente: comentarios/etiquetas) o el pulido transversal del MVP (mapa interactivo, caché de fotos). La velocity se sigue comparando sobre el equipo con frente backend + móvil; el promedio móvil de 8,7 SP refleja la cadencia de alcance acotado del frente móvil/web (una historia por sprint), no un límite real de capacidad: los módulos completos del arranque marcaron 24–28 SP.
 
 ## 4. Outliers explicados
 
@@ -75,3 +76,4 @@ A medida que se registren velocities, todo sprint cuyo valor se desvíe más del
 | 2.5 | 2026-06-02 | Registro de la velocity efectiva del Sprint 15: S15=11 (0 carry-over). Promedio móvil de 3 sprints (S13–S15) = 9,0; capacidad sugerida estricta para S16 = 10 SP. Ubicación manual del punto (US-13) + subida del binario de la foto (BT-20), frente cliente; desviación +13 % (dentro del umbral). Por AG-07 |
 | 2.6 | 2026-06-02 | Registro de la velocity efectiva del Sprint 16: S16=8 (0 carry-over). Promedio móvil de 3 sprints (S14–S16) = 9,0; capacidad sugerida estricta para S17 = 10 SP. Publicación de GeoVial.Sync como paquete preview (EP-09, empaquetado/DevOps); desviación −11 % (dentro del umbral). Por AG-07 |
 | 2.7 | 2026-06-02 | Registro de la velocity efectiva del Sprint 17: S17=10 (0 carry-over). Promedio móvil de 3 sprints (S15–S17) = 9,7; capacidad sugerida estricta para S18 = 11 SP. Revisión sobre mapa en el cliente móvil (US-21/US-22); desviación +11 % (dentro del umbral). Por AG-07 |
+| 2.8 | 2026-06-02 | Registro de la velocity efectiva del Sprint 18: S18=8 (0 carry-over). Promedio móvil de 3 sprints (S16–S18) = 8,7; capacidad sugerida estricta para S19 = 10 SP. Cierre de US-26 (EP-06, resolución de ediciones en conflicto web); desviación −17 % (dentro del umbral). Por AG-07 |

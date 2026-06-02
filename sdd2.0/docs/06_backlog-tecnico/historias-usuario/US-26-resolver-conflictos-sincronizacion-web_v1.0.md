@@ -3,7 +3,7 @@
 **Proyecto:** GeoVial
 **Documento:** US-26-resolver-conflictos-sincronizacion-web_v1.0.md
 **Versión:** 1.0
-**Estado:** Borrador
+**Estado:** Entregada (radio S05, ediciones S18)
 **Fecha:** 2026-06-01
 **Autor:** Equipo GeoVial (AG-06)
 **Épica:** EP-06 Resolución de conflictos
