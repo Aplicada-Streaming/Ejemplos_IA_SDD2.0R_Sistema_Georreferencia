@@ -1,0 +1,18 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <IsPackable>false</IsPackable>
+    <RootNamespace>GeoVial.SyncBasico</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- Consumidor de prueba (guía de publicación §3): en CI por ProjectReference; la instalación por
+         paquete (dotnet add package GeoVial.Sync) es la verificación manual post-publish. -->
+    <ProjectReference Include="..\..\src\GeoVial.Sync\GeoVial.Sync.csproj" />
+  </ItemGroup>
+
+</Project>
