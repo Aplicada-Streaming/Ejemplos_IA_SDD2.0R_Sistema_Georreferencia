@@ -72,6 +72,7 @@
 
 	<ItemGroup>
 		<ProjectReference Include="..\GeoVial.Sync\GeoVial.Sync.csproj" />
+		<ProjectReference Include="..\GeoVial.CapturaCampo\GeoVial.CapturaCampo.csproj" />
 	</ItemGroup>
 
 </Project>
