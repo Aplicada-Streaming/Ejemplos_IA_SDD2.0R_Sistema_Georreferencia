@@ -3,7 +3,7 @@
 **Proyecto:** GeoVial
 **Documento:** US-15-gestionar-fotos-comentarios-etiquetas-marcador_v1.0.md
 **Versión:** 1.0
-**Estado:** Ready
+**Estado:** Entregada (backend S04, frente cliente S19)
 **Fecha:** 2026-06-01
 **Autor:** Equipo GeoVial (AG-06)
 **Épica:** EP-03 Captura y georreferenciación

@@ -8,14 +8,17 @@ public partial class RevisionPage : ContentPage
 {
 	private readonly HttpClient _http;
 	private readonly ClienteRevisionHttp _cliente;
+	private readonly ClienteEdicionMarcador _editor;
 
 	private NavegadorRevision? _nav;
+	private Guid? _relevamientoId;
 
-	public RevisionPage(HttpClient http, ClienteRevisionHttp cliente)
+	public RevisionPage(HttpClient http, ClienteRevisionHttp cliente, ClienteEdicionMarcador editor)
 	{
 		InitializeComponent();
 		_http = http;
 		_cliente = cliente;
+		_editor = editor;
 	}
 
 	private async void OnCargar(object? sender, EventArgs e)
@@ -28,6 +31,7 @@ public partial class RevisionPage : ContentPage
 				return;
 			}
 
+			_relevamientoId = relevamientoId;
 			var revision = await _cliente.ObtenerAsync(relevamientoId);
 			if (revision is null)
 			{
@@ -60,8 +64,11 @@ public partial class RevisionPage : ContentPage
 			FotoImg.Source = null;
 			FotoLbl.Text = "";
 			ComentariosLbl.Text = "";
+			EdicionPanel.IsVisible = false;
 			return;
 		}
+
+		EdicionPanel.IsVisible = true;
 
 		var m = _nav.MarcadorActual!;
 		var conflicto = m.EnConflicto ? " · ⚠ en conflicto" : "";
@@ -112,6 +119,55 @@ public partial class RevisionPage : ContentPage
 		}
 
 		return relevamientos[0].RelevamientoId;
+	}
+
+	private async void OnAgregarComentario(object? sender, EventArgs e)
+	{
+		if (_nav?.MarcadorActual is not { } marcador)
+		{
+			return;
+		}
+
+		var r = await _editor.AgregarComentarioAsync(marcador.MarcadorId, _nav.FotoActual?.FotoId, ComentarioEntry.Text ?? "");
+		EdicionLbl.Text = r.Mensaje;
+		if (r.Exito)
+		{
+			ComentarioEntry.Text = "";
+			await RecargarAsync();
+		}
+	}
+
+	private async void OnEtiquetarFoto(object? sender, EventArgs e)
+	{
+		if (_nav?.FotoActual is not { } foto)
+		{
+			EdicionLbl.Text = "El marcador en foco no tiene una foto para etiquetar.";
+			return;
+		}
+
+		var r = await _editor.EtiquetarFotoAsync(foto.FotoId, EtiquetaEntry.Text ?? "");
+		EdicionLbl.Text = r.Mensaje;
+		if (r.Exito)
+		{
+			EtiquetaEntry.Text = "";
+			await RecargarAsync();
+		}
+	}
+
+	// Recarga la revisión tras una edición para reflejar el cambio (vuelve al primer marcador).
+	private async Task RecargarAsync()
+	{
+		if (_relevamientoId is not { } id)
+		{
+			return;
+		}
+
+		var revision = await _cliente.ObtenerAsync(id);
+		if (revision is not null)
+		{
+			_nav = new NavegadorRevision(revision);
+			await RenderAsync();
+		}
 	}
 
 	private sealed record TokenDto(string AccessToken);

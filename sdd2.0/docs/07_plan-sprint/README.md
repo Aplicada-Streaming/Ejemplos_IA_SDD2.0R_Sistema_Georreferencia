@@ -12,7 +12,7 @@
 
 | Sprint | Estado | Fechas | Plan |
 | --- | --- | --- | --- |
-| Sprint 19 | Por planificar (edición sobre el marcador desde el móvil —US-15 cliente— o pulido transversal del MVP) | — | — |
+| Sprint 20 | Por planificar (pulido transversal del MVP: mapa interactivo, caché de fotos, pruebas E2E, endurecimiento para release) | — | — |
 
 ## Histórico de sprints cerrados
 
@@ -37,6 +37,7 @@
 | Sprint 16 (publicación de GeoVial.Sync) | Cerrado (Cumplido; velocity 8) | [plan-iteracion-sprint-16_v1.0.md](plan-iteracion-sprint-16_v1.0.md) | [sprint-review-sprint-16_v1.0.md](sprint-review-sprint-16_v1.0.md) | [sprint-retrospectiva-sprint-16_v1.0.md](sprint-retrospectiva-sprint-16_v1.0.md) |
 | Sprint 17 (revisión sobre mapa móvil) | Cerrado (Cumplido; velocity 10) | [plan-iteracion-sprint-17_v1.0.md](plan-iteracion-sprint-17_v1.0.md) | [sprint-review-sprint-17_v1.0.md](sprint-review-sprint-17_v1.0.md) | [sprint-retrospectiva-sprint-17_v1.0.md](sprint-retrospectiva-sprint-17_v1.0.md) |
 | Sprint 18 (cierre US-26: conflictos web) | Cerrado (Cumplido; velocity 8) | [plan-iteracion-sprint-18_v1.0.md](plan-iteracion-sprint-18_v1.0.md) | [sprint-review-sprint-18_v1.0.md](sprint-review-sprint-18_v1.0.md) | [sprint-retrospectiva-sprint-18_v1.0.md](sprint-retrospectiva-sprint-18_v1.0.md) |
+| Sprint 19 (edición sobre el marcador móvil) | Cerrado (Cumplido; velocity 8) | [plan-iteracion-sprint-19_v1.0.md](plan-iteracion-sprint-19_v1.0.md) | [sprint-review-sprint-19_v1.0.md](sprint-review-sprint-19_v1.0.md) | [sprint-retrospectiva-sprint-19_v1.0.md](sprint-retrospectiva-sprint-19_v1.0.md) |
 
 ## Plantillas reusables
 
