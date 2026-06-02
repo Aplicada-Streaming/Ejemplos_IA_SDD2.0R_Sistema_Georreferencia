@@ -97,6 +97,18 @@ public class CapturaAplicacionTests
         r.Valor!.MarcadorId.Should().NotBeNull();
     }
 
+    [Fact] // S15 / ADR-08: la captura expone el FotoId de la foto creada para encadenar la subida de su binario
+    public async Task Captura_devuelve_el_foto_id()
+    {
+        var (agente, rel) = Escenario();
+        var handler = CapturaHandler(agente, rel);
+
+        var r = await handler.ManejarAsync(new CapturarObservacionCommand(agente.UsuarioId, rel.RelevamientoId, "foto.jpg", Punto.Latitud, Punto.Longitud));
+
+        r.EsExito.Should().BeTrue();
+        r.Valor!.FotoId.Should().NotBe(Guid.Empty);
+    }
+
     [Fact] // CU-04 CA-02: una segunda captura dentro del radio reutiliza el marcador existente
     public async Task Captura_dentro_del_radio_reutiliza_marcador()
     {

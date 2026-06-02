@@ -50,7 +50,7 @@ public sealed record CapturarObservacionRequest(string ReferenciaArchivo, decima
 
 public sealed record UbicarManualRequest(decimal Latitud, decimal Longitud);
 
-public sealed record CapturaResponse(Guid ObservacionId, Guid? MarcadorId, bool SinGeorreferenciar);
+public sealed record CapturaResponse(Guid ObservacionId, Guid? MarcadorId, bool SinGeorreferenciar, Guid FotoId);
 
 public sealed record ObservacionDto(
     Guid ObservacionId,

@@ -8,7 +8,7 @@
         <VerticalStackLayout Padding="24" Spacing="14">
 
             <Label Text="Capturar observación" FontSize="22" FontAttributes="Bold" />
-            <Label Text="Elegí o tomá una foto: la coordenada se deriva de sus metadatos EXIF (RN-03). Si no trae ubicación, la observación va a la bandeja sin georreferenciar."
+            <Label Text="Elegí o tomá una foto: la coordenada se deriva de sus metadatos EXIF (RN-03). Si no trae ubicación, la observación va a la bandeja y podés ubicarla a mano."
                    FontSize="13" TextColor="#666666" />
 
             <Button x:Name="ElegirBtn" Text="Elegir foto" Clicked="OnElegirFoto" />
@@ -18,13 +18,19 @@
                 <Label x:Name="GeorrefLbl" Text="Sin foto seleccionada." />
             </Border>
 
-            <Entry x:Name="ComentarioEntry" Placeholder="Comentario (opcional)" />
-
-            <Button x:Name="EnviarBtn" Text="Enviar captura al backend" Clicked="OnEnviar" IsEnabled="False" />
+            <Button x:Name="EnviarBtn" Text="Enviar captura (y subir la foto)" Clicked="OnEnviar" IsEnabled="False" />
 
             <Border Padding="12" Stroke="#cccccc" StrokeThickness="1">
                 <Label x:Name="EstadoLbl" Text="" />
             </Border>
+
+            <!-- Ubicación manual: aparece solo si la observación quedó sin georreferenciar (US-13). -->
+            <VerticalStackLayout x:Name="UbicacionPanel" IsVisible="False" Spacing="8" Margin="0,8,0,0">
+                <Label Text="Ubicar manualmente el punto" FontAttributes="Bold" />
+                <Entry x:Name="LatEntry" Placeholder="Latitud (-90 a 90)" Keyboard="Numeric" />
+                <Entry x:Name="LonEntry" Placeholder="Longitud (-180 a 180)" Keyboard="Numeric" />
+                <Button Text="Ubicar el punto" Clicked="OnUbicar" />
+            </VerticalStackLayout>
 
         </VerticalStackLayout>
     </ScrollView>

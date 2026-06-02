@@ -241,3 +241,55 @@ public class ArmadorCapturaCampoTests
         r.Peticion.LatitudExif.Should().BeNull();
     }
 }
+
+/// <summary>Ubicación manual del punto: validación y armado de la petición (US-13, CU-05).</summary>
+public class ArmadorUbicacionManualTests
+{
+    private readonly ArmadorUbicacionManual _armador = new();
+
+    [Fact] // US-13: una coordenada en rango arma la petición de ubicación
+    public void Coordenada_en_rango_arma_la_peticion()
+    {
+        var r = _armador.Armar(-34.6m, -58.37m);
+
+        r.Should().NotBeNull();
+        r!.Latitud.Should().Be(-34.6m);
+        r.Longitud.Should().Be(-58.37m);
+    }
+
+    [Theory] // RN-03: una coordenada fuera de rango se rechaza (la observación sigue en la bandeja)
+    [InlineData(90.1, 0)]
+    [InlineData(-90.1, 0)]
+    [InlineData(0, 180.1)]
+    [InlineData(0, -180.1)]
+    public void Coordenada_fuera_de_rango_se_rechaza(double lat, double lon)
+    {
+        _armador.Armar((decimal)lat, (decimal)lon).Should().BeNull();
+    }
+
+    [Theory] // los límites exactos del rango son válidos
+    [InlineData(90, 180)]
+    [InlineData(-90, -180)]
+    public void Limites_del_rango_son_validos(int lat, int lon)
+    {
+        _armador.Armar(lat, lon).Should().NotBeNull();
+    }
+}
+
+/// <summary>Armado del contenido multipart para subir el binario de la foto (BT-20, ADR-08).</summary>
+public class ConstructorContenidoMultipartTests
+{
+    [Fact] // la parte se llama "archivo", lleva el nombre y los bytes con tipo de imagen
+    public async Task Arma_la_parte_archivo_con_nombre_y_bytes()
+    {
+        var bytes = new byte[] { 0xFF, 0xD8, 1, 2, 3, 0xFF, 0xD9 };
+
+        using var contenido = ConstructorContenidoMultipart.Construir("obra/foto.jpg", bytes);
+
+        var parte = contenido.Single();
+        parte.Headers.ContentType!.MediaType.Should().Be("image/jpeg");
+        parte.Headers.ContentDisposition!.Name!.Trim('"').Should().Be("archivo");
+        parte.Headers.ContentDisposition.FileName!.Trim('"').Should().Be("obra/foto.jpg");
+        (await parte.ReadAsByteArrayAsync()).Should().Equal(bytes);
+    }
+}

@@ -41,6 +41,7 @@ public static class MauiProgram
 		// Captura de campo (US-11): extracción de la coordenada desde EXIF + armado de la petición de captura.
 		builder.Services.AddSingleton<IExtractorGpsExif, LectorGpsExif>();
 		builder.Services.AddSingleton<ArmadorCapturaCampo>();
+		builder.Services.AddSingleton<ArmadorUbicacionManual>();
 
 		builder.Services.AddTransient<MainPage>();
 		builder.Services.AddTransient<CapturaPage>();

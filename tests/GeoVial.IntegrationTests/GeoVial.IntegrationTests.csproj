@@ -23,6 +23,7 @@
   <ItemGroup>
     <ProjectReference Include="..\..\src\GeoVial.Api\GeoVial.Api.csproj" />
     <ProjectReference Include="..\..\src\GeoVial.Shared\GeoVial.Shared.csproj" />
+    <ProjectReference Include="..\..\src\GeoVial.CapturaCampo\GeoVial.CapturaCampo.csproj" />
   </ItemGroup>
 
 </Project>

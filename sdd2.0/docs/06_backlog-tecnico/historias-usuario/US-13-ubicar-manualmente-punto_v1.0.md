@@ -3,7 +3,7 @@
 **Proyecto:** GeoVial
 **Documento:** US-13-ubicar-manualmente-punto_v1.0.md
 **Versión:** 1.0
-**Estado:** Ready
+**Estado:** Entregada (backend S03, frente cliente S15)
 **Fecha:** 2026-06-01
 **Autor:** Equipo GeoVial (AG-06)
 **Épica:** EP-03 Captura y georreferenciación

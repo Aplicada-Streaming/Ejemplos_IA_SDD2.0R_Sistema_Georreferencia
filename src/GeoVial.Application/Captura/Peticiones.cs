@@ -14,8 +14,9 @@ public sealed record CapturarObservacionCommand(
     decimal? LongitudExif)
     : IPeticion<Resultado<ResultadoCaptura>>;
 
-/// <summary>Resultado de la captura: si quedó georreferenciada, el marcador; si no, la bandeja sin georreferenciar.</summary>
-public sealed record ResultadoCaptura(Guid ObservacionId, Guid? MarcadorId, bool SinGeorreferenciar);
+/// <summary>Resultado de la captura: si quedó georreferenciada, el marcador; si no, la bandeja sin georreferenciar.
+/// Incluye el <see cref="FotoId"/> de la foto creada para encadenar la subida de su binario (CU-04, ADR-08).</summary>
+public sealed record ResultadoCaptura(Guid ObservacionId, Guid? MarcadorId, bool SinGeorreferenciar, Guid FotoId);
 
 /// <summary>Ubica manualmente el punto de una observación sin georreferenciar (CU-05).</summary>
 public sealed record UbicarObservacionManualCommand(
