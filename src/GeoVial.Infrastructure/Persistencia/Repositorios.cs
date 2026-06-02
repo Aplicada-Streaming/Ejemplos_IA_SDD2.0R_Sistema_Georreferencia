@@ -255,6 +255,33 @@ public sealed class EtiquetaRepository : IEtiquetaRepository
     public Task GuardarCambiosAsync(CancellationToken ct = default) => _db.SaveChangesAsync(ct);
 }
 
+/// <summary>Consulta de solo lectura del registro inmutable de auditoría con filtros (US-30, CU-13).</summary>
+public sealed class ConsultaAuditoria : IConsultaAuditoria
+{
+    private readonly GeoVialDbContext _db;
+
+    public ConsultaAuditoria(GeoVialDbContext db) => _db = db;
+
+    public async Task<IReadOnlyList<RegistroAuditoria>> ConsultarAsync(
+        Guid? autorUsuarioId, string? recurso, DateTime desde, DateTime hasta, CancellationToken ct = default)
+    {
+        var consulta = _db.RegistrosAuditoria.AsNoTracking()
+            .Where(r => r.Momento >= desde && r.Momento <= hasta);
+
+        if (autorUsuarioId is { } autor)
+        {
+            consulta = consulta.Where(r => r.AutorUsuarioId == autor);
+        }
+
+        if (!string.IsNullOrWhiteSpace(recurso))
+        {
+            consulta = consulta.Where(r => r.RecursoAfectado.Contains(recurso));
+        }
+
+        return await consulta.OrderByDescending(r => r.Momento).ToListAsync(ct);
+    }
+}
+
 /// <summary>
 /// Persiste el asiento de auditoría inmutable (RN-07). Devuelve false ante cualquier fallo de
 /// persistencia para que el llamador rechace la acción con ACCION_NO_AUDITADA (CU-03).

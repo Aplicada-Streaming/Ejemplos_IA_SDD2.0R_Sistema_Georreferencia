@@ -294,4 +294,47 @@ public class ApiAccesoUsuariosTests : IClassFixture<WebApplicationFactory<Progra
 
         resp.StatusCode.Should().Be(HttpStatusCode.NotFound);
     }
+
+    [Fact] // CU-13 / US-30: consultar auditoría sin token → 401
+    public async Task Auditoria_sin_token_devuelve_401()
+    {
+        var cliente = _factory.CreateClient();
+        var resp = await cliente.GetAsync("/api/v1/auditoria");
+        resp.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
+    }
+
+    [Fact] // US-30 CA-01: el usuario raíz consulta el historial de auditoría → 200
+    public async Task Auditoria_con_token_raiz_devuelve_200()
+    {
+        var cliente = _factory.CreateClient();
+        var token = await LoginRaizAsync(cliente);
+        cliente.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+
+        var resp = await cliente.GetAsync("/api/v1/auditoria");
+
+        resp.StatusCode.Should().Be(HttpStatusCode.OK);
+        var registros = await resp.Content.ReadFromJsonAsync<List<RegistroAuditoriaDto>>();
+        registros.Should().NotBeNull();
+        registros!.Should().Contain(r => r.Operacion == "ACCESO"); // el login del raíz quedó auditado
+    }
+
+    [Fact] // CU-14 §5.B / US-31: acceder a datos personales sin token → 401
+    public async Task Datos_personales_sin_token_devuelve_401()
+    {
+        var cliente = _factory.CreateClient();
+        var resp = await cliente.GetAsync($"/api/v1/usuarios/{Guid.NewGuid()}/datos-personales?finalidad=relevamiento");
+        resp.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
+    }
+
+    [Fact] // RN-08 / US-31: una finalidad no permitida → 403
+    public async Task Datos_personales_finalidad_invalida_devuelve_403()
+    {
+        var cliente = _factory.CreateClient();
+        var token = await LoginRaizAsync(cliente);
+        cliente.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+
+        var resp = await cliente.GetAsync($"/api/v1/usuarios/{Guid.NewGuid()}/datos-personales?finalidad=marketing");
+
+        resp.StatusCode.Should().Be(HttpStatusCode.Forbidden);
+    }
 }

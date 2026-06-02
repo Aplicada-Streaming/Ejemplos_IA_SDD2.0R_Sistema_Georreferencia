@@ -41,6 +41,7 @@ public static class DependencyInjection
         servicios.AddScoped<ICambioAplicadoRepository, CambioAplicadoRepository>();
         servicios.AddScoped<ICredencialRepository, CredencialRepository>();
         servicios.AddScoped<IServicioAuditoria, ServicioAuditoria>();
+        servicios.AddScoped<IConsultaAuditoria, ConsultaAuditoria>();
         servicios.AddSingleton<IEmpaquetadorRelevamiento, EmpaquetadorZip>();
         RegistrarAlojamiento(servicios, configuracion);
         RegistrarPipelineImagen(servicios, configuracion);

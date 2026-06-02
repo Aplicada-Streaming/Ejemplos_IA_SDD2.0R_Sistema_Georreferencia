@@ -20,6 +20,7 @@ public static class DependencyInjection
         servicios.AddScoped<AccesoService>();
         servicios.AddScoped<AutorizacionService>();
         servicios.AddScoped<ProvisionCredencialService>();
+        servicios.AddScoped<ConsultaAuditoriaService>();
 
         // CQRS ligero del módulo de relevamientos (ADR-01, PROJECT-README §3).
         servicios.AddScoped<IMediador, Mediador>();

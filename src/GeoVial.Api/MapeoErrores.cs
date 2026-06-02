@@ -44,6 +44,8 @@ public static class MapeoErrores
         CodigosError.SincronizacionInterrumpida => Problema(codigo, StatusCodes.Status503ServiceUnavailable, "La sincronización se interrumpió"),
         CodigosError.ArchivoExportacionInvalido => Problema(codigo, StatusCodes.Status422UnprocessableEntity, "El archivo no es un relevamiento completo y coherente"),
         CodigosError.ContenidoFotoRequerido => Problema(codigo, StatusCodes.Status400BadRequest, "El contenido de la foto es obligatorio"),
+        CodigosError.AuditoriaInmutable => Problema(codigo, StatusCodes.Status403Forbidden, "El registro de auditoría es inalterable"),
+        CodigosError.FinalidadNoPermitida => Problema(codigo, StatusCodes.Status403Forbidden, "Finalidad no permitida para el dato personal"),
         _ => Problema(codigo ?? "ERROR_DESCONOCIDO", StatusCodes.Status500InternalServerError, "Error"),
     };
 

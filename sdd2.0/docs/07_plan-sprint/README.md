@@ -12,7 +12,7 @@
 
 | Sprint | Estado | Fechas | Plan |
 | --- | --- | --- | --- |
-| Sprint 10 | Por planificar | — | — |
+| Sprint 11 | Por planificar (requiere plataforma móvil MAUI para EP-04) | — | — |
 
 ## Histórico de sprints cerrados
 
@@ -28,6 +28,7 @@
 | Sprint 07 (alojamiento de fotos) | Cerrado (Cumplido; velocity 16) | [plan-iteracion-sprint-07_v1.0.md](plan-iteracion-sprint-07_v1.0.md) | [sprint-review-sprint-07_v1.0.md](sprint-review-sprint-07_v1.0.md) | [sprint-retrospectiva-sprint-07_v1.0.md](sprint-retrospectiva-sprint-07_v1.0.md) |
 | Sprint 08 (pipeline de imágenes y cierre EP-05) | Cerrado (Cumplido; velocity 11) | [plan-iteracion-sprint-08_v1.0.md](plan-iteracion-sprint-08_v1.0.md) | [sprint-review-sprint-08_v1.0.md](sprint-review-sprint-08_v1.0.md) | [sprint-retrospectiva-sprint-08_v1.0.md](sprint-retrospectiva-sprint-08_v1.0.md) |
 | Sprint 09 (sincronización backend) | Cerrado (Cumplido; velocity 13) | [plan-iteracion-sprint-09_v1.0.md](plan-iteracion-sprint-09_v1.0.md) | [sprint-review-sprint-09_v1.0.md](sprint-review-sprint-09_v1.0.md) | [sprint-retrospectiva-sprint-09_v1.0.md](sprint-retrospectiva-sprint-09_v1.0.md) |
+| Sprint 10 (cierre EP-08: auditoría y datos personales) | Cerrado (Cumplido; velocity 13) | [plan-iteracion-sprint-10_v1.0.md](plan-iteracion-sprint-10_v1.0.md) | [sprint-review-sprint-10_v1.0.md](sprint-review-sprint-10_v1.0.md) | [sprint-retrospectiva-sprint-10_v1.0.md](sprint-retrospectiva-sprint-10_v1.0.md) |
 
 ## Plantillas reusables
 
