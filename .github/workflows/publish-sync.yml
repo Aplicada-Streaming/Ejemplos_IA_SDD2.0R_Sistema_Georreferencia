@@ -1,0 +1,46 @@
+name: Publish GeoVial.Sync
+
+# STAGE-11 (package) + STAGE-13 (publish) del paquete de sincronizacion
+# (09_devops/pipeline-ci-cd y guia-publicacion-paquete-github-packages).
+# Dispara en tags de version v*: MinVer calcula la version desde el tag; el sufijo
+# -alpha.N / -beta.N / -rc.N publica al canal preview; v<X.Y.Z> sin sufijo, al stable.
+
+on:
+  push:
+    tags: [ 'v*' ]
+
+permissions:
+  contents: read
+  packages: write
+
+jobs:
+  pack-publish:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0   # MinVer necesita el historial completo y los tags
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+
+      - name: Pack (STAGE-11; MinVer calcula la version)
+        run: dotnet pack src/GeoVial.Sync -c Release -o ./artifacts
+
+      - name: Publish a GitHub Packages (STAGE-13)
+        run: >
+          dotnet nuget push "./artifacts/*.nupkg"
+          --source "https://nuget.pkg.github.com/${{ github.repository_owner }}/index.json"
+          --api-key ${{ secrets.GITHUB_TOKEN }}
+          --skip-duplicate
+
+      - name: Publicar artefactos del paquete
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: geovial-sync-nupkg
+          path: ./artifacts/*.nupkg
+          if-no-files-found: warn

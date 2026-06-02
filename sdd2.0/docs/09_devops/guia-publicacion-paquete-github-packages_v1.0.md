@@ -2,9 +2,9 @@
 
 **Proyecto:** GeoVial
 **Documento:** guia-publicacion-paquete-github-packages_v1.0.md
-**Versión:** 1.0
-**Estado:** Propuesto
-**Fecha:** 2026-06-01
+**Versión:** 1.1
+**Estado:** Aceptado (implementado en el Sprint 16)
+**Fecha:** 2026-06-02
 **Autor:** Ingeniero DevOps Senior (AG-09), Equipo SDD 2.0
 **Trazabilidad upstream:** 05 (ADR-07 publicación/versionado, contratos-abstractions-sync §6); PROJECT-README §1, §10, §14 (stage 4 empaquetado); 08 (definition-of-done §1.4)
 **Trazabilidad downstream:** pipeline-ci-cd_v1.0.md (STAGE-11 package, STAGE-13 publish); estrategia-versionado_v1.0.md (canales); 11_examples (samples/01-sync-basico, samples/02-sync-maui-demo)
@@ -85,3 +85,4 @@ Ventana de gracia y comunicación: la versión delistada queda no listada en el 
 | Versión | Fecha | Descripción |
 | --- | --- | --- |
 | 1.0 | 2026-06-01 | Guía de publicación inicial del paquete de la librería de sincronización en GitHub Packages: pre-requisitos (feed, token con scopes mínimos `write:packages`/`read:packages`, rotación 90 días), comando/stage (STAGE-11/STAGE-13, scripts de README §11), verificación por instalación de prueba contra samples 01 y 02, rollback por delist/deprecate + PATCH/MAJOR y métricas de adopción. Canales preview/stable (ADR-07). Generada por AG-09 |
+| 1.1 | 2026-06-02 | Implementada en el Sprint 16: `GeoVial.Sync.csproj` con metadatos NuGet + MinVer (prefijo `v`); scripts `scripts/publish-pack-sync.bat`, `scripts/publish-sync.bat`, `scripts/publish-sync-deprecate.bat`; workflow `.github/workflows/publish-sync.yml` (STAGE-11/13, dispara en tag `v*` con el token de Actions `packages: write`); consumidor de prueba `samples/01-sync-basico`; CHANGELOG inicial. Verificado: `dotnet pack` produce el `.nupkg` con la DLL + README (versión MinVer preview). Estado a Aceptado. Por AG-09 |

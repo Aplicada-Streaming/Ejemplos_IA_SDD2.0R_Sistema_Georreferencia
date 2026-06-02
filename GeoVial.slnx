@@ -11,6 +11,7 @@
     <Project Path="src/GeoVial.Web/GeoVial.Web.csproj" />
   </Folder>
   <Folder Name="/samples/">
+    <Project Path="samples/01-sync-basico/SyncBasico.csproj" />
     <Project Path="samples/02-sync-maui-demo/SyncDemo.Nucleo/SyncDemo.Nucleo.csproj" />
   </Folder>
   <Folder Name="/tests/">

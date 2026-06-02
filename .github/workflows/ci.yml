@@ -17,6 +17,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0   # MinVer (versionado de GeoVial.Sync) necesita el historial y los tags
 
       - name: Setup .NET
         uses: actions/setup-dotnet@v4
@@ -26,10 +28,10 @@ jobs:
       - name: Restore
         run: dotnet restore
 
-      - name: Build (gate: sin warnings tratados como error)
+      - name: "Build (gate: sin warnings tratados como error)"
         run: dotnet build --no-restore --configuration Release
 
-      - name: Test con cobertura (gate: dominio/aplicación líneas >= 80%, branches >= 70%)
+      - name: "Test con cobertura (gate: dominio/aplicacion lineas >= 80%, branches >= 70%)"
         run: dotnet test --no-build --configuration Release --collect:"XPlat Code Coverage"
 
       - name: Publicar resultados de cobertura
