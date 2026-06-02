@@ -30,6 +30,18 @@ jobs:
       - name: Pack (STAGE-11; MinVer calcula la version)
         run: dotnet pack src/GeoVial.Sync -c Release -o ./artifacts
 
+      - name: Verificar el contenido del .nupkg (DLL + README + nuspec)
+        shell: bash
+        run: |
+          set -e
+          pkg=$(ls ./artifacts/GeoVial.Sync.*.nupkg | grep -v '\.snupkg$' | head -1)
+          echo "Verificando $pkg"
+          contenido=$(unzip -Z1 "$pkg")
+          echo "$contenido" | grep -q '^lib/net10.0/GeoVial.Sync.dll$' || { echo "Falta la DLL"; exit 1; }
+          echo "$contenido" | grep -q '^README.md$' || { echo "Falta el README"; exit 1; }
+          unzip -p "$pkg" 'GeoVial.Sync.nuspec' | grep -q '<id>GeoVial.Sync</id>' || { echo "id incorrecto"; exit 1; }
+          echo "Paquete OK"
+
       - name: Publish a GitHub Packages (STAGE-13)
         run: >
           dotnet nuget push "./artifacts/*.nupkg"

@@ -22,6 +22,9 @@
 
     <!-- Versionado automático por MinVer desde los tags Git con prefijo v (no se edita a mano). -->
     <MinVerTagPrefix>v</MinVerTagPrefix>
+
+    <!-- Release: el .nupkg se produce como parte del build (CI lo genera y una prueba verifica su contenido). -->
+    <GeneratePackageOnBuild Condition="'$(Configuration)' == 'Release'">true</GeneratePackageOnBuild>
   </PropertyGroup>
 
   <ItemGroup>
