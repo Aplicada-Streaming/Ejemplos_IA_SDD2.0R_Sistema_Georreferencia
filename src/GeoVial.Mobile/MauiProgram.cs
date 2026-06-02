@@ -46,6 +46,8 @@ public static class MauiProgram
 
 		// Revisión sobre mapa (US-21/US-22): cliente de la API de revisión.
 		builder.Services.AddSingleton(sp => new ClienteRevisionHttp(sp.GetRequiredService<HttpClient>()));
+		// Edición sobre el marcador (US-15): cliente de comentarios y etiquetas.
+		builder.Services.AddSingleton(sp => new ClienteEdicionMarcador(sp.GetRequiredService<HttpClient>()));
 
 		builder.Services.AddTransient<MainPage>();
 		builder.Services.AddTransient<CapturaPage>();

@@ -32,6 +32,16 @@
                 <Label x:Name="ComentariosLbl" Text="" />
             </Border>
 
+            <!-- Edición sobre el marcador en foco (US-15): comentar y etiquetar. -->
+            <VerticalStackLayout x:Name="EdicionPanel" IsVisible="False" Spacing="8" Margin="0,8,0,0">
+                <Label Text="Editar el marcador" FontAttributes="Bold" />
+                <Entry x:Name="ComentarioEntry" Placeholder="Comentario para el marcador" />
+                <Button Text="Agregar comentario" Clicked="OnAgregarComentario" />
+                <Entry x:Name="EtiquetaEntry" Placeholder="Etiqueta para la foto en foco" />
+                <Button Text="Etiquetar foto" Clicked="OnEtiquetarFoto" />
+                <Label x:Name="EdicionLbl" Text="" FontSize="13" TextColor="#666666" />
+            </VerticalStackLayout>
+
         </VerticalStackLayout>
     </ScrollView>
 
