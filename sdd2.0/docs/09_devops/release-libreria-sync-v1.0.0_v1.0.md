@@ -29,7 +29,23 @@ bumpea MAJOR (ADR-07, estrategia-versionado §6).
 
 - El build en Release produce el `.nupkg` (`GeneratePackageOnBuild`); una prueba del gate verifica su contenido
   (DLL `lib/net10.0/GeoVial.Sync.dll`, `README.md`, nuspec con `id=GeoVial.Sync` y licencia `MIT`).
-- 302+ pruebas verdes; cobertura de dominio/aplicación sobre el gate.
+- 303+ pruebas verdes; cobertura de dominio/aplicación sobre el gate.
+
+### Firma del artefacto (supply-chain)
+
+El paquete se firma con **cosign (sigstore) en modo keyless** usando el OIDC de GitHub Actions (sin llaves
+privadas de larga vida, supply-chain-seguridad §2). La firma es un bundle detached (`<paquete>.cosign.bundle`)
+con certificado efímero y entrada en el transparency log de sigstore (Rekor), adjuntado al release como
+artefacto. El propio workflow `publish-sync.yml` firma y **verifica** la firma antes de publicar (STAGE-10 → STAGE-13).
+
+Un consumidor verifica la integridad y la procedencia con:
+
+```bash
+cosign verify-blob GeoVial.Sync.1.0.0.nupkg \
+  --bundle GeoVial.Sync.1.0.0.nupkg.cosign.bundle \
+  --certificate-oidc-issuer https://token.actions.githubusercontent.com \
+  --certificate-identity-regexp "^https://github.com/Aplicada-Streaming/Ejemplos_IA_SDD2.0R_Sistema_Georreferencia/.+"
+```
 
 ## 2. Checklist de release (Release manager)
 

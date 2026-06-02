@@ -52,8 +52,16 @@ dotnet build && dotnet run        # debe compilar y sincronizar contra el backen
 # 3. Para el canal stable, ejecutar la demo MAUI autónoma (sample 02-sync-maui-demo)
 #    alta local -> sync contra mock server -> estado de la cola -> resolución básica de conflictos (ADR-07 §8)
 
-# 4. Verificar la firma del paquete (supply-chain-seguridad §2) antes de declararlo consumible
+# 4. Verificar la firma cosign del paquete (supply-chain-seguridad §2) antes de declararlo consumible:
+cosign verify-blob GeoVial.Sync.<version>.nupkg \
+  --bundle GeoVial.Sync.<version>.nupkg.cosign.bundle \
+  --certificate-oidc-issuer https://token.actions.githubusercontent.com \
+  --certificate-identity-regexp "^https://github.com/<organizacion>/<repo>/.+"
 ```
+
+> La firma se aplica con cosign keyless (sigstore) en el workflow `publish-sync.yml` (STAGE-10), que además la
+> verifica antes de publicar; el bundle `.cosign.bundle` se adjunta como artefacto del release. Detalle del
+> procedimiento de verificación en `release-libreria-sync-v1.0.0`.
 
 La instalación de prueba contra `samples/01-sync-basico` y la demo `samples/02-sync-maui-demo` (PROJECT-README §14, 11_examples) son la verificación de que la API pública es consumible. Para stable, además, los contract tests (TC-26) deben estar verdes (definition-of-done §1.4).
 

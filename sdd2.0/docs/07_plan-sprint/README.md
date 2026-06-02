@@ -12,7 +12,7 @@
 
 | Sprint | Estado | Fechas | Plan |
 | --- | --- | --- | --- |
-| Sprint 22 | Por planificar (firma del paquete + publicación efectiva de v1.0.0; o pulido restante: mapa interactivo, caché, E2E de conflictos) | — | — |
+| Sprint 23 | Por planificar (pulido restante: mapa interactivo, caché de fotos, E2E de conflictos; o SBOM firmado del paquete) | — | — |
 
 ## Histórico de sprints cerrados
 
@@ -40,6 +40,7 @@
 | Sprint 19 (edición sobre el marcador móvil) | Cerrado (Cumplido; velocity 8) | [plan-iteracion-sprint-19_v1.0.md](plan-iteracion-sprint-19_v1.0.md) | [sprint-review-sprint-19_v1.0.md](sprint-review-sprint-19_v1.0.md) | [sprint-retrospectiva-sprint-19_v1.0.md](sprint-retrospectiva-sprint-19_v1.0.md) |
 | Sprint 20 (endurecimiento E2E del MVP) | Cerrado (Cumplido; velocity 8) | [plan-iteracion-sprint-20_v1.0.md](plan-iteracion-sprint-20_v1.0.md) | [sprint-review-sprint-20_v1.0.md](sprint-review-sprint-20_v1.0.md) | [sprint-retrospectiva-sprint-20_v1.0.md](sprint-retrospectiva-sprint-20_v1.0.md) |
 | Sprint 21 (preparación release v1.0.0 librería) | Cerrado (Cumplido; velocity 8) | [plan-iteracion-sprint-21_v1.0.md](plan-iteracion-sprint-21_v1.0.md) | [sprint-review-sprint-21_v1.0.md](sprint-review-sprint-21_v1.0.md) | [sprint-retrospectiva-sprint-21_v1.0.md](sprint-retrospectiva-sprint-21_v1.0.md) |
+| Sprint 22 (firma del paquete, supply-chain) | Cerrado (Cumplido; velocity 8) | [plan-iteracion-sprint-22_v1.0.md](plan-iteracion-sprint-22_v1.0.md) | [sprint-review-sprint-22_v1.0.md](sprint-review-sprint-22_v1.0.md) | [sprint-retrospectiva-sprint-22_v1.0.md](sprint-retrospectiva-sprint-22_v1.0.md) |
 
 ## Plantillas reusables
 
