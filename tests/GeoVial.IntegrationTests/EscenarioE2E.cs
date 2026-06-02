@@ -20,7 +20,7 @@ internal static class EscenarioE2E
 {
     public const string Clave = "Clave.E2E.2026";
 
-    public sealed record Datos(Guid RelevamientoId, Guid AreaId, string Usuario, string Clave);
+    public sealed record Datos(Guid RelevamientoId, Guid AreaId, Guid AgenteId, string Usuario, string Clave);
 
     public static async Task<Datos> SembrarAsync(WebApplicationFactory<Program> factory, decimal radioMetros = 15m)
     {
@@ -41,7 +41,7 @@ internal static class EscenarioE2E
         await db.Relevamientos.AddAsync(rel);
         await db.SaveChangesAsync();
 
-        return new Datos(rel.RelevamientoId, area.AreaId, usuario, Clave);
+        return new Datos(rel.RelevamientoId, area.AreaId, agente.UsuarioId, usuario, Clave);
     }
 
     public static async Task<HttpClient> ClienteAutenticadoAsync(WebApplicationFactory<Program> factory, string usuario, string clave)
