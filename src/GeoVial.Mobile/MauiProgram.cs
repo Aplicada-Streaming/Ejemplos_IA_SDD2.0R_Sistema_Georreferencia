@@ -1,6 +1,8 @@
-﻿using GeoVial.Sync;
+﻿using GeoVial.Mobile.Servicios;
+using GeoVial.Sync;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using Microsoft.Maui.Networking;
 
 namespace GeoVial.Mobile;
 
@@ -27,6 +29,12 @@ public static class MauiProgram
 		builder.Services.AddSingleton<ISyncBackendClient>(_ =>
 			new ClienteSyncHttp(new HttpClient { BaseAddress = new Uri("https://localhost:5001/") }));
 		builder.Services.AddSingleton<ISyncEngine, MotorSincronizacion>();
+
+		// Captura offline (US-16) y sincronización automática por conectividad (US-19).
+		builder.Services.AddSingleton(Connectivity.Current);
+		builder.Services.AddSingleton<IConnectivityMonitor, MonitorConectividadMaui>();
+		builder.Services.AddSingleton<ColectorOffline>();
+		builder.Services.AddSingleton<CoordinadorAutoSync>();
 
 #if DEBUG
 		builder.Logging.AddDebug();

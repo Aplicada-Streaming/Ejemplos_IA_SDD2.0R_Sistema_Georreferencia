@@ -54,6 +54,4 @@ public sealed class ClienteSyncHttp : ISyncBackendClient
     private sealed record ConflictoDto(Guid ConflictoSyncId, int Tipo, string RecursosInvolucrados);
 
     private sealed record ActualizacionDto(Guid ComentarioId, Guid MarcadorId, string Texto, DateTime MarcaTemporal);
-
-    private sealed record PayloadComentario(Guid MarcadorId, Guid? FotoId, Guid AutorUsuarioId, string Texto);
 }
