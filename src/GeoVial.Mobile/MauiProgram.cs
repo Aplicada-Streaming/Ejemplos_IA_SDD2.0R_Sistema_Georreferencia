@@ -1,5 +1,6 @@
 ﻿using GeoVial.CapturaCampo;
 using GeoVial.Mobile.Servicios;
+using GeoVial.Revision;
 using GeoVial.Sync;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -43,8 +44,12 @@ public static class MauiProgram
 		builder.Services.AddSingleton<ArmadorCapturaCampo>();
 		builder.Services.AddSingleton<ArmadorUbicacionManual>();
 
+		// Revisión sobre mapa (US-21/US-22): cliente de la API de revisión.
+		builder.Services.AddSingleton(sp => new ClienteRevisionHttp(sp.GetRequiredService<HttpClient>()));
+
 		builder.Services.AddTransient<MainPage>();
 		builder.Services.AddTransient<CapturaPage>();
+		builder.Services.AddTransient<RevisionPage>();
 
 #if DEBUG
 		builder.Logging.AddDebug();
