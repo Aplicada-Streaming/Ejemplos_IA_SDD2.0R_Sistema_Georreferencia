@@ -2,6 +2,7 @@
   <Folder Name="/src/">
     <Project Path="src/GeoVial.Api/GeoVial.Api.csproj" />
     <Project Path="src/GeoVial.Application/GeoVial.Application.csproj" />
+    <Project Path="src/GeoVial.CapturaCampo/GeoVial.CapturaCampo.csproj" />
     <Project Path="src/GeoVial.Domain/GeoVial.Domain.csproj" />
     <Project Path="src/GeoVial.FileHosting/GeoVial.FileHosting.csproj" />
     <Project Path="src/GeoVial.Infrastructure/GeoVial.Infrastructure.csproj" />

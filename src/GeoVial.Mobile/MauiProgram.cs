@@ -1,4 +1,5 @@
-﻿using GeoVial.Mobile.Servicios;
+﻿using GeoVial.CapturaCampo;
+using GeoVial.Mobile.Servicios;
 using GeoVial.Sync;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -37,7 +38,12 @@ public static class MauiProgram
 		builder.Services.AddSingleton<ColectorOffline>();
 		builder.Services.AddSingleton<CoordinadorAutoSync>();
 
+		// Captura de campo (US-11): extracción de la coordenada desde EXIF + armado de la petición de captura.
+		builder.Services.AddSingleton<IExtractorGpsExif, LectorGpsExif>();
+		builder.Services.AddSingleton<ArmadorCapturaCampo>();
+
 		builder.Services.AddTransient<MainPage>();
+		builder.Services.AddTransient<CapturaPage>();
 
 #if DEBUG
 		builder.Logging.AddDebug();

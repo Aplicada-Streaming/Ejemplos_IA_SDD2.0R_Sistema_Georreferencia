@@ -6,9 +6,15 @@
     xmlns:local="clr-namespace:GeoVial.Mobile"
     Title="GeoVial.Mobile">
 
-    <ShellContent
-        Title="Home"
-        ContentTemplate="{DataTemplate local:MainPage}"
-        Route="MainPage" />
+    <TabBar>
+        <ShellContent
+            Title="Sync"
+            ContentTemplate="{DataTemplate local:MainPage}"
+            Route="MainPage" />
+        <ShellContent
+            Title="Captura"
+            ContentTemplate="{DataTemplate local:CapturaPage}"
+            Route="CapturaPage" />
+    </TabBar>
 
 </Shell>

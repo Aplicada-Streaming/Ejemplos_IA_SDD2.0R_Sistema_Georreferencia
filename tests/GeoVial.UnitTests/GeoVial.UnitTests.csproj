@@ -27,6 +27,7 @@
     <ProjectReference Include="..\..\src\GeoVial.Shared\GeoVial.Shared.csproj" />
     <ProjectReference Include="..\..\src\GeoVial.Infrastructure\GeoVial.Infrastructure.csproj" />
     <ProjectReference Include="..\..\src\GeoVial.Sync\GeoVial.Sync.csproj" />
+    <ProjectReference Include="..\..\src\GeoVial.CapturaCampo\GeoVial.CapturaCampo.csproj" />
     <ProjectReference Include="..\..\samples\02-sync-maui-demo\SyncDemo.Nucleo\SyncDemo.Nucleo.csproj" />
   </ItemGroup>
 
