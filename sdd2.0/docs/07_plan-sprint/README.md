@@ -12,7 +12,7 @@
 
 | Sprint | Estado | Fechas | Plan |
 | --- | --- | --- | --- |
-| Sprint 27 | Por planificar (mapa interactivo —bloqueado por clave de proveedor— o publicación de v1.0.0; migración de `CapturaE2ETests`) | — | — |
+| Sprint 28 | Por planificar (publicación de v1.0.0 o mapa interactivo —bloqueado por clave de proveedor—; SBOM/firma de imágenes Docker) | — | — |
 
 ## Histórico de sprints cerrados
 
@@ -45,6 +45,7 @@
 | Sprint 24 (E2E de edición en conflicto) | Cerrado (Cumplido; velocity 8) | [plan-iteracion-sprint-24_v1.0.md](plan-iteracion-sprint-24_v1.0.md) | [sprint-review-sprint-24_v1.0.md](sprint-review-sprint-24_v1.0.md) | [sprint-retrospectiva-sprint-24_v1.0.md](sprint-retrospectiva-sprint-24_v1.0.md) |
 | Sprint 25 (SBOM firmado del paquete) | Cerrado (Cumplido; velocity 8) | [plan-iteracion-sprint-25_v1.0.md](plan-iteracion-sprint-25_v1.0.md) | [sprint-review-sprint-25_v1.0.md](sprint-review-sprint-25_v1.0.md) | [sprint-retrospectiva-sprint-25_v1.0.md](sprint-retrospectiva-sprint-25_v1.0.md) |
 | Sprint 26 (pulido móvil: caché + posición) | Cerrado (Cumplido; velocity 8) | [plan-iteracion-sprint-26_v1.0.md](plan-iteracion-sprint-26_v1.0.md) | [sprint-review-sprint-26_v1.0.md](sprint-review-sprint-26_v1.0.md) | [sprint-retrospectiva-sprint-26_v1.0.md](sprint-retrospectiva-sprint-26_v1.0.md) |
+| Sprint 27 (consolidación E2E sobre helper) | Cerrado (Cumplido; velocity 8) | [plan-iteracion-sprint-27_v1.0.md](plan-iteracion-sprint-27_v1.0.md) | [sprint-review-sprint-27_v1.0.md](sprint-review-sprint-27_v1.0.md) | [sprint-retrospectiva-sprint-27_v1.0.md](sprint-retrospectiva-sprint-27_v1.0.md) |
 
 ## Plantillas reusables
 
