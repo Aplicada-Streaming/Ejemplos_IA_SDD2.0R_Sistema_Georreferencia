@@ -96,7 +96,7 @@ public sealed record ResolverConflictoRequest(int Decision, Guid? MarcadorResult
 
 public sealed record ConflictoDetectadoDto(Guid ConflictoSyncId, Guid MarcadorA, Guid MarcadorB, double DistanciaMetros);
 
-public sealed record ConflictoPendienteDto(Guid ConflictoSyncId, int Tipo, Guid MarcadorA, Guid MarcadorB);
+public sealed record ConflictoPendienteDto(Guid ConflictoSyncId, int Tipo, Guid? MarcadorA, Guid? MarcadorB, Guid? Recurso);
 
 // --- Sincronización de cambios de campo (CU-07; US-18) ---
 

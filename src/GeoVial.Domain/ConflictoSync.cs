@@ -72,4 +72,7 @@ public sealed class ConflictoSync
         var partes = RecursosInvolucrados.Split(';', 2);
         return (Guid.Parse(partes[0]), Guid.Parse(partes[1]));
     }
+
+    /// <summary>Devuelve el recurso involucrado en un conflicto de edición (CU-07/CU-12, RN-04).</summary>
+    public Guid Recurso() => Guid.Parse(RecursosInvolucrados);
 }

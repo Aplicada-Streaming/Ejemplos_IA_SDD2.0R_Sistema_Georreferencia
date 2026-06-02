@@ -311,4 +311,75 @@ public class ConflictosAplicacionTests
 
         lista.Should().BeEmpty();
     }
+
+    // --- Ediciones en conflicto (US-26: dirimir, RN-04) ---
+
+    [Fact] // el listado incluye una edición en conflicto exponiendo su recurso, sin romper (antes lanzaba excepción)
+    public async Task Listar_pendientes_con_edicion_expone_recurso()
+    {
+        var jefe = Jefe();
+        var rel = Relevamiento();
+        var recurso = Guid.NewGuid();
+        var conflicto = ConflictoSync.EdicionEnConflicto(rel.RelevamientoId, recurso);
+        var handler = new ConflictosPendientesHandler(
+            new FakeUsuarioRepository(jefe), new FakeRelevamientoRepository(rel), new FakeConflictoRepository(conflicto));
+
+        var lista = await handler.ManejarAsync(new ConflictosPendientesQuery(jefe.UsuarioId, rel.RelevamientoId));
+
+        var c = lista.Should().ContainSingle().Subject;
+        c.Tipo.Should().Be((int)TipoConflicto.EdicionEnConflicto);
+        c.Recurso.Should().Be(recurso);
+        c.MarcadorA.Should().BeNull();
+        c.MarcadorB.Should().BeNull();
+    }
+
+    [Fact] // US-26: confirmar una edición en conflicto la deja resuelta y audita CONFIRMAR_EDICION
+    public async Task Resolver_confirmar_edicion_resuelve_y_audita()
+    {
+        var jefe = Jefe();
+        var rel = Relevamiento();
+        var conflicto = ConflictoSync.EdicionEnConflicto(rel.RelevamientoId, Guid.NewGuid());
+        var auditoria = new FakeAuditoria();
+        var handler = ResolverHandler(jefe, rel, new FakeConflictoRepository(conflicto), new FakeMarcadorRepository(),
+            new FakeObservacionRepository(), new FakeFotoRepository(), new FakeComentarioRepository(), auditoria);
+
+        var r = await handler.ManejarAsync(
+            new ResolverConflictoCommand(jefe.UsuarioId, conflicto.ConflictoSyncId, DecisionConflicto.ConfirmarEdicion, null));
+
+        r.EsExito.Should().BeTrue();
+        conflicto.EstaPendiente.Should().BeFalse();
+        auditoria.Registros.Should().Contain(x => x.StartsWith("CONFIRMAR_EDICION:"));
+    }
+
+    [Fact] // unificar no aplica a una edición en conflicto
+    public async Task Resolver_unificar_sobre_edicion_rechaza()
+    {
+        var jefe = Jefe();
+        var rel = Relevamiento();
+        var conflicto = ConflictoSync.EdicionEnConflicto(rel.RelevamientoId, Guid.NewGuid());
+        var handler = ResolverHandler(jefe, rel, new FakeConflictoRepository(conflicto), new FakeMarcadorRepository(),
+            new FakeObservacionRepository(), new FakeFotoRepository(), new FakeComentarioRepository());
+
+        var r = await handler.ManejarAsync(
+            new ResolverConflictoCommand(jefe.UsuarioId, conflicto.ConflictoSyncId, DecisionConflicto.Unificar, Guid.NewGuid()));
+
+        r.Codigo.Should().Be(CodigosError.DecisionConflictoInaplicable);
+        conflicto.EstaPendiente.Should().BeTrue();
+    }
+
+    [Fact] // confirmar edición no aplica a un conflicto de marcadores en radio
+    public async Task Resolver_confirmar_sobre_radio_rechaza()
+    {
+        var jefe = Jefe();
+        var rel = Relevamiento();
+        var conflicto = ConflictoSync.MarcadoresEnRadio(rel.RelevamientoId, Guid.NewGuid(), Guid.NewGuid());
+        var handler = ResolverHandler(jefe, rel, new FakeConflictoRepository(conflicto), new FakeMarcadorRepository(),
+            new FakeObservacionRepository(), new FakeFotoRepository(), new FakeComentarioRepository());
+
+        var r = await handler.ManejarAsync(
+            new ResolverConflictoCommand(jefe.UsuarioId, conflicto.ConflictoSyncId, DecisionConflicto.ConfirmarEdicion, null));
+
+        r.Codigo.Should().Be(CodigosError.DecisionConflictoInaplicable);
+        conflicto.EstaPendiente.Should().BeTrue();
+    }
 }
