@@ -3,7 +3,7 @@
 **Proyecto:** GeoVial
 **Documento:** US-22-recorrer-carrusel-navegar-marcadores_v1.0.md
 **Versión:** 1.0
-**Estado:** Ready
+**Estado:** Entregada (backend S04, frente cliente S17)
 **Fecha:** 2026-06-01
 **Autor:** Equipo GeoVial (AG-06)
 **Épica:** EP-05 Revisión sobre mapa
