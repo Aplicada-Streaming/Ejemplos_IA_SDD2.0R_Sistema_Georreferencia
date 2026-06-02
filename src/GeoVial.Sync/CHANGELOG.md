@@ -7,10 +7,19 @@ Todas las novedades relevantes de la librería de sincronización. El formato si
 
 ## [No publicado]
 
+_(sin cambios pendientes)_
+
+## [1.0.0] — pendiente de tag `v1.0.0`
+
+Primer release **stable** de la librería de sincronización. La superficie pública (`Abstractions`) queda
+congelada bajo SemVer: a partir de aquí, todo cambio incompatible bumpea MAJOR (ADR-07, estrategia-versionado §6).
+
 ### Added
 - Empaquetado NuGet de la librería (PackageId `GeoVial.Sync`) con versionado automático por MinVer y
   publicación en GitHub Packages (canales preview/stable, ADR-07).
-- Consumidor de prueba `samples/01-sync-basico` que valida el consumo de la superficie pública.
+- `GeneratePackageOnBuild` en Release: el build produce el `.nupkg`, verificado por una prueba sobre su
+  contenido (DLL + README + metadatos).
+- Consumidor de prueba `samples/01-sync-basico` y demo MAUI autónoma `samples/02-sync-maui-demo`.
 
 ### Superficie pública (estable, SemVer)
 - `IChangeQueue`, `ISyncEngine`, `ISyncBackendClient`, `IConflictReporter`, `IConnectivityMonitor`.
