@@ -2,6 +2,7 @@ using System.Net;
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using FluentAssertions;
+using GeoVial.CapturaCampo;
 using GeoVial.Shared;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
@@ -240,6 +241,20 @@ public class ApiAccesoUsuariosTests : IClassFixture<WebApplicationFactory<Progra
         using var contenido = new MultipartFormDataContent { { new ByteArrayContent(new byte[] { 1, 2, 3 }), "archivo", "foto.jpg" } };
         var resp = await cliente.PostAsync($"/api/v1/fotos/{Guid.NewGuid()}/contenido", contenido);
 
+        resp.StatusCode.Should().Be(HttpStatusCode.NotFound);
+    }
+
+    [Fact] // S15 / BT-20: el multipart que arma el cliente liga la parte "archivo" del endpoint (foto inexistente → 404, no 400)
+    public async Task Subir_contenido_con_multipart_del_cliente_liga_la_parte_archivo()
+    {
+        var cliente = _factory.CreateClient();
+        var token = await LoginRaizAsync(cliente);
+        cliente.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+
+        using var contenido = ConstructorContenidoMultipart.Construir("foto.jpg", new byte[] { 0xFF, 0xD8, 0xFF, 0xD9 });
+        var resp = await cliente.PostAsync($"/api/v1/fotos/{Guid.NewGuid()}/contenido", contenido);
+
+        // Si la parte no se llamara "archivo", el binding fallaría con 400; el 404 confirma que ligó y solo falta la foto.
         resp.StatusCode.Should().Be(HttpStatusCode.NotFound);
     }
 

@@ -106,7 +106,7 @@ public sealed class CapturarObservacionHandler : IManejador<CapturarObservacionC
         await _observaciones.GuardarCambiosAsync(ct);
 
         return Resultado<ResultadoCaptura>.Exito(
-            new ResultadoCaptura(observacion.ObservacionId, observacion.MarcadorId, observacion.SinGeorreferenciar));
+            new ResultadoCaptura(observacion.ObservacionId, observacion.MarcadorId, observacion.SinGeorreferenciar, foto.FotoId));
     }
 }
 

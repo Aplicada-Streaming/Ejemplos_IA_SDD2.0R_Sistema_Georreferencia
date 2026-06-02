@@ -255,7 +255,7 @@ relevamientos.MapPost("/{relevamientoId:guid}/observaciones", async (Guid releva
     var capt = r.Valor!;
     return Results.Created(
         $"/api/v1/relevamientos/{relevamientoId}/observaciones/{capt.ObservacionId}",
-        new CapturaResponse(capt.ObservacionId, capt.MarcadorId, capt.SinGeorreferenciar));
+        new CapturaResponse(capt.ObservacionId, capt.MarcadorId, capt.SinGeorreferenciar, capt.FotoId));
 });
 
 relevamientos.MapGet("/{relevamientoId:guid}/observaciones", async (Guid relevamientoId, ClaimsPrincipal solicitante, IMediador mediador, CancellationToken ct) =>
