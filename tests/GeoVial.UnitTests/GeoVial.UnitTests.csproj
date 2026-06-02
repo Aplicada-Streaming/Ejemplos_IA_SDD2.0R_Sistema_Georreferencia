@@ -26,6 +26,7 @@
     <ProjectReference Include="..\..\src\GeoVial.Domain\GeoVial.Domain.csproj" />
     <ProjectReference Include="..\..\src\GeoVial.Shared\GeoVial.Shared.csproj" />
     <ProjectReference Include="..\..\src\GeoVial.Infrastructure\GeoVial.Infrastructure.csproj" />
+    <ProjectReference Include="..\..\src\GeoVial.Sync\GeoVial.Sync.csproj" />
   </ItemGroup>
 
 </Project>
