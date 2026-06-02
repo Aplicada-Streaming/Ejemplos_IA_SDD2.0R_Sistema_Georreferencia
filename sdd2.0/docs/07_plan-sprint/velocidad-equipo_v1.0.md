@@ -2,12 +2,12 @@
 
 **Proyecto:** GeoVial
 **Documento:** velocidad-equipo_v1.0.md
-**Versión:** 3.2
+**Versión:** 3.3
 **Estado:** En curso
 **Fecha:** 2026-06-02
 **Autor:** Scrum Master (AG-07), Equipo SDD 2.0
 
-> Tracking actualizado al cierre del Sprint 22. La tabla §1 registra la velocity efectiva de los Sprint 00 a 22 ya ejecutados. El promedio móvil de 3 sprints se puebla desde S02 (con S00, S01, S02).
+> Tracking actualizado al cierre del Sprint 23. La tabla §1 registra la velocity efectiva de los Sprint 00 a 23 ya ejecutados. El promedio móvil de 3 sprints se puebla desde S02 (con S00, S01, S02).
 
 ## 1. Por sprint
 
@@ -36,16 +36,17 @@
 | S20 | 8 | 8 | 8 | 8,0 | Endurecimiento E2E del MVP: helper de escenario completo + 3 pruebas de integración por HTTP (captura, ubicación manual, autorización); cierra deuda de E2E de S15/S18/S19; 0 carry-over; 302 pruebas verdes |
 | S21 | 8 | 8 | 8 | 8,0 | Preparación del primer release stable v1.0.0 de GeoVial.Sync (EP-09): empaquetado en build verificado por prueba del contenido del .nupkg + CHANGELOG/notas/checklist; 0 carry-over; 303 pruebas verdes |
 | S22 | 8 | 8 | 8 | 8,0 | Firma del paquete con cosign keyless (supply-chain §2): firma + verificación en el workflow de publicación + documentación; 0 carry-over; 303 pruebas verdes (sprint DevOps, sin lógica nueva) |
+| S23 | 8 | 8 | 8 | 8,0 | Endurecimiento E2E del ciclo de conflictos por radio (CU-11/CU-12): helper de escenario compartido + 2 pruebas de integración por HTTP (detectar → unificar / mantener separados); 0 carry-over; 305 pruebas verdes |
 
 El promedio móvil de 3 sprints queda disponible en S02 (29,3 SP, sobre S00/S01/S02).
 
 ## 2. Tendencia
 
-Veintitrés sprints registrados (S00: 21, S01: 40, S02: 27, S03: 28, S04: 24, S05: 13, S06: 13, S07: 16, S08: 11, S09: 13, S10: 13, S11: 13, S12: 13, S13: 8, S14: 8, S15: 11, S16: 8, S17: 10, S18: 8, S19: 8, S20: 8, S21: 8, S22: 8). El promedio móvil de 3 sprints se mantuvo en 8,0 SP (ventana S20–S22): cinco sprints consecutivos de 8 SP (S18–S22), una cadencia estable de cierres de alcance acotado (conflictos web, edición móvil, E2E, release prep, firma). La desviación de S22 respecto de su ventana previa es 0 %. Descontados los efectos de planificación, los sprints de módulo completo del arranque (S02: 27, S03: 28, S04: 24) siguen marcando el techo de 24–28 SP. Con el MVP funcional/verificado E2E y la librería lista, firmada y verificable, el trabajo restante es la publicación efectiva de v1.0.0 (tag) y el pulido (mapa interactivo, caché, E2E de conflictos, SBOM).
+Veinticuatro sprints registrados (S00: 21, S01: 40, S02: 27, S03: 28, S04: 24, S05: 13, S06: 13, S07: 16, S08: 11, S09: 13, S10: 13, S11: 13, S12: 13, S13: 8, S14: 8, S15: 11, S16: 8, S17: 10, S18: 8, S19: 8, S20: 8, S21: 8, S22: 8, S23: 8). El promedio móvil de 3 sprints se mantuvo en 8,0 SP (ventana S21–S23): seis sprints consecutivos de 8 SP (S18–S23), una cadencia estable de cierres de alcance acotado. La desviación de S23 respecto de su ventana previa es 0 %. Descontados los efectos de planificación, los sprints de módulo completo del arranque (S02: 27, S03: 28, S04: 24) siguen marcando el techo de 24–28 SP. Con el MVP funcional/verificado E2E y la librería lista, firmada y verificable, el trabajo restante es la publicación efectiva de v1.0.0 (tag) y el pulido (mapa interactivo, caché, E2E de conflictos, SBOM).
 
 ## 3. Capacidad ajustada
 
-Con el promedio móvil de 3 sprints en 8,0 SP (S22), la capacidad sugerida estricta para S23 sería de hasta 9 SP (110 % del promedio móvil). Con la librería lista, firmada y verificable, S23 puede abordar el pulido restante (mapa interactivo con clave de proveedor, caché de fotos, E2E del ciclo de conflictos) o el SBOM firmado del paquete; la publicación efectiva de v1.0.0 es un acto del Release manager (tag). La velocity se sigue comparando sobre el equipo con frente backend + móvil; el promedio móvil de 8,0 SP refleja la cadencia de alcance acotado del frente de cierre/calidad (una historia por sprint), no un límite real de capacidad: los módulos completos del arranque marcaron 24–28 SP.
+Con el promedio móvil de 3 sprints en 8,0 SP (S23), la capacidad sugerida estricta para S24 sería de hasta 9 SP (110 % del promedio móvil). Con los flujos centrales verificados E2E, S24 puede abordar el SBOM firmado del paquete, el E2E del ciclo de edición en conflicto o el pulido móvil (mapa interactivo, caché de fotos); la publicación efectiva de v1.0.0 es un acto del Release manager (tag). La velocity se sigue comparando sobre el equipo con frente backend + móvil; el promedio móvil de 8,0 SP refleja la cadencia de alcance acotado del frente de cierre/calidad (una historia por sprint), no un límite real de capacidad: los módulos completos del arranque marcaron 24–28 SP.
 
 ## 4. Outliers explicados
 
@@ -85,3 +86,4 @@ A medida que se registren velocities, todo sprint cuyo valor se desvíe más del
 | 3.0 | 2026-06-02 | Registro de la velocity efectiva del Sprint 20: S20=8 (0 carry-over). Promedio móvil de 3 sprints (S18–S20) = 8,0; capacidad sugerida estricta para S21 = 9 SP. Endurecimiento E2E del MVP (helper de escenario + 3 pruebas de integración por HTTP); desviación −8 % (dentro del umbral). Por AG-07 |
 | 3.1 | 2026-06-02 | Registro de la velocity efectiva del Sprint 21: S21=8 (0 carry-over). Promedio móvil de 3 sprints (S19–S21) = 8,0; capacidad sugerida estricta para S22 = 9 SP. Preparación del primer release stable v1.0.0 de GeoVial.Sync (EP-09); desviación 0 %. Por AG-07 |
 | 3.2 | 2026-06-02 | Registro de la velocity efectiva del Sprint 22: S22=8 (0 carry-over). Promedio móvil de 3 sprints (S20–S22) = 8,0; capacidad sugerida estricta para S23 = 9 SP. Firma del paquete con cosign keyless (supply-chain §2); desviación 0 %. Por AG-07 |
+| 3.3 | 2026-06-02 | Registro de la velocity efectiva del Sprint 23: S23=8 (0 carry-over). Promedio móvil de 3 sprints (S21–S23) = 8,0; capacidad sugerida estricta para S24 = 9 SP. Endurecimiento E2E del ciclo de conflictos por radio (CU-11/CU-12); desviación 0 %. Por AG-07 |
