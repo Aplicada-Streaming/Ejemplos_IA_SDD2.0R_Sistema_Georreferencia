@@ -15,6 +15,10 @@
             Title="Captura"
             ContentTemplate="{DataTemplate local:CapturaPage}"
             Route="CapturaPage" />
+        <ShellContent
+            Title="Revisión"
+            ContentTemplate="{DataTemplate local:RevisionPage}"
+            Route="RevisionPage" />
     </TabBar>
 
 </Shell>

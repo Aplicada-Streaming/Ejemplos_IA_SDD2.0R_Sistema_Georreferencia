@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="GeoVial.Mobile.RevisionPage"
+             Title="Revisión sobre mapa">
+
+    <ScrollView>
+        <VerticalStackLayout Padding="24" Spacing="14">
+
+            <Label Text="Revisar relevamiento" FontSize="22" FontAttributes="Bold" />
+            <Label Text="Recorré los marcadores del relevamiento y sus fotos como un carrusel (US-21/US-22)."
+                   FontSize="13" TextColor="#666666" />
+
+            <Button x:Name="CargarBtn" Text="Cargar revisión" Clicked="OnCargar" />
+
+            <Label x:Name="MarcadorLbl" Text="Sin cargar." FontAttributes="Bold" Margin="0,8,0,0" />
+
+            <Grid ColumnDefinitions="*,*" ColumnSpacing="10">
+                <Button Grid.Column="0" Text="◀ Marcador" Clicked="OnAnteriorMarcador" />
+                <Button Grid.Column="1" Text="Marcador ▶" Clicked="OnSiguienteMarcador" />
+            </Grid>
+
+            <Image x:Name="FotoImg" HeightRequest="220" Aspect="AspectFit" BackgroundColor="#f0f0f0" />
+            <Label x:Name="FotoLbl" Text="" FontSize="13" HorizontalOptions="Center" />
+
+            <Grid ColumnDefinitions="*,*" ColumnSpacing="10">
+                <Button Grid.Column="0" Text="◀ Foto" Clicked="OnAnteriorFoto" />
+                <Button Grid.Column="1" Text="Foto ▶" Clicked="OnSiguienteFoto" />
+            </Grid>
+
+            <Border Padding="12" Stroke="#cccccc" StrokeThickness="1">
+                <Label x:Name="ComentariosLbl" Text="" />
+            </Border>
+
+        </VerticalStackLayout>
+    </ScrollView>
+
+</ContentPage>
