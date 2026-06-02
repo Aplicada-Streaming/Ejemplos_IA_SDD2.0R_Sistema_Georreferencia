@@ -2,9 +2,9 @@
 
 **Proyecto:** GeoVial
 **Documento:** supply-chain-seguridad_v1.0.md
-**Versión:** 1.0
-**Estado:** Propuesto
-**Fecha:** 2026-06-01
+**Versión:** 1.3
+**Estado:** Propuesto (§1/§2 implementados para el paquete y las imágenes Docker)
+**Fecha:** 2026-06-02
 **Autor:** Ingeniero DevOps Senior (AG-09), Equipo SDD 2.0
 **Trazabilidad upstream:** 05 (arquitectura-solucion §7 configuración/secretos, §8 NFR, ADR-14 compliance Ley 25.326, RA-08); PROJECT-README §2 (licencias), §8 (secretos/auditoría); 08 (criterios-validacion §5)
 **Trazabilidad downstream:** pipeline-ci-cd_v1.0.md (stages SCA/SBOM/firma); guías de publicación
@@ -73,3 +73,4 @@ SLA de remediación por severidad, aplicable a vulnerabilidades en dependencias,
 | 1.0 | 2026-06-01 | Política de supply chain inicial de GeoVial: SBOM CycloneDX por artefacto firmado, firma cosign keyless con transparency log, SLSA Build L2 objetivo con plan de elevación a L3, dependency scanning con Dependabot y política por severidad, SAST/DAST con criterios de bloqueo y política de CVE con SLA por severidad. Refuerzo de compliance Ley 25.326 (auditoría ≥ 1 año, datos personales). Generada por AG-09 |
 | 1.1 | 2026-06-02 | §2 (firma) implementada para el paquete de la librería `GeoVial.Sync` (Sprint 22): el workflow `publish-sync.yml` firma el `.nupkg` con cosign keyless (OIDC de Actions, `id-token: write`), lo verifica con `cosign verify-blob` antes de publicar y adjunta el bundle de verificación. La firma de las imágenes Docker y los SBOM sigue pendiente de los stages de imagen. Por AG-09 |
 | 1.2 | 2026-06-02 | §1 (SBOM) implementado para el paquete `GeoVial.Sync` (Sprint 25): el workflow `publish-sync.yml` genera el SBOM CycloneDX (JSON) del paquete (STAGE-09) y lo firma con cosign keyless (STAGE-10), verificándolo y adjuntándolo al release junto al `.nupkg`. La generación de SBOM de las imágenes Docker sigue pendiente de los stages de imagen. Por AG-09 |
+| 1.3 | 2026-06-02 | §1 (SBOM) y §2 (firma) implementados también para las tres imágenes Docker del monolito (Sprint 28): el workflow `publish-images.yml` construye las imágenes front/backend/db (STAGE-12), genera un SBOM CycloneDX (JSON) por imagen (STAGE-09), firma cada imagen por digest y atesta su SBOM con cosign keyless (STAGE-10) —verificando firma y atestación en el pipeline— y publica a GHCR (STAGE-14). Se agregan los Dockerfiles multi-stage (`src/GeoVial.Api/Dockerfile`, `src/GeoVial.Web/Dockerfile`, `infra/db/Dockerfile`) y los scripts `build-images.bat`/`publish-images.bat`. Con esto, el endurecimiento de supply-chain (SBOM + firma) queda completo para los dos tipos de artefacto: el paquete y las imágenes. Por AG-09 |

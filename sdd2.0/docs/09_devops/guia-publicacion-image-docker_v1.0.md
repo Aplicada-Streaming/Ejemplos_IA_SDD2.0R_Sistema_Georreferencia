@@ -2,9 +2,9 @@
 
 **Proyecto:** GeoVial
 **Documento:** guia-publicacion-image-docker_v1.0.md
-**Versión:** 1.0
-**Estado:** Propuesto
-**Fecha:** 2026-06-01
+**Versión:** 1.1
+**Estado:** Aceptado (SBOM + firma implementados en el Sprint 28; build/deploy efectivo por el Release manager)
+**Fecha:** 2026-06-02
 **Autor:** Ingeniero DevOps Senior (AG-09), Equipo SDD 2.0
 **Trazabilidad upstream:** 05 (arquitectura-solucion §5 tres contenedores, §8 disponibilidad); PROJECT-README §11 (stage 5 build de imágenes, stage 6 publish); 08 (definition-of-done §1.4)
 **Trazabilidad downstream:** pipeline-ci-cd_v1.0.md (STAGE-12 build, STAGE-14 publish); entornos-deploy_v1.0.md (ambientes)
@@ -87,3 +87,4 @@ Ventana y comunicación: el rollback es ejecutable en minutos; se comunica en el
 | Versión | Fecha | Descripción |
 | --- | --- | --- |
 | 1.0 | 2026-06-01 | Guía de publicación inicial de las imágenes Docker (front/backend/db) de GeoVial: pre-requisitos (GHCR, token con scope mínimo, rotación 90 días), comando/stage (scripts de imágenes de README §11, STAGE-12/STAGE-14), verificación post-publish (pull, firma cosign, health check, SBOM), rollback por reversión de deploy y métricas ligadas a los NFR. Generada por AG-09 |
+| 1.1 | 2026-06-02 | Implementados en el Sprint 28 los Dockerfiles multi-stage (`src/GeoVial.Api/Dockerfile`, `src/GeoVial.Web/Dockerfile`, `infra/db/Dockerfile`), el workflow `publish-images.yml` (STAGE-12 build + STAGE-09 SBOM CycloneDX por imagen + STAGE-10 firma cosign keyless de imagen y atestación del SBOM, con verificación in-pipeline + STAGE-14 publish a GHCR en tag `v*`), un `.dockerignore` y los scripts `build-images.bat`/`publish-images.bat`. Las imágenes exponen 8080 (front/backend) y 1433 (db); se etiquetan con la versión MinVer, el SHA corto y, en stable, `:latest`. Estado a Aceptado. Por AG-09 |
