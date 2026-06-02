@@ -1,0 +1,114 @@
+name: Publish GeoVial images
+
+# STAGE-12 (build) + STAGE-09 (SBOM) + STAGE-10 (firma) + STAGE-14 (publish) de las tres imagenes
+# Docker del monolito (front/backend/db) (09_devops/pipeline-ci-cd, supply-chain-seguridad §1/§2 y
+# guia-publicacion-image-docker). Dispara en tags de version v*. La version se toma del tag (MinVer
+# en el codigo); cada imagen se etiqueta con la version, el SHA corto y, en stable, tambien :latest.
+
+on:
+  push:
+    tags: [ 'v*' ]
+
+permissions:
+  contents: read
+  packages: write
+  id-token: write   # cosign keyless (OIDC de GitHub Actions); sin llaves privadas de larga vida (supply-chain-seguridad §2)
+
+jobs:
+  build-sign-publish:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: backend
+            dockerfile: src/GeoVial.Api/Dockerfile
+          - name: front
+            dockerfile: src/GeoVial.Web/Dockerfile
+          - name: db
+            dockerfile: infra/db/Dockerfile
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0   # historial completo para el SHA y la version
+
+      - name: Derivar version, SHA y referencia de imagen
+        id: meta
+        shell: bash
+        run: |
+          set -e
+          version="${GITHUB_REF_NAME#v}"   # quita el prefijo 'v' del tag (estrategia-versionado §3)
+          sha="$(git rev-parse --short HEAD)"
+          repo_lc="$(echo '${{ github.repository_owner }}' | tr '[:upper:]' '[:lower:]')"
+          image="ghcr.io/${repo_lc}/geovial-${{ matrix.name }}"
+          echo "image=$image" >> "$GITHUB_OUTPUT"
+          # Lista de tags: version + sha-<corto>; en stable (sin sufijo de prerelease) tambien :latest.
+          {
+            echo "tags<<EOF"
+            echo "${image}:${version}"
+            echo "${image}:sha-${sha}"
+            case "$version" in
+              *-*) ;;                                  # prerelease (-alpha/-beta/-rc): no mover :latest
+              *)   echo "${image}:latest" ;;           # stable: ademas :latest
+            esac
+            echo "EOF"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Log in a GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Set up Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build y push de la imagen (STAGE-12 + STAGE-14)
+        id: build
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: ${{ matrix.dockerfile }}
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+
+      - name: Generar SBOM CycloneDX de la imagen (STAGE-09)
+        uses: anchore/sbom-action@v0
+        with:
+          image: ${{ steps.meta.outputs.image }}@${{ steps.build.outputs.digest }}
+          format: cyclonedx-json
+          output-file: ./geovial-${{ matrix.name }}.cdx.json
+
+      - name: Instalar cosign
+        uses: sigstore/cosign-installer@v3
+
+      - name: Firmar la imagen y atestar el SBOM con cosign keyless (STAGE-10)
+        shell: bash
+        env:
+          COSIGN_IDENTITY_ISSUER: https://token.actions.githubusercontent.com
+        run: |
+          set -e
+          ref="${{ steps.meta.outputs.image }}@${{ steps.build.outputs.digest }}"
+          # Firma de la imagen por digest (keyless OIDC; se registra en el transparency log de Rekor).
+          cosign sign --yes "$ref"
+          # Atestacion del SBOM CycloneDX como predicado firmado de la imagen (supply-chain-seguridad §1).
+          cosign attest --yes --predicate "./geovial-${{ matrix.name }}.cdx.json" --type cyclonedx "$ref"
+          # Verificacion en el propio pipeline antes de declararla promovible: firma y atestacion deben
+          # validar contra la identidad del workflow (keyless OIDC).
+          cosign verify "$ref" \
+            --certificate-oidc-issuer "$COSIGN_IDENTITY_ISSUER" \
+            --certificate-identity-regexp "^https://github.com/${{ github.repository }}/.+"
+          cosign verify-attestation "$ref" --type cyclonedx \
+            --certificate-oidc-issuer "$COSIGN_IDENTITY_ISSUER" \
+            --certificate-identity-regexp "^https://github.com/${{ github.repository }}/.+"
+          echo "Imagen firmada y SBOM atestado: $ref"
+
+      - name: Publicar el SBOM como artefacto del release
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: geovial-${{ matrix.name }}-sbom
+          path: ./geovial-${{ matrix.name }}.cdx.json
+          if-no-files-found: warn

@@ -1,0 +1,14 @@
+# Excluir del contexto de build de imagen lo que no hace falta compilar/publicar,
+# para acelerar el build y evitar copiar artefactos de host obsoletos.
+**/bin/
+**/obj/
+**/TestResults/
+artifacts/
+.git/
+.github/
+.vs/
+sdd2.0/
+samples/
+tests/
+**/*.user
+vs.bat
