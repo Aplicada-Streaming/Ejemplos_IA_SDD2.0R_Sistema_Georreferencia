@@ -44,4 +44,30 @@ public sealed class AutorizacionService
         await _auditoria.RegistrarAsync(solicitanteId, "ACCESO_DATO_PERSONAL_RECHAZADO", $"objetivo={objetivoId}", ct);
         return Resultado.Fallo(CodigosError.AccesoDatoPersonalNoAutorizado);
     }
+
+    /// <summary>
+    /// Devuelve los datos personales de un usuario (CU-14 §5.B, US-31): exige una finalidad permitida
+    /// (RN-08), autoriza por rol y área (RN-01) y registra el acceso (RN-07). Bloquea con
+    /// <see cref="CodigosError.FinalidadNoPermitida"/> o <see cref="CodigosError.AccesoDatoPersonalNoAutorizado"/>.
+    /// </summary>
+    public async Task<Resultado<Usuario>> ConsultarDatosPersonalesAsync(
+        Guid solicitanteId, Guid objetivoId, string? finalidad, CancellationToken ct = default)
+    {
+        if (!Finalidades.EsPermitida(finalidad))
+        {
+            await _auditoria.RegistrarAsync(solicitanteId, "ACCESO_DATO_PERSONAL_FINALIDAD_RECHAZADA", $"objetivo={objetivoId}", ct);
+            return Resultado<Usuario>.Fallo(CodigosError.FinalidadNoPermitida);
+        }
+
+        var solicitante = await _usuarios.ObtenerPorIdAsync(solicitanteId, ct);
+        var objetivo = await _usuarios.ObtenerPorIdAsync(objetivoId, ct);
+        if (solicitante is null || objetivo is null || !Autorizacion.PuedeAccederDatoPersonal(solicitante, objetivo))
+        {
+            await _auditoria.RegistrarAsync(solicitanteId, "ACCESO_DATO_PERSONAL_RECHAZADO", $"objetivo={objetivoId}", ct);
+            return Resultado<Usuario>.Fallo(CodigosError.AccesoDatoPersonalNoAutorizado);
+        }
+
+        await _auditoria.RegistrarAsync(solicitanteId, "ACCESO_DATO_PERSONAL", $"objetivo={objetivoId};finalidad={finalidad}", ct);
+        return Resultado<Usuario>.Exito(objetivo);
+    }
 }

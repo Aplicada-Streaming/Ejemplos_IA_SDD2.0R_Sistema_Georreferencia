@@ -115,3 +115,7 @@ public sealed record SincronizarResponse(
 public sealed record ConflictoSyncDto(Guid ConflictoSyncId, int Tipo, string RecursosInvolucrados);
 
 public sealed record ActualizacionComentarioDto(Guid ComentarioId, Guid MarcadorId, string Texto, DateTime MarcaTemporal);
+
+// --- Auditoría y datos personales (CU-13, CU-14; US-30/US-31) ---
+
+public sealed record RegistroAuditoriaDto(Guid AutorUsuarioId, DateTime Momento, string Operacion, string RecursoAfectado);

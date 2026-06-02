@@ -393,6 +393,30 @@ internal sealed class FakeAuditoria : IServicioAuditoria
     }
 }
 
+internal sealed class FakeConsultaAuditoria : IConsultaAuditoria
+{
+    private readonly List<RegistroAuditoria> _datos;
+
+    public FakeConsultaAuditoria(params RegistroAuditoria[] iniciales) => _datos = iniciales.ToList();
+
+    public Task<IReadOnlyList<RegistroAuditoria>> ConsultarAsync(
+        Guid? autorUsuarioId, string? recurso, DateTime desde, DateTime hasta, CancellationToken ct = default)
+    {
+        var resultado = _datos.Where(r => r.Momento >= desde && r.Momento <= hasta);
+        if (autorUsuarioId is { } autor)
+        {
+            resultado = resultado.Where(r => r.AutorUsuarioId == autor);
+        }
+
+        if (!string.IsNullOrWhiteSpace(recurso))
+        {
+            resultado = resultado.Where(r => r.RecursoAfectado.Contains(recurso));
+        }
+
+        return Task.FromResult<IReadOnlyList<RegistroAuditoria>>(resultado.ToList());
+    }
+}
+
 internal sealed class FakeHasher : IHasherClave
 {
     public string Hash(string clave) => $"h:{clave}";

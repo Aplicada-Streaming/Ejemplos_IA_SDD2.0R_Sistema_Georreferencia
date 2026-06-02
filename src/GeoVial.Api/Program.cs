@@ -472,6 +472,32 @@ relevamientos.MapPost("/import", async (IFormFile archivo, ClaimsPrincipal usuar
         : MapeoErrores.AProblema(r.Codigo);
 }).DisableAntiforgery();
 
+// --- Consulta del historial de auditoría (CU-13; US-30) ---
+app.MapGet("/api/v1/auditoria", async (Guid? autor, string? recurso, DateTime? desde, DateTime? hasta, ClaimsPrincipal solicitante, ConsultaAuditoriaService consulta, CancellationToken ct) =>
+{
+    if (!TryGetUsuarioId(solicitante, out var id))
+    {
+        return Results.Unauthorized();
+    }
+
+    var r = await consulta.ConsultarAsync(id, autor, recurso, desde, hasta, ct);
+    return r.EsExito
+        ? Results.Ok(r.Valor!.Select(a => new RegistroAuditoriaDto(a.AutorUsuarioId, a.Momento, a.Operacion, a.RecursoAfectado)))
+        : MapeoErrores.AProblema(r.Codigo);
+}).RequireAuthorization();
+
+// --- Acceso a datos personales de un usuario con finalidad (CU-14 §5.B; US-31, RN-08) ---
+usuarios.MapGet("/{id:guid}/datos-personales", async (Guid id, string? finalidad, ClaimsPrincipal solicitante, AutorizacionService autorizacion, CancellationToken ct) =>
+{
+    if (!TryGetUsuarioId(solicitante, out var solicitanteId))
+    {
+        return Results.Unauthorized();
+    }
+
+    var r = await autorizacion.ConsultarDatosPersonalesAsync(solicitanteId, id, finalidad, ct);
+    return r.EsExito ? Results.Ok(AMapa(r.Valor!)) : MapeoErrores.AProblema(r.Codigo);
+});
+
 app.Run();
 
 static bool TryGetUsuarioId(ClaimsPrincipal principal, out Guid id)

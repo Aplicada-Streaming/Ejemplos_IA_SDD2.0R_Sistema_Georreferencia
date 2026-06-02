@@ -66,4 +66,8 @@ public static class CodigosError
     public const string ConsolidacionInvalida = "CONSOLIDACION_INVALIDA";
     public const string ConflictoNoMarcado = "CONFLICTO_NO_MARCADO";
     public const string SincronizacionInterrumpida = "SINCRONIZACION_INTERRUMPIDA";
+
+    // Auditoría y datos personales (CU-13, CU-14; RN-07, RN-08)
+    public const string AuditoriaInmutable = "AUDITORIA_INMUTABLE";
+    public const string FinalidadNoPermitida = "FINALIDAD_NO_PERMITIDA";
 }

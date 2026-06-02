@@ -135,6 +135,16 @@ public interface IServicioAuditoria
     Task<bool> RegistrarAsync(Guid autorUsuarioId, string operacion, string recursoAfectado, CancellationToken ct = default);
 }
 
+/// <summary>
+/// Consulta de solo lectura sobre el registro inmutable de auditoría (CU-13 §4.4-5, US-30). Filtra por
+/// autor, recurso y rango de fechas; el control de retención y de acceso lo aplica la capa de aplicación.
+/// </summary>
+public interface IConsultaAuditoria
+{
+    Task<IReadOnlyList<RegistroAuditoria>> ConsultarAsync(
+        Guid? autorUsuarioId, string? recurso, DateTime desde, DateTime hasta, CancellationToken ct = default);
+}
+
 public interface IHasherClave
 {
     string Hash(string clave);
