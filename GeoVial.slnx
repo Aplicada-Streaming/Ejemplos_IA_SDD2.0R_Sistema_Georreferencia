@@ -6,6 +6,7 @@
     <Project Path="src/GeoVial.FileHosting/GeoVial.FileHosting.csproj" />
     <Project Path="src/GeoVial.Infrastructure/GeoVial.Infrastructure.csproj" />
     <Project Path="src/GeoVial.Shared/GeoVial.Shared.csproj" />
+    <Project Path="src/GeoVial.Sync/GeoVial.Sync.csproj" />
     <Project Path="src/GeoVial.Web/GeoVial.Web.csproj" />
   </Folder>
   <Folder Name="/tests/">
