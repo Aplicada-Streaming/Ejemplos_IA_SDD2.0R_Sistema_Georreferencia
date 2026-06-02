@@ -12,7 +12,7 @@
 
 | Sprint | Estado | Fechas | Plan |
 | --- | --- | --- | --- |
-| Sprint 14 | Por planificar (UI de captura de campo —foto/GPS/comentario— en GeoVial.Mobile, EP-03) | — | — |
+| Sprint 15 | Por planificar (ubicación manual del punto sobre mapa —US-13— y subida del binario de la foto en GeoVial.Mobile) | — | — |
 
 ## Histórico de sprints cerrados
 
@@ -32,6 +32,7 @@
 | Sprint 11 (spike móvil: GeoVial.Sync) | Cerrado (Cumplido; velocity 13) | [plan-iteracion-sprint-11_v1.0.md](plan-iteracion-sprint-11_v1.0.md) | [sprint-review-sprint-11_v1.0.md](sprint-review-sprint-11_v1.0.md) | [sprint-retrospectiva-sprint-11_v1.0.md](sprint-retrospectiva-sprint-11_v1.0.md) |
 | Sprint 12 (captura offline y sync automática) | Cerrado (Cumplido; velocity 13) | [plan-iteracion-sprint-12_v1.0.md](plan-iteracion-sprint-12_v1.0.md) | [sprint-review-sprint-12_v1.0.md](sprint-review-sprint-12_v1.0.md) | [sprint-retrospectiva-sprint-12_v1.0.md](sprint-retrospectiva-sprint-12_v1.0.md) |
 | Sprint 13 (demo autónoma de la librería de sync) | Cerrado (Cumplido; velocity 8) | [plan-iteracion-sprint-13_v1.0.md](plan-iteracion-sprint-13_v1.0.md) | [sprint-review-sprint-13_v1.0.md](sprint-review-sprint-13_v1.0.md) | [sprint-retrospectiva-sprint-13_v1.0.md](sprint-retrospectiva-sprint-13_v1.0.md) |
+| Sprint 14 (captura de campo móvil por EXIF) | Cerrado (Cumplido; velocity 8) | [plan-iteracion-sprint-14_v1.0.md](plan-iteracion-sprint-14_v1.0.md) | [sprint-review-sprint-14_v1.0.md](sprint-review-sprint-14_v1.0.md) | [sprint-retrospectiva-sprint-14_v1.0.md](sprint-retrospectiva-sprint-14_v1.0.md) |
 
 ## Plantillas reusables
 
