@@ -38,6 +38,7 @@ public static class DependencyInjection
         servicios.AddScoped<IComentarioRepository, ComentarioRepository>();
         servicios.AddScoped<IEtiquetaRepository, EtiquetaRepository>();
         servicios.AddScoped<IConflictoRepository, ConflictoRepository>();
+        servicios.AddScoped<ICambioAplicadoRepository, CambioAplicadoRepository>();
         servicios.AddScoped<ICredencialRepository, CredencialRepository>();
         servicios.AddScoped<IServicioAuditoria, ServicioAuditoria>();
         servicios.AddSingleton<IEmpaquetadorRelevamiento, EmpaquetadorZip>();

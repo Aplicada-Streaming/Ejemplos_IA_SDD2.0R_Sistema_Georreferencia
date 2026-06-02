@@ -61,4 +61,9 @@ public static class CodigosError
 
     // Alojamiento de fotos (CU-04; ADR-08, BT-20)
     public const string ContenidoFotoRequerido = "CONTENIDO_FOTO_REQUERIDO";
+
+    // Sincronización (CU-07; RN-04)
+    public const string ConsolidacionInvalida = "CONSOLIDACION_INVALIDA";
+    public const string ConflictoNoMarcado = "CONFLICTO_NO_MARCADO";
+    public const string SincronizacionInterrumpida = "SINCRONIZACION_INTERRUMPIDA";
 }

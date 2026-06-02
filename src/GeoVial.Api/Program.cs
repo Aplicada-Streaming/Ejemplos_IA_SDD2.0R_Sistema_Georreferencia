@@ -9,6 +9,7 @@ using GeoVial.Application.ExportImport;
 using GeoVial.Application.Relevamientos;
 using GeoVial.Application.Revision;
 using GeoVial.Application.Servicios;
+using GeoVial.Application.Sincronizacion;
 using GeoVial.Domain;
 using GeoVial.Infrastructure;
 using GeoVial.Infrastructure.Persistencia;
@@ -400,6 +401,32 @@ relevamientos.MapPut("/{relevamientoId:guid}/radio", async (Guid relevamientoId,
 
     var r = await mediador.EnviarAsync(new AjustarRadioCommand(usuarioId, relevamientoId, req.RadioMetros), ct);
     return r.EsExito ? Results.NoContent() : MapeoErrores.AProblema(r.Codigo);
+});
+
+// --- Sincronización de cambios de campo (CU-07; US-18) ---
+relevamientos.MapPost("/{relevamientoId:guid}/sync", async (Guid relevamientoId, SincronizarRequest req, ClaimsPrincipal agente, IMediador mediador, CancellationToken ct) =>
+{
+    if (!TryGetUsuarioId(agente, out var agenteId))
+    {
+        return Results.Unauthorized();
+    }
+
+    var cambios = (req.Cambios ?? Array.Empty<CambioSyncDto>())
+        .Select(c => new CambioComentario(
+            c.CambioId, (OperacionSync)c.Operacion, c.ComentarioId, c.MarcadorId, c.FotoId, c.AutorUsuarioId, c.Texto, c.MarcaTemporal))
+        .ToList();
+
+    var r = await mediador.EnviarAsync(new SincronizarCommand(agenteId, relevamientoId, cambios, req.Desde), ct);
+    if (!r.EsExito)
+    {
+        return MapeoErrores.AProblema(r.Codigo);
+    }
+
+    var v = r.Valor!;
+    return Results.Ok(new SincronizarResponse(
+        v.Confirmados,
+        v.Conflictos.Select(c => new ConflictoSyncDto(c.ConflictoSyncId, c.Tipo, c.RecursosInvolucrados)).ToList(),
+        v.Actualizaciones.Select(a => new ActualizacionComentarioDto(a.ComentarioId, a.MarcadorId, a.Texto, a.MarcaTemporal)).ToList()));
 });
 
 var conflictos = app.MapGroup("/api/v1/conflictos").RequireAuthorization();

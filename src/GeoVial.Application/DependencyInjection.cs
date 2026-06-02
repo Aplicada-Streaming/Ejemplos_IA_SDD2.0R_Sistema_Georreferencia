@@ -5,6 +5,7 @@ using GeoVial.Application.ExportImport;
 using GeoVial.Application.Relevamientos;
 using GeoVial.Application.Revision;
 using GeoVial.Application.Servicios;
+using GeoVial.Application.Sincronizacion;
 using GeoVial.Domain;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -51,6 +52,9 @@ public static class DependencyInjection
         // Módulo de exportación e importación del relevamiento completo (CU-08 §5.A/§5.B; EP-07).
         servicios.AddScoped<IManejador<ExportarRelevamientoCommand, Resultado<ArchivoExportado>>, ExportarRelevamientoHandler>();
         servicios.AddScoped<IManejador<ImportarRelevamientoCommand, Resultado<Guid>>, ImportarRelevamientoHandler>();
+
+        // Módulo de sincronización: consolidación backend (CU-07; EP-04).
+        servicios.AddScoped<IManejador<SincronizarCommand, Resultado<ResultadoSincronizacion>>, SincronizarHandler>();
 
         return servicios;
     }
