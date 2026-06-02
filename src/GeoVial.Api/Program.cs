@@ -55,6 +55,12 @@ using (var scope = app.Services.CreateScope())
     var db = scope.ServiceProvider.GetRequiredService<GeoVialDbContext>();
     var hasher = scope.ServiceProvider.GetRequiredService<GeoVial.Application.Abstracciones.IHasherClave>();
     await SeedInicial.EjecutarAsync(db, hasher);
+
+    // Solo en desarrollo: un relevamiento de demostración como destino de la app móvil (capturar → sync).
+    if (app.Environment.IsDevelopment())
+    {
+        await SeedDemo.EjecutarAsync(db);
+    }
 }
 
 if (app.Environment.IsDevelopment())
