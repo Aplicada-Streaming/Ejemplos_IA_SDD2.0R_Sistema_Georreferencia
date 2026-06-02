@@ -2,9 +2,9 @@
 
 **Proyecto:** GeoVial
 **Documento:** estrategia-versionado_v1.0.md
-**Versión:** 1.0
-**Estado:** Propuesto
-**Fecha:** 2026-06-01
+**Versión:** 1.1
+**Estado:** Aceptado (MinVer implementado en GeoVial.Sync, Sprint 16)
+**Fecha:** 2026-06-02
 **Autor:** Ingeniero DevOps Senior (AG-09), Equipo SDD 2.0
 **Trazabilidad upstream:** PROJECT-README §10 (SemVer + Conventional Commits + MinVer + GitHub Flow); 05 (ADR-07, contratos-abstractions-sync §6); 08 (definition-of-done §1.4)
 **Trazabilidad downstream:** pipeline-ci-cd_v1.0.md (calcula la versión y promueve por canal/ambiente); entornos-deploy_v1.0.md (canales preview/stable); guías de publicación; 10_developer_guide
@@ -85,3 +85,4 @@ Aplica principalmente a la superficie pública de la librería `GeoVial.Sync` y,
 | Versión | Fecha | Descripción |
 | --- | --- | --- |
 | 1.0 | 2026-06-01 | Estrategia de versionado inicial de GeoVial: SemVer 2.0.0, Conventional Commits 1.0.0 con tabla de bump, MinVer/Nerdbank.GitVersioning como herramienta, GitHub Flow con `main` protegida y PR, canales preview/stable de la librería de sync (breaking de Abstractions → MAJOR) y deprecation policy con dos MINOR de gracia. Generada por AG-09 |
+| 1.1 | 2026-06-02 | MinVer implementado en `GeoVial.Sync` (Sprint 16) con `MinVerTagPrefix=v`. Sin tag `v*` aún, el canal preview produce `0.0.0-alpha.0.N`; el primer stable se materializa al crear el tag `v1.0.0` sobre `main`. CHANGELOG (Keep a Changelog) inicial creado en `src/GeoVial.Sync/CHANGELOG.md`. Estado a Aceptado. Por AG-09 |

@@ -12,7 +12,7 @@
 
 | Sprint | Estado | Fechas | Plan |
 | --- | --- | --- | --- |
-| Sprint 16 | Por planificar (revisión/edición sobre mapa en el móvil, o publicación de GeoVial.Sync como paquete preview) | — | — |
+| Sprint 17 | Por planificar (revisión/edición sobre mapa —US-21/US-22— o resolución de conflictos en la web —US-26—) | — | — |
 
 ## Histórico de sprints cerrados
 
@@ -34,6 +34,7 @@
 | Sprint 13 (demo autónoma de la librería de sync) | Cerrado (Cumplido; velocity 8) | [plan-iteracion-sprint-13_v1.0.md](plan-iteracion-sprint-13_v1.0.md) | [sprint-review-sprint-13_v1.0.md](sprint-review-sprint-13_v1.0.md) | [sprint-retrospectiva-sprint-13_v1.0.md](sprint-retrospectiva-sprint-13_v1.0.md) |
 | Sprint 14 (captura de campo móvil por EXIF) | Cerrado (Cumplido; velocity 8) | [plan-iteracion-sprint-14_v1.0.md](plan-iteracion-sprint-14_v1.0.md) | [sprint-review-sprint-14_v1.0.md](sprint-review-sprint-14_v1.0.md) | [sprint-retrospectiva-sprint-14_v1.0.md](sprint-retrospectiva-sprint-14_v1.0.md) |
 | Sprint 15 (ubicación manual + subida de binario) | Cerrado (Cumplido; velocity 11) | [plan-iteracion-sprint-15_v1.0.md](plan-iteracion-sprint-15_v1.0.md) | [sprint-review-sprint-15_v1.0.md](sprint-review-sprint-15_v1.0.md) | [sprint-retrospectiva-sprint-15_v1.0.md](sprint-retrospectiva-sprint-15_v1.0.md) |
+| Sprint 16 (publicación de GeoVial.Sync) | Cerrado (Cumplido; velocity 8) | [plan-iteracion-sprint-16_v1.0.md](plan-iteracion-sprint-16_v1.0.md) | [sprint-review-sprint-16_v1.0.md](sprint-review-sprint-16_v1.0.md) | [sprint-retrospectiva-sprint-16_v1.0.md](sprint-retrospectiva-sprint-16_v1.0.md) |
 
 ## Plantillas reusables
 
