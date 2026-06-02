@@ -63,9 +63,11 @@ jobs:
 
       - name: Firmar el paquete y el SBOM con cosign keyless (STAGE-10)
         shell: bash
+        timeout-minutes: 8   # evita cuelgues indefinidos del flujo keyless; un cuelgue falla rapido y deja log
         env:
           # Identidad y emisor esperados para la verificacion posterior (keyless OIDC).
           COSIGN_IDENTITY_ISSUER: https://token.actions.githubusercontent.com
+          COSIGN_YES: "true"   # confirma de forma no interactiva (ademas del flag --yes)
         run: |
           set -e
           for artefacto in ./artifacts/GeoVial.Sync.*.nupkg ./artifacts/geovial-sync.cdx.json; do

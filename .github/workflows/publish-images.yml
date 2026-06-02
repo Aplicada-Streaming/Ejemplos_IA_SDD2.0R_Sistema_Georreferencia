@@ -84,10 +84,19 @@ jobs:
       - name: Instalar cosign
         uses: sigstore/cosign-installer@v3
 
+      - name: Publicar el SBOM como artefacto del release (antes de firmar, para preservarlo)
+        uses: actions/upload-artifact@v4
+        with:
+          name: geovial-${{ matrix.name }}-sbom
+          path: ./geovial-${{ matrix.name }}.cdx.json
+          if-no-files-found: warn
+
       - name: Firmar la imagen y atestar el SBOM con cosign keyless (STAGE-10)
         shell: bash
+        timeout-minutes: 8   # evita cuelgues indefinidos del flujo keyless; un cuelgue falla rapido y deja log
         env:
           COSIGN_IDENTITY_ISSUER: https://token.actions.githubusercontent.com
+          COSIGN_YES: "true"   # confirma de forma no interactiva (ademas del flag --yes)
         run: |
           set -e
           ref="${{ steps.meta.outputs.image }}@${{ steps.build.outputs.digest }}"
@@ -104,11 +113,3 @@ jobs:
             --certificate-oidc-issuer "$COSIGN_IDENTITY_ISSUER" \
             --certificate-identity-regexp "^https://github.com/${{ github.repository }}/.+"
           echo "Imagen firmada y SBOM atestado: $ref"
-
-      - name: Publicar el SBOM como artefacto del release
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: geovial-${{ matrix.name }}-sbom
-          path: ./geovial-${{ matrix.name }}.cdx.json
-          if-no-files-found: warn
