@@ -51,8 +51,19 @@ public sealed class ColaCambiosSqlite : IChangeQueue
         comando.Parameters.AddWithValue("$ref", change.EntityRef.ToString());
         comando.Parameters.AddWithValue("$ts", change.Timestamp.ToString("O"));
         comando.Parameters.AddWithValue("$payload", change.Payload);
-        await comando.ExecuteNonQueryAsync(ct);
+        try
+        {
+            await comando.ExecuteNonQueryAsync(ct);
+        }
+        catch (SqliteException ex) when (ex.SqliteErrorCode == SqliteFull)
+        {
+            // US-16 CA-03: disco lleno; se conserva lo ya guardado y se informa con el error tipado.
+            throw new AlmacenamientoLocalInsuficienteException("No hay espacio de almacenamiento local para encolar el cambio.", ex);
+        }
     }
+
+    // SQLITE_FULL: el disco/base local se quedó sin espacio.
+    private const int SqliteFull = 13;
 
     public async Task<IReadOnlyList<ChangeRecord>> ReadPendingAsync(int max, CancellationToken ct = default)
     {

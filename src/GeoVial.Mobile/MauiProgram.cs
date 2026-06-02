@@ -1,6 +1,8 @@
-﻿using GeoVial.Sync;
+﻿using GeoVial.Mobile.Servicios;
+using GeoVial.Sync;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using Microsoft.Maui.Networking;
 
 namespace GeoVial.Mobile;
 
@@ -23,10 +25,19 @@ public static class MauiProgram
 		builder.Services.AddSingleton<IChangeQueue>(_ => new ColaCambiosSqlite($"Data Source={rutaCola}"));
 		builder.Services.AddSingleton<IConflictReporter, ReporterConflictosLog>();
 
-		// Cliente HTTP hacia el backend GeoVial; la BaseAddress y el token de sesión se configuran al iniciar sesión.
-		builder.Services.AddSingleton<ISyncBackendClient>(_ =>
-			new ClienteSyncHttp(new HttpClient { BaseAddress = new Uri("https://localhost:5001/") }));
+		// Cliente HTTP compartido hacia el backend GeoVial. En el dispositivo se alcanza por adb reverse
+		// (localhost:5080 → host). El token de sesión se asienta al iniciar sesión y lo reusa el cliente de sync.
+		builder.Services.AddSingleton(_ => new HttpClient { BaseAddress = new Uri("http://localhost:5080/") });
+		builder.Services.AddSingleton<ISyncBackendClient>(sp => new ClienteSyncHttp(sp.GetRequiredService<HttpClient>()));
 		builder.Services.AddSingleton<ISyncEngine, MotorSincronizacion>();
+
+		// Captura offline (US-16) y sincronización automática por conectividad (US-19).
+		builder.Services.AddSingleton(Connectivity.Current);
+		builder.Services.AddSingleton<IConnectivityMonitor, MonitorConectividadMaui>();
+		builder.Services.AddSingleton<ColectorOffline>();
+		builder.Services.AddSingleton<CoordinadorAutoSync>();
+
+		builder.Services.AddTransient<MainPage>();
 
 #if DEBUG
 		builder.Logging.AddDebug();

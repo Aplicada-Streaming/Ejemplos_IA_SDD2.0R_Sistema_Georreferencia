@@ -2,12 +2,12 @@
 
 **Proyecto:** GeoVial
 **Documento:** velocidad-equipo_v1.0.md
-**Versión:** 2.1
+**Versión:** 2.2
 **Estado:** En curso
-**Fecha:** 2026-06-01
+**Fecha:** 2026-06-02
 **Autor:** Scrum Master (AG-07), Equipo SDD 2.0
 
-> Tracking actualizado al cierre del Sprint 11. La tabla §1 registra la velocity efectiva de los Sprint 00 a 11 ya ejecutados. El promedio móvil de 3 sprints se puebla desde S02 (con S00, S01, S02).
+> Tracking actualizado al cierre del Sprint 12. La tabla §1 registra la velocity efectiva de los Sprint 00 a 12 ya ejecutados. El promedio móvil de 3 sprints se puebla desde S02 (con S00, S01, S02).
 
 ## 1. Por sprint
 
@@ -25,16 +25,17 @@
 | S09 | 13 | 13 | 13 | 13,3 | Sincronización backend: consolidación last-write-wins + idempotencia + conflictos (US-18, EP-04); 0 carry-over; 216 pruebas verdes |
 | S10 | 13 | 13 | 13 | 12,3 | Cierre de EP-08: consulta de auditoría con retención (US-30) + acceso a datos personales con finalidad (US-31 §5.B); 0 carry-over; 234 pruebas verdes |
 | S11 | 13 | 13 | 13 | 13,0 | Spike móvil: librería GeoVial.Sync + cola SQLite (BT-15, US-17) + cáscara MAUI; 0 carry-over; 242 pruebas verdes |
+| S12 | 13 | 13 | 13 | 13,0 | Captura offline (US-16) + sincronización automática por conectividad (US-19) sobre GeoVial.Sync; 0 carry-over; 250 pruebas verdes |
 
 El promedio móvil de 3 sprints queda disponible en S02 (29,3 SP, sobre S00/S01/S02).
 
 ## 2. Tendencia
 
-Doce sprints registrados (S00: 21, S01: 40, S02: 27, S03: 28, S04: 24, S05: 13, S06: 13, S07: 16, S08: 11, S09: 13, S10: 13, S11: 13). El promedio móvil de 3 sprints se estabilizó en 12–13 SP y en S11 marca 13,0 (ventana S09–S11), con tres sprints consecutivos de 13 SP: una cadencia sostenida de alcance acotado por decisión de planificación (cierres de épica y arranque de la plataforma móvil). Descontados esos efectos, los sprints de módulo completo del arranque (S02: 27, S03: 28, S04: 24) siguen marcando el techo estable de 24–28 SP. El S11 incorporó el perfil móvil (MAUI/SQLite); a partir de aquí la velocity se compara sobre un equipo con frente backend + móvil.
+Trece sprints registrados (S00: 21, S01: 40, S02: 27, S03: 28, S04: 24, S05: 13, S06: 13, S07: 16, S08: 11, S09: 13, S10: 13, S11: 13, S12: 13). El promedio móvil de 3 sprints se asentó en 13,0 SP (ventana S10–S12), con cuatro sprints consecutivos de 13 SP: una cadencia estable y predecible de alcance acotado, primero por cierres de épica backend y ahora por el arranque de la plataforma móvil (librería + cola + captura offline + sync automática). Descontados esos efectos de planificación, los sprints de módulo completo del arranque (S02: 27, S03: 28, S04: 24) siguen marcando el techo de 24–28 SP. Con el frente móvil ya productivo, los próximos sprints abordan la UI de captura de campo sobre `GeoVial.Sync`.
 
 ## 3. Capacidad ajustada
 
-Con el promedio móvil de 3 sprints en 13,0 SP (S11), la capacidad sugerida estricta para S12 sería de hasta 14 SP (110 % del promedio móvil). Con la plataforma móvil ya arrancada (`GeoVial.Sync` + cola SQLite), S12 puede comprometer la captura offline (US-16) y la sincronización automática por conectividad (US-19) sobre esa base, además de avanzar la UI de campo. La planificación se hará sobre el equipo con frente backend + móvil, sin tratar el promedio móvil —deprimido por la racha de alcance acotado— como techo real de capacidad.
+Con el promedio móvil de 3 sprints en 13,0 SP (S12), la capacidad sugerida estricta para S13 sería de hasta 14 SP (110 % del promedio móvil). Con la lógica de continuidad operativa del cliente ya construida (`GeoVial.Sync`: cola, motor, captura offline, sync automática), S13 puede abordar la UI de captura de campo (foto/GPS/comentario) y la pantalla de resolución de conflictos en la app `GeoVial.Mobile`, sobre un agente con el Android SDK provisionado. La velocity se sigue comparando sobre el equipo con frente backend + móvil; el promedio móvil de 13 SP refleja una cadencia de alcance acotado consciente, no un límite real de capacidad.
 
 ## 4. Outliers explicados
 
@@ -62,3 +63,4 @@ A medida que se registren velocities, todo sprint cuyo valor se desvíe más del
 | 1.9 | 2026-06-01 | Registro de la velocity efectiva del Sprint 09: S09=13 (0 carry-over). Promedio móvil de 3 sprints (S07–S09) = 13,3; capacidad sugerida estricta para S10 = 15 SP. US-18 entregada en su alcance backend; el resto de EP-04 (cliente móvil) espera la plataforma MAUI. Por AG-07 |
 | 2.0 | 2026-06-01 | Registro de la velocity efectiva del Sprint 10: S10=13 (0 carry-over). Promedio móvil de 3 sprints (S08–S10) = 12,3; capacidad sugerida estricta para S11 = 14 SP. Cierra EP-08 y el backend del MVP (EP-01 a EP-08 salvo cliente móvil de EP-04); el trabajo restante requiere incorporar la plataforma MAUI. Por AG-07 |
 | 2.1 | 2026-06-01 | Registro de la velocity efectiva del Sprint 11: S11=13 (0 carry-over). Promedio móvil de 3 sprints (S09–S11) = 13,0; capacidad sugerida estricta para S12 = 14 SP. Spike de plataforma móvil: librería GeoVial.Sync + cola SQLite (BT-15, US-17); habilita US-16/US-19 para S12. Por AG-07 |
+| 2.2 | 2026-06-02 | Registro de la velocity efectiva del Sprint 12: S12=13 (0 carry-over). Promedio móvil de 3 sprints (S10–S12) = 13,0; capacidad sugerida estricta para S13 = 14 SP. Captura offline (US-16) + sync automática por conectividad (US-19) sobre GeoVial.Sync; resta la UI de captura de campo. Por AG-07 |

@@ -110,3 +110,11 @@ public sealed class SyncInterruptedException : Exception
     {
     }
 }
+
+/// <summary>No hay espacio de almacenamiento local para encolar el cambio (ALMACENAMIENTO_LOCAL_INSUFICIENTE, US-16 CA-03).</summary>
+public sealed class AlmacenamientoLocalInsuficienteException : Exception
+{
+    public AlmacenamientoLocalInsuficienteException(string message, Exception? inner = null) : base(message, inner)
+    {
+    }
+}
