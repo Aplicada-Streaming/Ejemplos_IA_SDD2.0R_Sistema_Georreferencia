@@ -12,7 +12,7 @@
 
 | Sprint | Estado | Fechas | Plan |
 | --- | --- | --- | --- |
-| Sprint 25 | Por planificar (SBOM firmado del paquete; o pulido móvil: mapa interactivo, caché de fotos) | — | — |
+| Sprint 26 | Por planificar (pulido móvil: caché de fotos del carrusel, mapa interactivo; o publicación de v1.0.0) | — | — |
 
 ## Histórico de sprints cerrados
 
@@ -43,6 +43,7 @@
 | Sprint 22 (firma del paquete, supply-chain) | Cerrado (Cumplido; velocity 8) | [plan-iteracion-sprint-22_v1.0.md](plan-iteracion-sprint-22_v1.0.md) | [sprint-review-sprint-22_v1.0.md](sprint-review-sprint-22_v1.0.md) | [sprint-retrospectiva-sprint-22_v1.0.md](sprint-retrospectiva-sprint-22_v1.0.md) |
 | Sprint 23 (E2E del ciclo de conflictos) | Cerrado (Cumplido; velocity 8) | [plan-iteracion-sprint-23_v1.0.md](plan-iteracion-sprint-23_v1.0.md) | [sprint-review-sprint-23_v1.0.md](sprint-review-sprint-23_v1.0.md) | [sprint-retrospectiva-sprint-23_v1.0.md](sprint-retrospectiva-sprint-23_v1.0.md) |
 | Sprint 24 (E2E de edición en conflicto) | Cerrado (Cumplido; velocity 8) | [plan-iteracion-sprint-24_v1.0.md](plan-iteracion-sprint-24_v1.0.md) | [sprint-review-sprint-24_v1.0.md](sprint-review-sprint-24_v1.0.md) | [sprint-retrospectiva-sprint-24_v1.0.md](sprint-retrospectiva-sprint-24_v1.0.md) |
+| Sprint 25 (SBOM firmado del paquete) | Cerrado (Cumplido; velocity 8) | [plan-iteracion-sprint-25_v1.0.md](plan-iteracion-sprint-25_v1.0.md) | [sprint-review-sprint-25_v1.0.md](sprint-review-sprint-25_v1.0.md) | [sprint-retrospectiva-sprint-25_v1.0.md](sprint-retrospectiva-sprint-25_v1.0.md) |
 
 ## Plantillas reusables
 

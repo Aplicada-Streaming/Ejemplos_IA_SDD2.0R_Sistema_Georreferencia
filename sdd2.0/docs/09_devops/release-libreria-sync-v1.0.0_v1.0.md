@@ -47,6 +47,19 @@ cosign verify-blob GeoVial.Sync.1.0.0.nupkg \
   --certificate-identity-regexp "^https://github.com/Aplicada-Streaming/Ejemplos_IA_SDD2.0R_Sistema_Georreferencia/.+"
 ```
 
+### SBOM (inventario de dependencias)
+
+El pipeline genera el SBOM **CycloneDX (JSON)** del paquete (`geovial-sync.cdx.json`, supply-chain-seguridad §1,
+STAGE-09), lo firma con cosign (STAGE-10) y lo adjunta al release. El consumidor verifica su integridad igual
+que el paquete:
+
+```bash
+cosign verify-blob geovial-sync.cdx.json \
+  --bundle geovial-sync.cdx.json.cosign.bundle \
+  --certificate-oidc-issuer https://token.actions.githubusercontent.com \
+  --certificate-identity-regexp "^https://github.com/Aplicada-Streaming/Ejemplos_IA_SDD2.0R_Sistema_Georreferencia/.+"
+```
+
 ## 2. Checklist de release (Release manager)
 
 1. **Pre-condiciones**: `main` verde en CI (build + tests + cobertura); CHANGELOG con la sección `[1.0.0]`.

@@ -21,6 +21,8 @@ congelada bajo SemVer: a partir de aquí, todo cambio incompatible bumpea MAJOR 
   contenido (DLL + README + metadatos).
 - Firma del paquete con **cosign keyless** (sigstore, OIDC de GitHub Actions) en el pipeline de publicación,
   verificada antes de publicar; bundle de verificación adjunto al release (supply-chain-seguridad §2).
+- SBOM **CycloneDX** (JSON) del paquete generado y firmado con cosign en el pipeline, adjunto al release
+  (supply-chain-seguridad §1).
 - Consumidor de prueba `samples/01-sync-basico` y demo MAUI autónoma `samples/02-sync-maui-demo`.
 
 ### Superficie pública (estable, SemVer)

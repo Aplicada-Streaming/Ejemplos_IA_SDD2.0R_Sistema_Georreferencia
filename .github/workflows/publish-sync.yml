@@ -1,6 +1,6 @@
 name: Publish GeoVial.Sync
 
-# STAGE-11 (package) + STAGE-10 (firma) + STAGE-13 (publish) del paquete de sincronizacion
+# STAGE-11 (package) + STAGE-09 (SBOM) + STAGE-10 (firma) + STAGE-13 (publish) del paquete de sincronizacion
 # (09_devops/pipeline-ci-cd, supply-chain-seguridad y guia-publicacion-paquete-github-packages).
 # Dispara en tags de version v*: MinVer calcula la version desde el tag; el sufijo
 # -alpha.N / -beta.N / -rc.N publica al canal preview; v<X.Y.Z> sin sufijo, al stable.
@@ -43,26 +43,37 @@ jobs:
           unzip -p "$pkg" 'GeoVial.Sync.nuspec' | grep -q '<id>GeoVial.Sync</id>' || { echo "id incorrecto"; exit 1; }
           echo "Paquete OK"
 
+      - name: Generar SBOM CycloneDX (STAGE-09)
+        shell: bash
+        run: |
+          set -e
+          dotnet tool install --global CycloneDX
+          export PATH="$PATH:$HOME/.dotnet/tools"
+          # SBOM (CycloneDX JSON) del paquete con su arbol de dependencias (supply-chain-seguridad §1).
+          dotnet CycloneDX src/GeoVial.Sync/GeoVial.Sync.csproj -o ./artifacts -fn geovial-sync.cdx.json -j
+          test -f ./artifacts/geovial-sync.cdx.json
+          echo "SBOM generado: ./artifacts/geovial-sync.cdx.json"
+
       - name: Instalar cosign
         uses: sigstore/cosign-installer@v3
 
-      - name: Firmar el paquete con cosign keyless (STAGE-10)
+      - name: Firmar el paquete y el SBOM con cosign keyless (STAGE-10)
         shell: bash
         env:
           # Identidad y emisor esperados para la verificacion posterior (keyless OIDC).
           COSIGN_IDENTITY_ISSUER: https://token.actions.githubusercontent.com
         run: |
           set -e
-          for pkg in ./artifacts/GeoVial.Sync.*.nupkg; do
-            echo "Firmando $pkg"
+          for artefacto in ./artifacts/GeoVial.Sync.*.nupkg ./artifacts/geovial-sync.cdx.json; do
+            echo "Firmando $artefacto"
             # Firma detached (bundle con certificado + entrada de Rekor); modo keyless via OIDC de Actions.
-            cosign sign-blob --yes "$pkg" --bundle "$pkg.cosign.bundle"
+            cosign sign-blob --yes "$artefacto" --bundle "$artefacto.cosign.bundle"
             # Verificacion en el propio pipeline: la firma debe validar contra la identidad del workflow.
-            cosign verify-blob "$pkg" \
-              --bundle "$pkg.cosign.bundle" \
+            cosign verify-blob "$artefacto" \
+              --bundle "$artefacto.cosign.bundle" \
               --certificate-oidc-issuer "$COSIGN_IDENTITY_ISSUER" \
               --certificate-identity-regexp "^https://github.com/${{ github.repository }}/.+"
-            echo "Firma OK: $pkg.cosign.bundle"
+            echo "Firma OK: $artefacto.cosign.bundle"
           done
 
       - name: Publish a GitHub Packages (STAGE-13)
@@ -72,12 +83,13 @@ jobs:
           --api-key ${{ secrets.GITHUB_TOKEN }}
           --skip-duplicate
 
-      - name: Publicar artefactos del paquete (nupkg + firmas)
+      - name: Publicar artefactos del paquete (nupkg + SBOM + firmas)
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: geovial-sync-nupkg
           path: |
             ./artifacts/*.nupkg
+            ./artifacts/geovial-sync.cdx.json
             ./artifacts/*.cosign.bundle
           if-no-files-found: warn
