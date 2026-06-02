@@ -9,6 +9,9 @@
     <Project Path="src/GeoVial.Sync/GeoVial.Sync.csproj" />
     <Project Path="src/GeoVial.Web/GeoVial.Web.csproj" />
   </Folder>
+  <Folder Name="/samples/">
+    <Project Path="samples/02-sync-maui-demo/SyncDemo.Nucleo/SyncDemo.Nucleo.csproj" />
+  </Folder>
   <Folder Name="/tests/">
     <Project Path="tests/GeoVial.IntegrationTests/GeoVial.IntegrationTests.csproj" />
     <Project Path="tests/GeoVial.UnitTests/GeoVial.UnitTests.csproj" />

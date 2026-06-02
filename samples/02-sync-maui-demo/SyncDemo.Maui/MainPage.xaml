@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="SyncDemo.Maui.MainPage"
+             Title="Demo · GeoVial.Sync">
+
+    <ScrollView>
+        <VerticalStackLayout Padding="24" Spacing="14">
+
+            <Label Text="Demo autónoma de sincronización"
+                   FontSize="22" FontAttributes="Bold" />
+            <Label Text="Ejercita la superficie pública de GeoVial.Sync contra un backend simulado en memoria. No hay red ni backend real."
+                   FontSize="13" TextColor="#666666" />
+
+            <Label x:Name="PendientesLbl" Text="Pendientes en cola: 0"
+                   FontSize="18" FontAttributes="Bold" Margin="0,8,0,0" />
+
+            <Button x:Name="CapturarBtn" Text="Capturar registro local"
+                    Clicked="OnCapturar" />
+            <Button x:Name="CapturarConflictoBtn" Text="Capturar registro en conflicto"
+                    Clicked="OnCapturarConflicto" BackgroundColor="#B8860B" />
+            <Button x:Name="SincronizarBtn" Text="Sincronizar"
+                    Clicked="OnSincronizar" />
+
+            <Border Padding="12" Stroke="#cccccc" StrokeThickness="1" Margin="0,8,0,0">
+                <Label x:Name="EstadoLbl" Text="Capturá registros y sincronizá para ver el estado de la cola." />
+            </Border>
+
+            <!-- Resolución básica del conflicto: aparece solo cuando hay uno reportado (US-32 CA-02). -->
+            <VerticalStackLayout x:Name="ResolucionPanel" IsVisible="False" Spacing="8" Margin="0,8,0,0">
+                <Label x:Name="ConflictoLbl" Text="" TextColor="#B8860B" FontAttributes="Bold" />
+                <Button Text="Mantener lo local (prevalece mi cambio)" Clicked="OnMantenerLocal" />
+                <Button Text="Aceptar lo remoto (descartar mi cambio)" Clicked="OnAceptarRemoto" />
+            </VerticalStackLayout>
+
+        </VerticalStackLayout>
+    </ScrollView>
+
+</ContentPage>

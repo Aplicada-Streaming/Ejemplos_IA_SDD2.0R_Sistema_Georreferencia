@@ -1,0 +1,15 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <IsPackable>false</IsPackable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- La demo es ajena al sistema GeoVial: solo referencia la librería publicada (ADR-07, US-32 §7). -->
+    <ProjectReference Include="..\..\..\src\GeoVial.Sync\GeoVial.Sync.csproj" />
+  </ItemGroup>
+
+</Project>
