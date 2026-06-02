@@ -1,7 +1,7 @@
 name: Publish GeoVial.Sync
 
-# STAGE-11 (package) + STAGE-13 (publish) del paquete de sincronizacion
-# (09_devops/pipeline-ci-cd y guia-publicacion-paquete-github-packages).
+# STAGE-11 (package) + STAGE-10 (firma) + STAGE-13 (publish) del paquete de sincronizacion
+# (09_devops/pipeline-ci-cd, supply-chain-seguridad y guia-publicacion-paquete-github-packages).
 # Dispara en tags de version v*: MinVer calcula la version desde el tag; el sufijo
 # -alpha.N / -beta.N / -rc.N publica al canal preview; v<X.Y.Z> sin sufijo, al stable.
 
@@ -12,6 +12,7 @@ on:
 permissions:
   contents: read
   packages: write
+  id-token: write   # cosign keyless (OIDC de GitHub Actions); sin llaves privadas de larga vida (supply-chain-seguridad §2)
 
 jobs:
   pack-publish:
@@ -42,6 +43,28 @@ jobs:
           unzip -p "$pkg" 'GeoVial.Sync.nuspec' | grep -q '<id>GeoVial.Sync</id>' || { echo "id incorrecto"; exit 1; }
           echo "Paquete OK"
 
+      - name: Instalar cosign
+        uses: sigstore/cosign-installer@v3
+
+      - name: Firmar el paquete con cosign keyless (STAGE-10)
+        shell: bash
+        env:
+          # Identidad y emisor esperados para la verificacion posterior (keyless OIDC).
+          COSIGN_IDENTITY_ISSUER: https://token.actions.githubusercontent.com
+        run: |
+          set -e
+          for pkg in ./artifacts/GeoVial.Sync.*.nupkg; do
+            echo "Firmando $pkg"
+            # Firma detached (bundle con certificado + entrada de Rekor); modo keyless via OIDC de Actions.
+            cosign sign-blob --yes "$pkg" --bundle "$pkg.cosign.bundle"
+            # Verificacion en el propio pipeline: la firma debe validar contra la identidad del workflow.
+            cosign verify-blob "$pkg" \
+              --bundle "$pkg.cosign.bundle" \
+              --certificate-oidc-issuer "$COSIGN_IDENTITY_ISSUER" \
+              --certificate-identity-regexp "^https://github.com/${{ github.repository }}/.+"
+            echo "Firma OK: $pkg.cosign.bundle"
+          done
+
       - name: Publish a GitHub Packages (STAGE-13)
         run: >
           dotnet nuget push "./artifacts/*.nupkg"
@@ -49,10 +72,12 @@ jobs:
           --api-key ${{ secrets.GITHUB_TOKEN }}
           --skip-duplicate
 
-      - name: Publicar artefactos del paquete
+      - name: Publicar artefactos del paquete (nupkg + firmas)
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: geovial-sync-nupkg
-          path: ./artifacts/*.nupkg
+          path: |
+            ./artifacts/*.nupkg
+            ./artifacts/*.cosign.bundle
           if-no-files-found: warn
