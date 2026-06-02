@@ -12,7 +12,7 @@
 
 | Sprint | Estado | Fechas | Plan |
 | --- | --- | --- | --- |
-| Sprint 09 | Por planificar | — | — |
+| Sprint 10 | Por planificar | — | — |
 
 ## Histórico de sprints cerrados
 
@@ -27,6 +27,7 @@
 | Sprint 06 (exportación/importación) | Cerrado (Cumplido; velocity 13) | [plan-iteracion-sprint-06_v1.0.md](plan-iteracion-sprint-06_v1.0.md) | [sprint-review-sprint-06_v1.0.md](sprint-review-sprint-06_v1.0.md) | [sprint-retrospectiva-sprint-06_v1.0.md](sprint-retrospectiva-sprint-06_v1.0.md) |
 | Sprint 07 (alojamiento de fotos) | Cerrado (Cumplido; velocity 16) | [plan-iteracion-sprint-07_v1.0.md](plan-iteracion-sprint-07_v1.0.md) | [sprint-review-sprint-07_v1.0.md](sprint-review-sprint-07_v1.0.md) | [sprint-retrospectiva-sprint-07_v1.0.md](sprint-retrospectiva-sprint-07_v1.0.md) |
 | Sprint 08 (pipeline de imágenes y cierre EP-05) | Cerrado (Cumplido; velocity 11) | [plan-iteracion-sprint-08_v1.0.md](plan-iteracion-sprint-08_v1.0.md) | [sprint-review-sprint-08_v1.0.md](sprint-review-sprint-08_v1.0.md) | [sprint-retrospectiva-sprint-08_v1.0.md](sprint-retrospectiva-sprint-08_v1.0.md) |
+| Sprint 09 (sincronización backend) | Cerrado (Cumplido; velocity 13) | [plan-iteracion-sprint-09_v1.0.md](plan-iteracion-sprint-09_v1.0.md) | [sprint-review-sprint-09_v1.0.md](sprint-review-sprint-09_v1.0.md) | [sprint-retrospectiva-sprint-09_v1.0.md](sprint-retrospectiva-sprint-09_v1.0.md) |
 
 ## Plantillas reusables
 
