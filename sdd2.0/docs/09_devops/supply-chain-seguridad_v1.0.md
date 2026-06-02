@@ -71,3 +71,4 @@ SLA de remediación por severidad, aplicable a vulnerabilidades en dependencias,
 | Versión | Fecha | Descripción |
 | --- | --- | --- |
 | 1.0 | 2026-06-01 | Política de supply chain inicial de GeoVial: SBOM CycloneDX por artefacto firmado, firma cosign keyless con transparency log, SLSA Build L2 objetivo con plan de elevación a L3, dependency scanning con Dependabot y política por severidad, SAST/DAST con criterios de bloqueo y política de CVE con SLA por severidad. Refuerzo de compliance Ley 25.326 (auditoría ≥ 1 año, datos personales). Generada por AG-09 |
+| 1.1 | 2026-06-02 | §2 (firma) implementada para el paquete de la librería `GeoVial.Sync` (Sprint 22): el workflow `publish-sync.yml` firma el `.nupkg` con cosign keyless (OIDC de Actions, `id-token: write`), lo verifica con `cosign verify-blob` antes de publicar y adjunta el bundle de verificación. La firma de las imágenes Docker y los SBOM sigue pendiente de los stages de imagen. Por AG-09 |
