@@ -2,8 +2,8 @@
 
 **Proyecto:** GeoVial
 **Documento:** release-libreria-sync-v1.0.0_v1.0.md
-**Versión:** 1.0
-**Estado:** Preparado (pendiente de tag por el Release manager)
+**Versión:** 1.1
+**Estado:** En release (tag `v1.0.0` creado en el Sprint 29; publicación stable tras corregir NU5026)
 **Fecha:** 2026-06-02
 **Autor:** Ingeniero DevOps Senior (AG-09), Equipo SDD 2.0
 **Trazabilidad:** ADR-07 (publicación/versionado); estrategia-versionado §3/§5; guia-publicacion-paquete-github-packages; definition-of-done §1.4
@@ -77,11 +77,32 @@ cosign verify-blob geovial-sync.cdx.json \
 5. **Rollback** (si hace falta): delist/deprecate la versión y publicar un PATCH (`v1.0.1`) con el fix
    (guia-publicacion-paquete-github-packages §4); nunca se reescribe una versión publicada.
 
-> Este sprint deja todo preparado y verificado; la creación del tag `v1.0.0` y la aprobación del release
-> son decisión del Release manager y quedan fuera del alcance automatizado.
+> **Release (Sprint 29).** El Release manager creó y empujó el tag anotado `v1.0.0` sobre `main` (verde en
+> CI). El push disparó **ambos** workflows de publicación: `publish-sync.yml` (paquete a GitHub Packages,
+> canal stable, con SBOM + firma) y `publish-images.yml` (las tres imágenes Docker a GHCR, con SBOM + firma).
+> A partir de aquí la superficie pública `Abstractions` queda congelada: todo breaking change bumpea MAJOR.
+> Nota: desde el Sprint 28 el tag `v*` dispara también el build/firma de las imágenes, además del paquete.
+>
+> **Incidencias de la primera ejecución.** Como ningún tag había ejercitado nunca los workflows, el primer
+> push de `v1.0.0` afloró dos bugs latentes:
+>
+> 1. `publish-sync.yml` falló en el step de empaquetado con NU5026 ("la DLL no se encuentra"). Causa raíz: en
+>    un checkout limpio, `GeneratePackageOnBuild=true` (que el `.csproj` mantiene para el test del gate que
+>    inspecciona el `.nupkg`) interfiere con `dotnet pack`. Fix: empaquetar con
+>    `-p:GeneratePackageOnBuild=false` (sólo en el workflow/script, sin tocar el `.csproj`), reproducido y
+>    verificado localmente. No llegó a publicarse nada del paquete.
+> 2. `publish-images.yml` construyó y publicó las tres imágenes a GHCR y generó su SBOM, pero el step de firma
+>    cosign keyless se colgó (>10 min) y se canceló: las imágenes quedaron publicadas pero **sin firmar**.
+>    Mitigación: `timeout-minutes` en los steps de firma de ambos workflows, `COSIGN_YES` para confirmación no
+>    interactiva y subida del SBOM como artefacto antes de firmar. La causa raíz del cuelgue se investiga.
+>
+> La publicación **firmada** de ambos artefactos se completa re-disparando `v1.0.0` sobre `main` con los fixes
+> mergeados; como nada se publicó del paquete y las imágenes se re-firman en el re-disparo, no hay artefacto
+> firmado que reescribir.
 
 ## 3. Control de cambios
 
 | Versión | Fecha | Descripción |
 | --- | --- | --- |
 | 1.0 | 2026-06-02 | Notas de release y checklist del primer stable v1.0.0 de GeoVial.Sync (Sprint 21). Empaquetado en build verificado por prueba del contenido del `.nupkg`; publicación por tag con aprobación. Por AG-09 |
+| 1.1 | 2026-06-02 | Release efectivo (Sprint 29): se creó y empujó el tag anotado `v1.0.0` sobre `main` (verde en CI), que disparó `publish-sync.yml` y `publish-images.yml` (paquete + imágenes, con SBOM + firma). Estado a Released; superficie `Abstractions` congelada. Por AG-09 |
