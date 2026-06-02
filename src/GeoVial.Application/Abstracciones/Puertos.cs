@@ -76,7 +76,19 @@ public interface IComentarioRepository
     /// <summary>Lista los comentarios del marcador con seguimiento de cambios para reasignarlos (CU-12 §5.A).</summary>
     Task<IReadOnlyList<Comentario>> ListarPorMarcadorParaEdicionAsync(Guid marcadorId, CancellationToken ct = default);
 
+    /// <summary>Lista los comentarios del relevamiento editados después de una marca temporal (bajada de actualizaciones, CU-07).</summary>
+    Task<IReadOnlyList<Comentario>> ListarActualizadosDesdeAsync(Guid relevamientoId, DateTime desde, CancellationToken ct = default);
+
     Task AgregarAsync(Comentario comentario, CancellationToken ct = default);
+    Task GuardarCambiosAsync(CancellationToken ct = default);
+}
+
+public interface ICambioAplicadoRepository
+{
+    /// <summary>Idempotencia (RC-03): true si el cambio ya fue aplicado en una sincronización previa.</summary>
+    Task<bool> ExisteAsync(Guid cambioId, CancellationToken ct = default);
+
+    Task AgregarAsync(CambioAplicado cambio, CancellationToken ct = default);
     Task GuardarCambiosAsync(CancellationToken ct = default);
 }
 

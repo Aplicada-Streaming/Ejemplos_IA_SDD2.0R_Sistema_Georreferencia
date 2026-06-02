@@ -50,6 +50,13 @@ public sealed class ConflictoSync
         return new ConflictoSync(TipoConflicto.MarcadoresEnRadio, relevamientoId, $"{primero};{segundo}");
     }
 
+    /// <summary>
+    /// Crea un conflicto de edición concurrente sobre un recurso consolidado por última escritura (RN-04, CU-07).
+    /// Lo resuelve manualmente un usuario autorizado desde la web (CU-12).
+    /// </summary>
+    public static ConflictoSync EdicionEnConflicto(Guid relevamientoId, Guid recursoId) =>
+        new(TipoConflicto.EdicionEnConflicto, relevamientoId, recursoId.ToString());
+
     public bool EstaPendiente => EstadoResolucion == EstadoResolucionConflicto.Pendiente;
 
     /// <summary>Marca el conflicto como resuelto por decisión del usuario (CU-12, RN-07).</summary>

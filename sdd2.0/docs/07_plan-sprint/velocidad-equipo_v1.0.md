@@ -2,12 +2,12 @@
 
 **Proyecto:** GeoVial
 **Documento:** velocidad-equipo_v1.0.md
-**Versión:** 1.8
+**Versión:** 1.9
 **Estado:** En curso
 **Fecha:** 2026-06-01
 **Autor:** Scrum Master (AG-07), Equipo SDD 2.0
 
-> Tracking actualizado al cierre del Sprint 08. La tabla §1 registra la velocity efectiva de los Sprint 00 a 08 ya ejecutados. El promedio móvil de 3 sprints se puebla desde S02 (con S00, S01, S02).
+> Tracking actualizado al cierre del Sprint 09. La tabla §1 registra la velocity efectiva de los Sprint 00 a 09 ya ejecutados. El promedio móvil de 3 sprints se puebla desde S02 (con S00, S01, S02).
 
 ## 1. Por sprint
 
@@ -22,16 +22,17 @@
 | S06 | 13 | 13 | 13 | 16,7 | Exportación/importación del relevamiento completo en ZIP (EP-07); compromiso acotado (2 historias); 0 carry-over; 176 pruebas verdes |
 | S07 | 16 | 16 | 16 | 14,0 | Alojamiento de fotos con backends configurables (BT-20) + binarios en el ZIP (cierre BT-21); compromiso ampliado por la acción de retro; 0 carry-over; 192 pruebas verdes |
 | S08 | 11 | 11 | 11 | 13,3 | Pipeline de imágenes (BT-19) + cierre de EP-05 (filtrado US-23 + visor US-24); 0 carry-over; 205 pruebas verdes |
+| S09 | 13 | 13 | 13 | 13,3 | Sincronización backend: consolidación last-write-wins + idempotencia + conflictos (US-18, EP-04); 0 carry-over; 216 pruebas verdes |
 
 El promedio móvil de 3 sprints queda disponible en S02 (29,3 SP, sobre S00/S01/S02).
 
 ## 2. Tendencia
 
-Nueve sprints registrados (S00: 21, S01: 40, S02: 27, S03: 28, S04: 24, S05: 13, S06: 13, S07: 16, S08: 11). El promedio móvil de 3 sprints se estabiliza en torno a 13–14 SP (S07: 14,0 ventana S05–S07; S08: 13,3 ventana S06–S08), reflejando una racha de cuatro sprints de alcance acotado (S05/S06 por épica chica; S07 ampliado a 16; S08 a 11 por cerrar EP-05 con dos historias Could de bajo costo más un BT). Descontados los efectos de planificación, los sprints de módulo completo del arranque (S02: 27, S03: 28, S04: 24) siguen marcando el techo estable de 24–28 SP; la serie reciente trabaja por debajo de ese techo por decisión de alcance, no por capacidad.
+Diez sprints registrados (S00: 21, S01: 40, S02: 27, S03: 28, S04: 24, S05: 13, S06: 13, S07: 16, S08: 11, S09: 13). El promedio móvil de 3 sprints se mantiene estable en 13,3 SP (S08 ventana S06–S08 y S09 ventana S07–S09 coinciden en 13,3), reflejando una racha de cinco sprints de alcance acotado: S05/S06 por épica chica, S07 ampliado a 16, S08 a 11 por cerrar EP-05, y S09 a 13 por una sola historia grande (US-18, descompuesta a su alcance backend). Descontados los efectos de planificación, los sprints de módulo completo del arranque (S02: 27, S03: 28, S04: 24) siguen marcando el techo estable de 24–28 SP; la serie reciente trabaja por debajo de ese techo por decisión de alcance, no por capacidad.
 
 ## 3. Capacidad ajustada
 
-Con el promedio móvil de 3 sprints en 13,3 SP (S08), la capacidad sugerida estricta para S09 sería de hasta 15 SP (110 % del promedio móvil). El próximo foco (EP-04 sincronización) trae historias grandes (US-18 = 13 SP); el equipo planificará S09 contra el rango 13–24 SP según cuántas historias de EP-04 entren refinadas, sin tratar el promedio móvil deprimido por la racha de alcance acotado como techo real.
+Con el promedio móvil de 3 sprints en 13,3 SP (S09), la capacidad sugerida estricta para S10 sería de hasta 15 SP (110 % del promedio móvil). El próximo foco depende del backlog refinado: si entra US-30 (consulta de auditoría, 5 SP) puede combinarse con otra historia backend hacia el rango 13–18 SP; el resto de EP-04 (cliente móvil) requiere incorporar la plataforma MAUI antes de comprometerse. El equipo no trata el promedio móvil, deprimido por la racha de alcance acotado, como techo real de capacidad (el módulo completo del arranque marcaba 24–28 SP).
 
 ## 4. Outliers explicados
 
@@ -56,3 +57,4 @@ A medida que se registren velocities, todo sprint cuyo valor se desvíe más del
 | 1.6 | 2026-06-01 | Registro de la velocity efectiva del Sprint 06: S06=13 (0 carry-over). Promedio móvil de 3 sprints (S04–S06) = 16,7; capacidad sugerida estricta para S07 = 18 SP, con recomendación de combinar épica acotada + ítem de backlog hacia el rango estable 24–28 SP. S06 documentado como outlier por compromiso acotado (EP-07, 2 historias). Por AG-07 |
 | 1.7 | 2026-06-01 | Registro de la velocity efectiva del Sprint 07: S07=16 (0 carry-over). Promedio móvil de 3 sprints (S05–S07) = 14,0; capacidad sugerida hacia 16–24 SP para S08 (la ventana está deprimida por S05/S06; S07 ya repuntó a 16). Por AG-07 |
 | 1.8 | 2026-06-01 | Registro de la velocity efectiva del Sprint 08: S08=11 (0 carry-over). Promedio móvil de 3 sprints (S06–S08) = 13,3; capacidad sugerida hacia 13–24 SP para S09 según cuántas historias de EP-04 (sincronización) entren refinadas. Por AG-07 |
+| 1.9 | 2026-06-01 | Registro de la velocity efectiva del Sprint 09: S09=13 (0 carry-over). Promedio móvil de 3 sprints (S07–S09) = 13,3; capacidad sugerida estricta para S10 = 15 SP. US-18 entregada en su alcance backend; el resto de EP-04 (cliente móvil) espera la plataforma MAUI. Por AG-07 |

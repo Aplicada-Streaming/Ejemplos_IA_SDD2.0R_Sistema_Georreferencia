@@ -270,4 +270,28 @@ public class ApiAccesoUsuariosTests : IClassFixture<WebApplicationFactory<Progra
         var resp = await cliente.GetAsync($"/api/v1/relevamientos/{Guid.NewGuid()}/revision?etiquetas=fisura");
         resp.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
     }
+
+    [Fact] // CU-07 / US-18: sincronizar sin token → 401
+    public async Task Sincronizar_sin_token_devuelve_401()
+    {
+        var cliente = _factory.CreateClient();
+        var resp = await cliente.PostAsJsonAsync(
+            $"/api/v1/relevamientos/{Guid.NewGuid()}/sync",
+            new SincronizarRequest(null, Array.Empty<CambioSyncDto>()));
+        resp.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
+    }
+
+    [Fact] // CU-07 / US-18: sincronizar un relevamiento inexistente con token del raíz → 404
+    public async Task Sincronizar_relevamiento_inexistente_devuelve_404()
+    {
+        var cliente = _factory.CreateClient();
+        var token = await LoginRaizAsync(cliente);
+        cliente.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+
+        var resp = await cliente.PostAsJsonAsync(
+            $"/api/v1/relevamientos/{Guid.NewGuid()}/sync",
+            new SincronizarRequest(null, Array.Empty<CambioSyncDto>()));
+
+        resp.StatusCode.Should().Be(HttpStatusCode.NotFound);
+    }
 }

@@ -97,3 +97,21 @@ public sealed record ResolverConflictoRequest(int Decision, Guid? MarcadorResult
 public sealed record ConflictoDetectadoDto(Guid ConflictoSyncId, Guid MarcadorA, Guid MarcadorB, double DistanciaMetros);
 
 public sealed record ConflictoPendienteDto(Guid ConflictoSyncId, int Tipo, Guid MarcadorA, Guid MarcadorB);
+
+// --- Sincronización de cambios de campo (CU-07; US-18) ---
+
+/// <summary>Lote de cambios encolados a subir + la marca temporal desde la cual se piden actualizaciones.</summary>
+public sealed record SincronizarRequest(DateTime? Desde, IReadOnlyList<CambioSyncDto> Cambios);
+
+/// <summary>Cambio de comentario encolado. Operacion: 1 = crear, 2 = actualizar. CambioId es la clave de idempotencia.</summary>
+public sealed record CambioSyncDto(
+    Guid CambioId, int Operacion, Guid ComentarioId, Guid MarcadorId, Guid? FotoId, Guid AutorUsuarioId, string Texto, DateTime MarcaTemporal);
+
+public sealed record SincronizarResponse(
+    IReadOnlyList<Guid> Confirmados,
+    IReadOnlyList<ConflictoSyncDto> Conflictos,
+    IReadOnlyList<ActualizacionComentarioDto> Actualizaciones);
+
+public sealed record ConflictoSyncDto(Guid ConflictoSyncId, int Tipo, string RecursosInvolucrados);
+
+public sealed record ActualizacionComentarioDto(Guid ComentarioId, Guid MarcadorId, string Texto, DateTime MarcaTemporal);
