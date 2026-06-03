@@ -24,6 +24,8 @@
     <ProjectReference Include="..\..\src\GeoVial.Api\GeoVial.Api.csproj" />
     <ProjectReference Include="..\..\src\GeoVial.Shared\GeoVial.Shared.csproj" />
     <ProjectReference Include="..\..\src\GeoVial.CapturaCampo\GeoVial.CapturaCampo.csproj" />
+    <!-- AlmacenS3 para la prueba contra LocalStack (Sprint 39). -->
+    <ProjectReference Include="..\..\src\GeoVial.Infrastructure\GeoVial.Infrastructure.csproj" />
   </ItemGroup>
 
 </Project>

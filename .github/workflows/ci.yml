@@ -14,6 +14,17 @@ on:
 jobs:
   build-test:
     runs-on: ubuntu-latest
+    env:
+      # En CI hay un service container de LocalStack (S3 emulado); la prueba de AlmacenS3 lo usa (Sprint 39).
+      # Localmente, sin esta variable (y sin Docker), esa prueba hace no-op.
+      LOCALSTACK_S3_URL: http://localhost:4566
+    services:
+      localstack:
+        image: localstack/localstack:3
+        ports:
+          - 4566:4566
+        env:
+          SERVICES: s3
     steps:
       - name: Checkout
         uses: actions/checkout@v6
