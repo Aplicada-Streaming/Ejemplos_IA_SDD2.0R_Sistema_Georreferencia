@@ -19,6 +19,10 @@
             Title="Revisión"
             ContentTemplate="{DataTemplate local:RevisionPage}"
             Route="RevisionPage" />
+        <ShellContent
+            Title="Mapa"
+            ContentTemplate="{DataTemplate local:MapaPage}"
+            Route="MapaPage" />
     </TabBar>
 
 </Shell>

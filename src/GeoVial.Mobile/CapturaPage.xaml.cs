@@ -1,14 +1,15 @@
 using System.Globalization;
-using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using GeoVial.CapturaCampo;
 using GeoVial.Shared;
+using GeoVial.Sync;
 
 namespace GeoVial.Mobile;
 
 public partial class CapturaPage : ContentPage
 {
 	private readonly HttpClient _http;
+	private readonly ServicioSesion _sesion;
 	private readonly ArmadorCapturaCampo _armador;
 	private readonly ArmadorUbicacionManual _ubicador;
 
@@ -17,21 +18,68 @@ public partial class CapturaPage : ContentPage
 	private string _nombreArchivo = "foto.jpg";
 	private Guid? _observacionId;
 
-	public CapturaPage(HttpClient http, ArmadorCapturaCampo armador, ArmadorUbicacionManual ubicador)
+	public CapturaPage(HttpClient http, ServicioSesion sesion, ArmadorCapturaCampo armador, ArmadorUbicacionManual ubicador)
 	{
 		InitializeComponent();
 		_http = http;
+		_sesion = sesion;
 		_armador = armador;
 		_ubicador = ubicador;
 	}
 
+	// US-40 (bug en dispositivo): elegir foto de la galería sin que un fallo tumbe la app.
 	private async void OnElegirFoto(object? sender, EventArgs e)
 	{
-		var fotos = await MediaPicker.Default.PickPhotosAsync();
-		await ProcesarAsync(fotos?.FirstOrDefault());
+		try
+		{
+			var fotos = await MediaPicker.Default.PickPhotosAsync();
+			await ProcesarAsync(fotos?.FirstOrDefault());
+		}
+		catch (Exception ex)
+		{
+			GeorrefLbl.Text = $"No se pudo abrir la galería: {ex.Message}";
+		}
 	}
 
-	private async void OnTomarFoto(object? sender, EventArgs e) => await ProcesarAsync(await MediaPicker.Default.CapturePhotoAsync());
+	// US-40 (bug en dispositivo): tomar foto pedía permiso de cámara que no se solicitaba y la
+	// llamada al MediaPicker estaba fuera de un try/catch, así que cualquier fallo cerraba la app.
+	// Ahora se pide el permiso CAMERA en runtime y se atrapa todo error mostrándolo en pantalla.
+	private async void OnTomarFoto(object? sender, EventArgs e)
+	{
+		try
+		{
+			if (!await AsegurarPermisoCamaraAsync())
+			{
+				GeorrefLbl.Text = "Se necesita permiso de cámara para tomar la foto. Habilitalo en Ajustes.";
+				return;
+			}
+
+			if (!MediaPicker.Default.IsCaptureSupported)
+			{
+				GeorrefLbl.Text = "Este dispositivo no permite capturar fotos con la cámara.";
+				return;
+			}
+
+			var foto = await MediaPicker.Default.CapturePhotoAsync();
+			await ProcesarAsync(foto);
+		}
+		catch (Exception ex)
+		{
+			GeorrefLbl.Text = $"No se pudo tomar la foto: {ex.Message}";
+		}
+	}
+
+	// Pide el permiso de cámara en runtime (Android 6+ lo exige aunque esté en el manifiesto).
+	private static async Task<bool> AsegurarPermisoCamaraAsync()
+	{
+		var estado = await Permissions.CheckStatusAsync<Permissions.Camera>();
+		if (estado != PermissionStatus.Granted)
+		{
+			estado = await Permissions.RequestAsync<Permissions.Camera>();
+		}
+
+		return estado == PermissionStatus.Granted;
+	}
 
 	private async Task ProcesarAsync(FileResult? foto)
 	{
@@ -71,9 +119,11 @@ public partial class CapturaPage : ContentPage
 
 		try
 		{
-			EstadoLbl.Text = "Iniciando sesión…";
-			if (await AutenticarYElegirRelevamientoAsync() is not { } relevamientoId)
+			// La sesión ya está iniciada; sólo hace falta el relevamiento destino.
+			EstadoLbl.Text = "Buscando relevamiento destino…";
+			if (await _sesion.PrimerRelevamientoAsync() is not { } relevamientoId)
 			{
+				EstadoLbl.Text = "No hay un relevamiento destino en el backend.";
 				return;
 			}
 
@@ -146,25 +196,4 @@ public partial class CapturaPage : ContentPage
 			EstadoLbl.Text = $"No se pudo ubicar el punto: {ex.Message}";
 		}
 	}
-
-	private async Task<Guid?> AutenticarYElegirRelevamientoAsync()
-	{
-		var login = await _http.PostAsJsonAsync("api/v1/auth/login", new { nombreUsuario = "raiz", clave = "GeoVial.Raiz.2026" });
-		login.EnsureSuccessStatusCode();
-		var token = await login.Content.ReadFromJsonAsync<TokenDto>();
-		_http.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token!.AccessToken);
-
-		var relevamientos = await _http.GetFromJsonAsync<List<RelevamientoDto>>("api/v1/relevamientos");
-		if (relevamientos is null || relevamientos.Count == 0)
-		{
-			EstadoLbl.Text = "Conexión OK, pero no hay un relevamiento destino en el backend.";
-			return null;
-		}
-
-		return relevamientos[0].RelevamientoId;
-	}
-
-	private sealed record TokenDto(string AccessToken);
-
-	private sealed record RelevamientoDto(Guid RelevamientoId);
 }

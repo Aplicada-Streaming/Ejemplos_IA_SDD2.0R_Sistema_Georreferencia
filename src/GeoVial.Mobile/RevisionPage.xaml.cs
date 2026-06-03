@@ -1,12 +1,12 @@
-using System.Net.Http.Headers;
-using System.Net.Http.Json;
 using GeoVial.Revision;
+using GeoVial.Sync;
 
 namespace GeoVial.Mobile;
 
 public partial class RevisionPage : ContentPage
 {
 	private readonly HttpClient _http;
+	private readonly ServicioSesion _sesion;
 	private readonly ClienteRevisionHttp _cliente;
 	private readonly ClienteEdicionMarcador _editor;
 	private readonly CacheFotos _cacheFotos = new();
@@ -15,10 +15,11 @@ public partial class RevisionPage : ContentPage
 	private Guid? _relevamientoId;
 	private GeoVial.Shared.RevisionRelevamientoDto? _revision;
 
-	public RevisionPage(HttpClient http, ClienteRevisionHttp cliente, ClienteEdicionMarcador editor)
+	public RevisionPage(HttpClient http, ServicioSesion sesion, ClienteRevisionHttp cliente, ClienteEdicionMarcador editor)
 	{
 		InitializeComponent();
 		_http = http;
+		_sesion = sesion;
 		_cliente = cliente;
 		_editor = editor;
 	}
@@ -28,8 +29,10 @@ public partial class RevisionPage : ContentPage
 		try
 		{
 			MarcadorLbl.Text = "Cargando…";
-			if (await AutenticarYElegirRelevamientoAsync() is not { } relevamientoId)
+			// La sesión ya está iniciada (token asentado en el HttpClient compartido al loguearse).
+			if (await _sesion.PrimerRelevamientoAsync() is not { } relevamientoId)
 			{
+				MarcadorLbl.Text = "No hay un relevamiento en el backend.";
 				return;
 			}
 
@@ -128,23 +131,6 @@ public partial class RevisionPage : ContentPage
 		}
 	}
 
-	private async Task<Guid?> AutenticarYElegirRelevamientoAsync()
-	{
-		var login = await _http.PostAsJsonAsync("api/v1/auth/login", new { nombreUsuario = "raiz", clave = "GeoVial.Raiz.2026" });
-		login.EnsureSuccessStatusCode();
-		var token = await login.Content.ReadFromJsonAsync<TokenDto>();
-		_http.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token!.AccessToken);
-
-		var relevamientos = await _http.GetFromJsonAsync<List<RelevamientoDto>>("api/v1/relevamientos");
-		if (relevamientos is null || relevamientos.Count == 0)
-		{
-			MarcadorLbl.Text = "No hay un relevamiento en el backend.";
-			return null;
-		}
-
-		return relevamientos[0].RelevamientoId;
-	}
-
 	private async void OnAgregarComentario(object? sender, EventArgs e)
 	{
 		if (_nav?.MarcadorActual is not { } marcador)
@@ -201,8 +187,4 @@ public partial class RevisionPage : ContentPage
 			await RenderAsync();
 		}
 	}
-
-	private sealed record TokenDto(string AccessToken);
-
-	private sealed record RelevamientoDto(Guid RelevamientoId);
 }

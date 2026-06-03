@@ -30,6 +30,9 @@ public static class MauiProgram
 		// Cliente HTTP compartido hacia el backend GeoVial. En el dispositivo se alcanza por adb reverse
 		// (localhost:5080 → host). El token de sesión se asienta al iniciar sesión y lo reusa el cliente de sync.
 		builder.Services.AddSingleton(_ => new HttpClient { BaseAddress = new Uri("http://localhost:5080/") });
+		// Sesión única (US-40): autentica una vez y asienta el token en el HttpClient compartido,
+		// que reusan todas las páginas (incluido el cliente de sync). Reemplaza el login hardcodeado.
+		builder.Services.AddSingleton(sp => new ServicioSesion(sp.GetRequiredService<HttpClient>()));
 		builder.Services.AddSingleton<ISyncBackendClient>(sp => new ClienteSyncHttp(sp.GetRequiredService<HttpClient>()));
 		builder.Services.AddSingleton<ISyncEngine, MotorSincronizacion>();
 
@@ -49,9 +52,11 @@ public static class MauiProgram
 		// Edición sobre el marcador (US-15): cliente de comentarios y etiquetas.
 		builder.Services.AddSingleton(sp => new ClienteEdicionMarcador(sp.GetRequiredService<HttpClient>()));
 
+		builder.Services.AddTransient<LoginPage>();
 		builder.Services.AddTransient<MainPage>();
 		builder.Services.AddTransient<CapturaPage>();
 		builder.Services.AddTransient<RevisionPage>();
+		builder.Services.AddTransient<MapaPage>();
 
 #if DEBUG
 		builder.Logging.AddDebug();

@@ -12,8 +12,18 @@ namespace GeoVial.Mobile;
 /// </summary>
 public sealed class MapaWebViewClient : WebViewClient
 {
-    private static readonly HttpClient Http = new();
+    private static readonly HttpClient Http = CrearCliente();
     private readonly CacheTeselasDisco _cache;
+
+    // OSM bloquea (403 "tile usage policy") las peticiones sin un User-Agent que identifique la app.
+    // El navegador de la web manda el suyo; el fetch nativo de Android no, así que lo seteamos acá.
+    private static HttpClient CrearCliente()
+    {
+        var http = new HttpClient();
+        http.DefaultRequestHeaders.UserAgent.ParseAdd(
+            "GeoVial/1.0 (relevamiento vial; +https://github.com/fernandofilipuzzi-utn)");
+        return http;
+    }
 
     public MapaWebViewClient(CacheTeselasDisco cache) => _cache = cache;
 
