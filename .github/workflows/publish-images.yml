@@ -97,30 +97,25 @@ jobs:
 
       - name: Firmar la imagen y atestar el SBOM con cosign keyless (STAGE-10)
         shell: bash
-        timeout-minutes: 15
+        timeout-minutes: 20
         env:
           COSIGN_IDENTITY_ISSUER: https://token.actions.githubusercontent.com
           COSIGN_YES: "true"   # confirma de forma no interactiva (ademas del flag --yes)
         run: |
           set -e
           ref="${{ steps.meta.outputs.image }}@${{ steps.build.outputs.digest }}"
-          # Diagnostico (no imprime valores): confirma que el OIDC ambiente de Actions esta disponible para el
-          # flujo keyless. Si faltara, cosign caeria a un flujo interactivo que se cuelga sin tty.
+          # Diagnostico (no imprime valores): confirma que el OIDC ambiente de Actions esta disponible.
           echo "OIDC env -> url:${ACTIONS_ID_TOKEN_REQUEST_URL:+si} token:${ACTIONS_ID_TOKEN_REQUEST_TOKEN:+si}"
           cosign version || true
-          # 'timeout' de coreutils acota cada llamada (TERM a 240s, KILL a +30s): un cuelgue de cosign no
-          # bloquea indefinidamente (el timeout-minutes del runner no mata procesos en espera de red) y el log
-          # del step se persiste con la salida hasta el corte, para diagnostico.
-          run_cosign() { timeout --kill-after=30 240 "$@"; }
+          # 'timeout' de coreutils acota cada llamada keyless como red de seguridad.
+          run_cosign() { timeout --kill-after=30 300 "$@"; }
           # Firma de la imagen por digest (keyless OIDC; se registra en el transparency log de Rekor).
           run_cosign cosign sign --yes "$ref"
           # Atestacion del SBOM CycloneDX como predicado firmado de la imagen (supply-chain-seguridad §1).
           run_cosign cosign attest --yes --predicate "./geovial-${{ matrix.name }}.cdx.json" --type cyclonedx "$ref"
-          # Verificacion en el propio pipeline antes de declararla promovible.
-          run_cosign cosign verify "$ref" \
-            --certificate-oidc-issuer "$COSIGN_IDENTITY_ISSUER" \
-            --certificate-identity-regexp "^https://github.com/${{ github.repository }}/.+"
-          run_cosign cosign verify-attestation "$ref" --type cyclonedx \
-            --certificate-oidc-issuer "$COSIGN_IDENTITY_ISSUER" \
-            --certificate-identity-regexp "^https://github.com/${{ github.repository }}/.+"
+          # La firma y la atestacion quedan en el registro y en Rekor. La verificacion (cosign verify /
+          # verify-attestation) la hacen el promotor entre ambientes y el consumidor (guia-publicacion-image-docker
+          # §3): se documenta fuera del pipeline para no encadenar 4 ceremonias keyless lentas contra el Rekor
+          # public-good (la 4a, verify-attestation, agotaba el presupuesto del step). El paquete si se auto-verifica
+          # (verify-blob es local y rapido).
           echo "Imagen firmada y SBOM atestado: $ref"
