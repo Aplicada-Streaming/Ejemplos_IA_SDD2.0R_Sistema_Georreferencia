@@ -15,6 +15,9 @@
 
             <Label x:Name="MarcadorLbl" Text="Sin cargar." FontAttributes="Bold" Margin="0,8,0,0" />
 
+            <!-- Mapa interactivo de la revisión sobre OpenStreetMap (US-21), sin clave. -->
+            <Button x:Name="MapaBtn" Text="🗺 Ver en mapa" Clicked="OnVerMapa" />
+
             <Grid ColumnDefinitions="*,*" ColumnSpacing="10">
                 <Button Grid.Column="0" Text="◀ Marcador" Clicked="OnAnteriorMarcador" />
                 <Button Grid.Column="1" Text="Marcador ▶" Clicked="OnSiguienteMarcador" />
