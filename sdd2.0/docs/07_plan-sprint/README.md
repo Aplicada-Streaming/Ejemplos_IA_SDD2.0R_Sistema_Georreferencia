@@ -12,7 +12,7 @@
 
 | Sprint | Estado | Fechas | Plan |
 | --- | --- | --- | --- |
-| Sprint 36 | Por planificar (migración a AWSSDK.S3 v4 con prueba contra S3; offline de teselas en el móvil; o auto-merge de Dependabot para minor/patch) | — | — |
+| Sprint 37 | Por planificar (offline de teselas en el móvil; auto-merge de Dependabot para minor/patch; o prueba de S3 contra LocalStack) | — | — |
 
 ## Histórico de sprints cerrados
 
@@ -54,6 +54,7 @@
 | Sprint 33 (mantenimiento supply-chain) | Cerrado (Cumplido; velocity 8) | [plan-iteracion-sprint-33_v1.0.md](plan-iteracion-sprint-33_v1.0.md) | [sprint-review-sprint-33_v1.0.md](sprint-review-sprint-33_v1.0.md) | [sprint-retrospectiva-sprint-33_v1.0.md](sprint-retrospectiva-sprint-33_v1.0.md) |
 | Sprint 34 (caché de teselas offline web) | Cerrado (Cumplido; velocity 8) | [plan-iteracion-sprint-34_v1.0.md](plan-iteracion-sprint-34_v1.0.md) | [sprint-review-sprint-34_v1.0.md](sprint-review-sprint-34_v1.0.md) | [sprint-retrospectiva-sprint-34_v1.0.md](sprint-retrospectiva-sprint-34_v1.0.md) |
 | Sprint 35 (triage de Dependabot) | Cerrado (Cumplido; velocity 8) | [plan-iteracion-sprint-35_v1.0.md](plan-iteracion-sprint-35_v1.0.md) | [sprint-review-sprint-35_v1.0.md](sprint-review-sprint-35_v1.0.md) | [sprint-retrospectiva-sprint-35_v1.0.md](sprint-retrospectiva-sprint-35_v1.0.md) |
+| Sprint 36 (migración AWSSDK.S3 v4) | Cerrado (Cumplido; velocity 8) | [plan-iteracion-sprint-36_v1.0.md](plan-iteracion-sprint-36_v1.0.md) | [sprint-review-sprint-36_v1.0.md](sprint-review-sprint-36_v1.0.md) | [sprint-retrospectiva-sprint-36_v1.0.md](sprint-retrospectiva-sprint-36_v1.0.md) |
 
 ## Plantillas reusables
 
