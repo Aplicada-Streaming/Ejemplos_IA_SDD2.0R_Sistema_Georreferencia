@@ -1,0 +1,37 @@
+name: Dependabot auto-merge
+
+# Auto-merge de los PRs de Dependabot de tipo minor/patch que pasen CI (supply-chain-seguridad §4).
+# Los majors NO se auto-mergean: quedan para revision manual (criterio que ya evito problemas reales,
+# p.ej. FluentAssertions 8 por licencia y AWSSDK.S3 v4 por migracion, Sprint 35/36).
+#
+# Prerrequisitos del repo (no se pueden fijar por codigo, ver supply-chain-seguridad §4):
+#   - "Allow auto-merge" habilitado en Settings -> General.
+#   - Proteccion de rama en main con el check de ci.yml requerido, para que el auto-merge espere a CI verde.
+
+on: pull_request
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  dependabot-auto-merge:
+    runs-on: ubuntu-latest
+    # Solo PRs abiertos por Dependabot.
+    if: github.event.pull_request.user.login == 'dependabot[bot]'
+    steps:
+      - name: Metadata de Dependabot
+        id: meta
+        uses: dependabot/fetch-metadata@v2
+
+      - name: Aprobar y habilitar auto-merge (solo minor/patch)
+        if: >-
+          steps.meta.outputs.update-type == 'version-update:semver-minor' ||
+          steps.meta.outputs.update-type == 'version-update:semver-patch'
+        run: |
+          gh pr review --approve "$PR_URL"
+          # --auto: el merge se gatilla cuando los checks requeridos (ci.yml) estan verdes.
+          gh pr merge --auto --squash "$PR_URL"
+        env:
+          PR_URL: ${{ github.event.pull_request.html_url }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
