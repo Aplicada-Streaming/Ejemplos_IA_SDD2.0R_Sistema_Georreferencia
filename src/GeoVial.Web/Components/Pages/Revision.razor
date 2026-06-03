@@ -1,8 +1,12 @@
 @page "/revision"
 @rendermode InteractiveServer
 @using GeoVial.Shared
+@using GeoVial.Revision
 @using GeoVial.Web.Servicios
+@using Microsoft.JSInterop
 @inject GeoVialApiCliente Api
+@inject IJSRuntime JS
+@implements IAsyncDisposable
 
 <PageTitle>GeoVial — Revisión</PageTitle>
 
@@ -39,6 +43,16 @@ else
         @if (revision is not null)
         {
             <p>Estado: @NombreEstado(revision.Estado) — Marcadores: @revision.Marcadores.Count — Sin georreferenciar: @revision.ObservacionesSinGeorreferenciar.Count</p>
+
+            <h3>Mapa</h3>
+            @if (revision.Marcadores.Count == 0)
+            {
+                <p><em>El relevamiento no tiene marcadores georreferenciados para mostrar en el mapa.</em></p>
+            }
+            else
+            {
+                <div id="mapa-revision" style="height:420px; margin:8px 0; border:1px solid #ccc;"></div>
+            }
 
             @if (revision.Marcadores.Count == 0 && FiltroActivo)
             {
@@ -106,6 +120,9 @@ else
     private bool FiltroActivo => !string.IsNullOrWhiteSpace(filtro);
     private RevisionRelevamientoDto? revision;
 
+    private IJSObjectReference? moduloMapa;
+    private bool renderMapaPendiente;
+
     private readonly Dictionary<Guid, string> comentarioMarcador = new();
     private readonly Dictionary<Guid, string> etiquetaFoto = new();
 
@@ -151,6 +168,46 @@ else
             foreach (var f in m.Fotos)
             {
                 etiquetaFoto.TryAdd(f.FotoId, "");
+            }
+        }
+
+        // Redibujar el mapa con los marcadores recién cargados (tras el próximo render).
+        renderMapaPendiente = true;
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!renderMapaPendiente)
+        {
+            return;
+        }
+
+        renderMapaPendiente = false;
+
+        if (revision is { Marcadores.Count: > 0 })
+        {
+            // VistaMapa (núcleo en el gate) calcula los pines, el centro y la caja; el módulo dibuja con Leaflet+OSM.
+            moduloMapa ??= await JS.InvokeAsync<IJSObjectReference>("import", "./js/mapaRevision.js");
+            await moduloMapa.InvokeVoidAsync("render", "mapa-revision", new VistaMapa(revision.Marcadores));
+        }
+        else if (moduloMapa is not null)
+        {
+            await moduloMapa.InvokeVoidAsync("destruir");
+        }
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        if (moduloMapa is not null)
+        {
+            try
+            {
+                await moduloMapa.InvokeVoidAsync("destruir");
+                await moduloMapa.DisposeAsync();
+            }
+            catch (JSDisconnectedException)
+            {
+                // El circuito ya se cerró; nada que liberar del lado del cliente.
             }
         }
     }
