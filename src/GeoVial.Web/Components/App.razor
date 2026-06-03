@@ -9,11 +9,11 @@
     <link rel="stylesheet" href="@Assets["app.css"]" />
     <link rel="stylesheet" href="@Assets["GeoVial.Web.styles.css"]" />
     <!-- Leaflet + OpenStreetMap para el mapa interactivo de la revisión (US-21). OSM es libre: sin clave de
-         proveedor, sólo requiere la atribución que agrega el tile layer. -->
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
-          integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
-            integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+         proveedor, sólo requiere la atribución que agrega el tile layer. Leaflet se sirve desde wwwroot
+         (vendorizado, Sprint 31): sin dependencia de CDN en runtime. Las teselas siguen viniendo por red de
+         OSM; el detalle de offline/caché está en 09_devops/mapa-offline-teselas. -->
+    <link rel="stylesheet" href="lib/leaflet/leaflet.css" />
+    <script src="lib/leaflet/leaflet.js"></script>
     <ImportMap />
     <HeadOutlet />
 </head>
