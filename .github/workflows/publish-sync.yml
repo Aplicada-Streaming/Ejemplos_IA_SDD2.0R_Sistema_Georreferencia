@@ -51,10 +51,12 @@ jobs:
         shell: bash
         run: |
           set -e
-          dotnet tool install --global CycloneDX
+          # Version fijada para reproducibilidad: la CLI de CycloneDX cambio entre mayores (en 6.x el flag
+          # JSON paso de -j a -F Json), asi que se ancla a 6.2.0 para no romper por upgrades del tool.
+          dotnet tool install --global CycloneDX --version 6.2.0
           export PATH="$PATH:$HOME/.dotnet/tools"
           # SBOM (CycloneDX JSON) del paquete con su arbol de dependencias (supply-chain-seguridad §1).
-          dotnet CycloneDX src/GeoVial.Sync/GeoVial.Sync.csproj -o ./artifacts -fn geovial-sync.cdx.json -j
+          dotnet CycloneDX src/GeoVial.Sync/GeoVial.Sync.csproj -o ./artifacts -fn geovial-sync.cdx.json -F Json
           test -f ./artifacts/geovial-sync.cdx.json
           echo "SBOM generado: ./artifacts/geovial-sync.cdx.json"
 
@@ -63,19 +65,25 @@ jobs:
 
       - name: Firmar el paquete y el SBOM con cosign keyless (STAGE-10)
         shell: bash
-        timeout-minutes: 8   # evita cuelgues indefinidos del flujo keyless; un cuelgue falla rapido y deja log
+        timeout-minutes: 15
         env:
           # Identidad y emisor esperados para la verificacion posterior (keyless OIDC).
           COSIGN_IDENTITY_ISSUER: https://token.actions.githubusercontent.com
           COSIGN_YES: "true"   # confirma de forma no interactiva (ademas del flag --yes)
         run: |
           set -e
+          # Diagnostico (no imprime valores): confirma que el OIDC ambiente de Actions esta disponible.
+          echo "OIDC env -> url:${ACTIONS_ID_TOKEN_REQUEST_URL:+si} token:${ACTIONS_ID_TOKEN_REQUEST_TOKEN:+si}"
+          cosign version || true
+          # 'timeout' de coreutils acota cada llamada keyless (TERM a 240s, KILL a +30s): un cuelgue no bloquea
+          # indefinidamente (el timeout-minutes del runner no mata procesos en espera de red) y persiste el log.
+          run_cosign() { timeout --kill-after=30 240 "$@"; }
           for artefacto in ./artifacts/GeoVial.Sync.*.nupkg ./artifacts/geovial-sync.cdx.json; do
             echo "Firmando $artefacto"
             # Firma detached (bundle con certificado + entrada de Rekor); modo keyless via OIDC de Actions.
-            cosign sign-blob --yes "$artefacto" --bundle "$artefacto.cosign.bundle"
+            run_cosign cosign sign-blob --yes "$artefacto" --bundle "$artefacto.cosign.bundle"
             # Verificacion en el propio pipeline: la firma debe validar contra la identidad del workflow.
-            cosign verify-blob "$artefacto" \
+            run_cosign cosign verify-blob "$artefacto" \
               --bundle "$artefacto.cosign.bundle" \
               --certificate-oidc-issuer "$COSIGN_IDENTITY_ISSUER" \
               --certificate-identity-regexp "^https://github.com/${{ github.repository }}/.+"
