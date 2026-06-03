@@ -2,6 +2,8 @@
 
   <ItemGroup>
     <ProjectReference Include="..\GeoVial.Shared\GeoVial.Shared.csproj" />
+    <!-- VistaMapa: cálculo de la vista del mapa interactivo de la revisión (US-21), núcleo en el gate. -->
+    <ProjectReference Include="..\GeoVial.Revision\GeoVial.Revision.csproj" />
   </ItemGroup>
 
   <PropertyGroup>

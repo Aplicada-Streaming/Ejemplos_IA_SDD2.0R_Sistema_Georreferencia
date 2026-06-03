@@ -12,7 +12,7 @@
 
 | Sprint | Estado | Fechas | Plan |
 | --- | --- | --- | --- |
-| Sprint 30 | Por planificar (mapa interactivo —bloqueado por clave de proveedor— o mantenimiento post-release: Dependabot/CVE/PATCH) | — | — |
+| Sprint 31 | Por planificar (mantenimiento post-release: Dependabot/CVE/PATCH; o mejoras opcionales: mapa OSM en el móvil, teselas cacheadas) | — | — |
 
 ## Histórico de sprints cerrados
 
@@ -48,6 +48,7 @@
 | Sprint 27 (consolidación E2E sobre helper) | Cerrado (Cumplido; velocity 8) | [plan-iteracion-sprint-27_v1.0.md](plan-iteracion-sprint-27_v1.0.md) | [sprint-review-sprint-27_v1.0.md](sprint-review-sprint-27_v1.0.md) | [sprint-retrospectiva-sprint-27_v1.0.md](sprint-retrospectiva-sprint-27_v1.0.md) |
 | Sprint 28 (SBOM + firma de imágenes Docker) | Cerrado (Cumplido; velocity 8) | [plan-iteracion-sprint-28_v1.0.md](plan-iteracion-sprint-28_v1.0.md) | [sprint-review-sprint-28_v1.0.md](sprint-review-sprint-28_v1.0.md) | [sprint-retrospectiva-sprint-28_v1.0.md](sprint-retrospectiva-sprint-28_v1.0.md) |
 | Sprint 29 (release v1.0.0) | Cerrado (Cumplido; velocity 8; `v1.0.0` publicado tras validar con rc.1–rc.4) | [plan-iteracion-sprint-29_v1.0.md](plan-iteracion-sprint-29_v1.0.md) | [sprint-review-sprint-29_v1.0.md](sprint-review-sprint-29_v1.0.md) | [sprint-retrospectiva-sprint-29_v1.0.md](sprint-retrospectiva-sprint-29_v1.0.md) |
+| Sprint 30 (mapa interactivo OSM en la web) | Cerrado (Cumplido; velocity 8) | [plan-iteracion-sprint-30_v1.0.md](plan-iteracion-sprint-30_v1.0.md) | [sprint-review-sprint-30_v1.0.md](sprint-review-sprint-30_v1.0.md) | [sprint-retrospectiva-sprint-30_v1.0.md](sprint-retrospectiva-sprint-30_v1.0.md) |
 
 ## Plantillas reusables
 
