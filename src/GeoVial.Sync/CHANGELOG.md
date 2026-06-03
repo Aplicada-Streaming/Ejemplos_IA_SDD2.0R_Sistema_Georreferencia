@@ -34,9 +34,10 @@ Primer release **stable** de la librería de sincronización (tag `v1.0.0`). La 
 - Excepciones: `ConsolidationException`, `ConflictNotMarkedException`, `SyncInterruptedException`,
   `AlmacenamientoLocalInsuficienteException`.
 
-> Materializado al crear el tag `v1.0.0` sobre `main` (estrategia-versionado §3, §5): el push del tag dispara
-> `publish-sync.yml` (paquete a GitHub Packages, canal **stable**, con SBOM CycloneDX + firma cosign keyless)
-> y `publish-images.yml` (las tres imágenes Docker a GHCR, con SBOM + firma). En la primera ejecución del
-> tag, `publish-sync.yml` falló con NU5026 (interacción de `GeneratePackageOnBuild` con `dotnet pack` en
-> checkout limpio); se corrigió el step de empaquetado (`-p:GeneratePackageOnBuild=false`) y la publicación
-> stable se completa re-disparando el tag sobre `main` con el fix.
+> **Publicado** al crear el tag `v1.0.0` sobre `main` (estrategia-versionado §3, §5): `publish-sync.yml`
+> publicó el paquete al canal **stable** de GitHub Packages con SBOM CycloneDX + firma cosign keyless
+> (ambos verificados en el pipeline). El pipeline se validó antes con tags preview `v1.0.0-rc.1`…`rc.4`,
+> que expusieron y permitieron corregir cuatro bugs latentes de los workflows (pack NU5026, flag del SBOM
+> CycloneDX 6.x, concurrencia de la firma de imágenes y presupuesto del step de firma) sin arriesgar el
+> stable. En paralelo, `publish-images.yml` publicó las tres imágenes Docker del monolito a GHCR firmadas y
+> con SBOM atestado.
