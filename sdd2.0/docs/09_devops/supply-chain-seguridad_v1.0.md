@@ -2,8 +2,8 @@
 
 **Proyecto:** GeoVial
 **Documento:** supply-chain-seguridad_v1.0.md
-**Versión:** 1.4
-**Estado:** Propuesto (§1/§2 implementados para el paquete y las imágenes Docker; §4 Dependabot configurado)
+**Versión:** 1.5
+**Estado:** Propuesto (§1/§2 implementados para el paquete y las imágenes Docker; §4 Dependabot + auto-merge configurados)
 **Fecha:** 2026-06-03
 **Autor:** Ingeniero DevOps Senior (AG-09), Equipo SDD 2.0
 **Trazabilidad upstream:** 05 (arquitectura-solucion §7 configuración/secretos, §8 NFR, ADR-14 compliance Ley 25.326, RA-08); PROJECT-README §2 (licencias), §8 (secretos/auditoría); 08 (criterios-validacion §5)
@@ -36,6 +36,7 @@ Política de cadena de suministro de GeoVial alineada a SLSA, NIST SSDF (SP 800-
 
 - Tooling de SCA: **Dependabot** para actualización y alerta de dependencias del repositorio (NuGet, imágenes base de Docker, acciones de GitHub Actions), complementado por el escáner de SCA del pipeline (STAGE-08). **Configurado** en `.github/dependabot.yml` (Sprint 33): ecosistemas `nuget` (raíz; agrupa minor/patch), `github-actions` y `docker` (los tres Dockerfiles: `src/GeoVial.Api`, `src/GeoVial.Web`, `infra/db`), con cadencia semanal y límite de PRs abiertos. Nota: las librerías de JavaScript vendorizadas o por CDN (Leaflet, en `wwwroot` y en el WebView móvil) **no** las cubre Dependabot —no hay ecosistema para JS hand-vendored—; su versión se sigue a mano (ver `mapa-offline-teselas`).
 - Frecuencia: en cada PR y push (STAGE-08), más el escaneo programado de Dependabot sobre `main` y un escaneo periódico de las imágenes ya publicadas.
+- **Auto-merge de minor/patch** (`.github/workflows/dependabot-auto-merge.yml`, Sprint 37): los PRs de Dependabot de tipo `semver-minor`/`semver-patch` se auto-aprueban y se habilita su auto-merge (squash); los `semver-major` **no** se auto-mergean —quedan para revisión manual— (criterio que evitó problemas reales: FluentAssertions 8 por licencia comercial y AWSSDK.S3 v4 por migración, S35/S36). El gate de `ci.yml` (build + pruebas + cobertura) es la barrera antes del merge. Prerrequisitos del repo (manuales, no fijables por código): habilitar "Allow auto-merge" (Settings → General) y proteger `main` con el check de `ci.yml` requerido para que el auto-merge **espere a CI verde**.
 - Política de licencias: las dependencias deben ser MIT/Apache/BSD; sin GPL en componentes distribuidos (PROJECT-README §2; criterios-validacion §5). El escaneo verifica la conformidad de licencias además de las CVE.
 - Política por severidad de vulnerabilidad de dependencia (gate de STAGE-08):
 
@@ -75,3 +76,4 @@ SLA de remediación por severidad, aplicable a vulnerabilidades en dependencias,
 | 1.2 | 2026-06-02 | §1 (SBOM) implementado para el paquete `GeoVial.Sync` (Sprint 25): el workflow `publish-sync.yml` genera el SBOM CycloneDX (JSON) del paquete (STAGE-09) y lo firma con cosign keyless (STAGE-10), verificándolo y adjuntándolo al release junto al `.nupkg`. La generación de SBOM de las imágenes Docker sigue pendiente de los stages de imagen. Por AG-09 |
 | 1.3 | 2026-06-02 | §1 (SBOM) y §2 (firma) implementados también para las tres imágenes Docker del monolito (Sprint 28): el workflow `publish-images.yml` construye las imágenes front/backend/db (STAGE-12), genera un SBOM CycloneDX (JSON) por imagen (STAGE-09), firma cada imagen por digest y atesta su SBOM con cosign keyless (STAGE-10) —verificando firma y atestación en el pipeline— y publica a GHCR (STAGE-14). Se agregan los Dockerfiles multi-stage (`src/GeoVial.Api/Dockerfile`, `src/GeoVial.Web/Dockerfile`, `infra/db/Dockerfile`) y los scripts `build-images.bat`/`publish-images.bat`. Con esto, el endurecimiento de supply-chain (SBOM + firma) queda completo para los dos tipos de artefacto: el paquete y las imágenes. Por AG-09 |
 | 1.4 | 2026-06-03 | §4 (dependency scanning) implementado (Sprint 33): `.github/dependabot.yml` con los ecosistemas `nuget`, `github-actions` y `docker` (×3 Dockerfiles), cadencia semanal, agrupación de minor/patch y límite de PRs. Se documenta que Leaflet (vendorizado/CDN) queda fuera de Dependabot y se sigue a mano. Además se institucionaliza la validación con tag preview `-rc` antes de cada stable (`checklist-release`), tras el incidente del Sprint 29. Por AG-09 |
+| 1.5 | 2026-06-03 | §4: auto-merge de Dependabot para minor/patch que pasen CI (Sprint 37): workflow `dependabot-auto-merge.yml` (fetch-metadata → aprobar + `gh pr merge --auto --squash` sólo para `semver-minor`/`semver-patch`; los majors quedan a revisión manual). Se documentan los prerrequisitos del repo (Allow auto-merge + branch protection con `ci.yml` requerido). Por AG-09 |
