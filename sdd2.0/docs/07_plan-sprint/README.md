@@ -12,7 +12,7 @@
 
 | Sprint | Estado | Fechas | Plan |
 | --- | --- | --- | --- |
-| Sprint 33 | Por planificar (caché/Service Worker de teselas para offline; bundle de Leaflet en el móvil; o mantenimiento post-release: Dependabot/CVE) | — | — |
+| Sprint 34 | Por planificar (caché/Service Worker de teselas para offline; bundle de Leaflet en el móvil; o automatizar la regla `-rc` como check de CI) | — | — |
 
 ## Histórico de sprints cerrados
 
@@ -51,6 +51,7 @@
 | Sprint 30 (mapa interactivo OSM en la web) | Cerrado (Cumplido; velocity 8) | [plan-iteracion-sprint-30_v1.0.md](plan-iteracion-sprint-30_v1.0.md) | [sprint-review-sprint-30_v1.0.md](sprint-review-sprint-30_v1.0.md) | [sprint-retrospectiva-sprint-30_v1.0.md](sprint-retrospectiva-sprint-30_v1.0.md) |
 | Sprint 31 (vendorizado de Leaflet + offline) | Cerrado (Cumplido; velocity 8) | [plan-iteracion-sprint-31_v1.0.md](plan-iteracion-sprint-31_v1.0.md) | [sprint-review-sprint-31_v1.0.md](sprint-review-sprint-31_v1.0.md) | [sprint-retrospectiva-sprint-31_v1.0.md](sprint-retrospectiva-sprint-31_v1.0.md) |
 | Sprint 32 (mapa OSM en el móvil) | Cerrado (Cumplido; velocity 8) | [plan-iteracion-sprint-32_v1.0.md](plan-iteracion-sprint-32_v1.0.md) | [sprint-review-sprint-32_v1.0.md](sprint-review-sprint-32_v1.0.md) | [sprint-retrospectiva-sprint-32_v1.0.md](sprint-retrospectiva-sprint-32_v1.0.md) |
+| Sprint 33 (mantenimiento supply-chain) | Cerrado (Cumplido; velocity 8) | [plan-iteracion-sprint-33_v1.0.md](plan-iteracion-sprint-33_v1.0.md) | [sprint-review-sprint-33_v1.0.md](sprint-review-sprint-33_v1.0.md) | [sprint-retrospectiva-sprint-33_v1.0.md](sprint-retrospectiva-sprint-33_v1.0.md) |
 
 ## Plantillas reusables
 
