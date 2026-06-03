@@ -2,12 +2,12 @@
 
 **Proyecto:** GeoVial
 **Documento:** velocidad-equipo_v1.0.md
-**Versión:** 3.14
+**Versión:** 3.15
 **Estado:** En curso
 **Fecha:** 2026-06-03
 **Autor:** Scrum Master (AG-07), Equipo SDD 2.0
 
-> Tracking actualizado al cierre del Sprint 34. La tabla §1 registra la velocity efectiva de los Sprint 00 a 34 ya ejecutados. El promedio móvil de 3 sprints se puebla desde S02 (con S00, S01, S02).
+> Tracking actualizado al cierre del Sprint 35. La tabla §1 registra la velocity efectiva de los Sprint 00 a 35 ya ejecutados. El promedio móvil de 3 sprints se puebla desde S02 (con S00, S01, S02).
 
 ## 1. Por sprint
 
@@ -48,16 +48,17 @@
 | S32 | 8 | 8 | 8 | 8,0 | Mapa interactivo de la revisión sobre OSM en el **móvil** (US-21): núcleo `MapaRevisionHtml` (arma el HTML Leaflet+OSM+pines) en el gate + pantalla MAUI `MapaRevisionPage` (WebView) fuera de CI, sin clave ni dependencia NuGet nueva. Unifica la visualización geográfica web+móvil. 0 carry-over; 325 pruebas verdes (+5 unitarias) |
 | S33 | 8 | 8 | 8 | 8,0 | Mantenimiento supply-chain: `.github/dependabot.yml` (NuGet/Actions/Docker×3, semanal, agrupado) + checklist de release que institucionaliza la validación con tag preview `-rc` antes del stable (lección S29); supply-chain §4 a v1.4. 0 carry-over; 325 pruebas verdes (DevOps, sin lógica nueva) |
 | S34 | 8 | 8 | 8 | 8,0 | Caché de teselas (offline parcial web, US-21): Service Worker `sw-teselas.js` (cache-first, FIFO 500) que cachea las teselas OSM visitadas + núcleo `MapaTeselas` (config + `EsUrlDeTesela`) en el gate, reusado por `MapaRevisionHtml`. 0 carry-over; 332 pruebas verdes (+7 unitarias) |
+| S35 | 8 | 8 | 8 | 8,0 | Triage del primer lote de Dependabot (config de S33, 7 PRs): integrado el lote seguro (grupo minor/patch, coverlet 10, Test.Sdk 18, grupo Actions, imagen db 2025) con el gate verde; AWSSDK.S3 v4 diferido (migración) y FluentAssertions 8 declinado (licencia comercial → se queda en 7.2.2). 0 carry-over; 332 pruebas verdes (mantenimiento, sin lógica nueva) |
 
 El promedio móvil de 3 sprints queda disponible en S02 (29,3 SP, sobre S00/S01/S02).
 
 ## 2. Tendencia
 
-Treinta y cinco sprints registrados (S00: 21, S01: 40, S02: 27, S03: 28, S04: 24, S05: 13, S06: 13, S07: 16, S08: 11, S09: 13, S10: 13, S11: 13, S12: 13, S13: 8, S14: 8, S15: 11, S16: 8, S17: 10, S18: 8, S19: 8, S20: 8, S21: 8, S22: 8, S23: 8, S24: 8, S25: 8, S26: 8, S27: 8, S28: 8, S29: 8, S30: 8, S31: 8, S32: 8, S33: 8, S34: 8). El promedio móvil de 3 sprints se mantuvo en 8,0 SP (ventana S32–S34): diecisiete sprints consecutivos de 8 SP (S18–S34), una cadencia muy estable de alcance acotado (E2E, supply-chain, pulido de producto, consolidación de pruebas, release, mapa web+móvil, mantenimiento y offline). La desviación de S34 respecto de su ventana previa es 0 %. Descontados los efectos de planificación, los sprints de módulo completo del arranque (S02: 27, S03: 28, S04: 24) siguen marcando el techo de 24–28 SP. Con el release stable v1.0.0 publicado, el mapa interactivo en web y móvil (con offline parcial de teselas en la web) y el mantenimiento de supply-chain configurado, el MVP de producto queda completo; lo restante son mejoras opcionales (offline de teselas en el móvil, bundle de Leaflet en el móvil) y el mantenimiento continuo que abra Dependabot.
+Treinta y seis sprints registrados (S00: 21, S01: 40, S02: 27, S03: 28, S04: 24, S05: 13, S06: 13, S07: 16, S08: 11, S09: 13, S10: 13, S11: 13, S12: 13, S13: 8, S14: 8, S15: 11, S16: 8, S17: 10, S18: 8, S19: 8, S20: 8, S21: 8, S22: 8, S23: 8, S24: 8, S25: 8, S26: 8, S27: 8, S28: 8, S29: 8, S30: 8, S31: 8, S32: 8, S33: 8, S34: 8, S35: 8). El promedio móvil de 3 sprints se mantuvo en 8,0 SP (ventana S33–S35): dieciocho sprints consecutivos de 8 SP (S18–S35), una cadencia muy estable de alcance acotado (E2E, supply-chain, pulido de producto, consolidación de pruebas, release, mapa web+móvil, mantenimiento, offline y triage de dependencias). La desviación de S35 respecto de su ventana previa es 0 %. Descontados los efectos de planificación, los sprints de módulo completo del arranque (S02: 27, S03: 28, S04: 24) siguen marcando el techo de 24–28 SP. Con el release stable v1.0.0 publicado, el mapa interactivo en web y móvil (con offline parcial de teselas en la web) y el mantenimiento de supply-chain en marcha (Dependabot vigente, primer lote consumido), el MVP de producto queda completo; lo restante son mejoras opcionales (offline de teselas en el móvil) y el mantenimiento continuo (próximos lotes de Dependabot, migración a AWSSDK.S3 v4).
 
 ## 3. Capacidad ajustada
 
-Con el promedio móvil de 3 sprints en 8,0 SP (S34), la capacidad sugerida estricta para S35 sería de hasta 9 SP (110 % del promedio móvil). Con el MVP de producto completo, el mapa con offline parcial de teselas en la web y el mantenimiento de supply-chain configurado, el trabajo restante son mejoras opcionales (offline de teselas en el móvil, bundle de Leaflet en la app móvil, unificar la URL de teselas también en el JS de la web) y el mantenimiento continuo (atender los PRs/alertas de Dependabot por SLA de CVE; evaluar automatizar la regla `-rc` como check de CI). La velocity se sigue comparando sobre el equipo con frente backend + móvil; el promedio móvil de 8,0 SP refleja la cadencia de alcance acotado (una historia por sprint), no un límite real de capacidad: los módulos completos del arranque marcaron 24–28 SP.
+Con el promedio móvil de 3 sprints en 8,0 SP (S35), la capacidad sugerida estricta para S36 sería de hasta 9 SP (110 % del promedio móvil). Con el MVP de producto completo y el mantenimiento de dependencias en marcha (primer lote de Dependabot consumido), el trabajo restante son mejoras opcionales (offline de teselas en el móvil, unificar la URL de teselas en el JS web) y el mantenimiento continuo (próximos lotes de Dependabot —evaluar auto-merge de minor/patch que pasen CI—, y la migración a AWSSDK.S3 v4 con prueba real contra S3). La velocity se sigue comparando sobre el equipo con frente backend + móvil; el promedio móvil de 8,0 SP refleja la cadencia de alcance acotado (una historia por sprint), no un límite real de capacidad: los módulos completos del arranque marcaron 24–28 SP.
 
 ## 4. Outliers explicados
 
@@ -109,3 +110,4 @@ A medida que se registren velocities, todo sprint cuyo valor se desvíe más del
 | 3.12 | 2026-06-03 | Registro de la velocity efectiva del Sprint 32: S32=8 (0 carry-over). Promedio móvil de 3 sprints (S30–S32) = 8,0; capacidad sugerida estricta para S33 = 9 SP. Mapa interactivo de la revisión sobre OSM en el móvil (WebView+Leaflet, sin clave); desviación 0 %. Por AG-07 |
 | 3.13 | 2026-06-03 | Registro de la velocity efectiva del Sprint 33: S33=8 (0 carry-over). Promedio móvil de 3 sprints (S31–S33) = 8,0; capacidad sugerida estricta para S34 = 9 SP. Mantenimiento supply-chain (Dependabot + checklist de release con `-rc`); desviación 0 %. Por AG-07 |
 | 3.14 | 2026-06-03 | Registro de la velocity efectiva del Sprint 34: S34=8 (0 carry-over). Promedio móvil de 3 sprints (S32–S34) = 8,0; capacidad sugerida estricta para S35 = 9 SP. Caché de teselas por Service Worker (offline parcial del mapa web); desviación 0 %. Por AG-07 |
+| 3.15 | 2026-06-03 | Registro de la velocity efectiva del Sprint 35: S35=8 (0 carry-over). Promedio móvil de 3 sprints (S33–S35) = 8,0; capacidad sugerida estricta para S36 = 9 SP. Triage del primer lote de Dependabot (integrado lo seguro; AWSSDK.S3 v4 diferido, FluentAssertions 8 declinado por licencia); desviación 0 %. Por AG-07 |
