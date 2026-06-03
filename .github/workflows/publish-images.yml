@@ -93,23 +93,30 @@ jobs:
 
       - name: Firmar la imagen y atestar el SBOM con cosign keyless (STAGE-10)
         shell: bash
-        timeout-minutes: 8   # evita cuelgues indefinidos del flujo keyless; un cuelgue falla rapido y deja log
+        timeout-minutes: 15
         env:
           COSIGN_IDENTITY_ISSUER: https://token.actions.githubusercontent.com
           COSIGN_YES: "true"   # confirma de forma no interactiva (ademas del flag --yes)
         run: |
           set -e
           ref="${{ steps.meta.outputs.image }}@${{ steps.build.outputs.digest }}"
+          # Diagnostico (no imprime valores): confirma que el OIDC ambiente de Actions esta disponible para el
+          # flujo keyless. Si faltara, cosign caeria a un flujo interactivo que se cuelga sin tty.
+          echo "OIDC env -> url:${ACTIONS_ID_TOKEN_REQUEST_URL:+si} token:${ACTIONS_ID_TOKEN_REQUEST_TOKEN:+si}"
+          cosign version || true
+          # 'timeout' de coreutils acota cada llamada (TERM a 240s, KILL a +30s): un cuelgue de cosign no
+          # bloquea indefinidamente (el timeout-minutes del runner no mata procesos en espera de red) y el log
+          # del step se persiste con la salida hasta el corte, para diagnostico.
+          run_cosign() { timeout --kill-after=30 240 "$@"; }
           # Firma de la imagen por digest (keyless OIDC; se registra en el transparency log de Rekor).
-          cosign sign --yes "$ref"
+          run_cosign cosign sign --yes "$ref"
           # Atestacion del SBOM CycloneDX como predicado firmado de la imagen (supply-chain-seguridad §1).
-          cosign attest --yes --predicate "./geovial-${{ matrix.name }}.cdx.json" --type cyclonedx "$ref"
-          # Verificacion en el propio pipeline antes de declararla promovible: firma y atestacion deben
-          # validar contra la identidad del workflow (keyless OIDC).
-          cosign verify "$ref" \
+          run_cosign cosign attest --yes --predicate "./geovial-${{ matrix.name }}.cdx.json" --type cyclonedx "$ref"
+          # Verificacion en el propio pipeline antes de declararla promovible.
+          run_cosign cosign verify "$ref" \
             --certificate-oidc-issuer "$COSIGN_IDENTITY_ISSUER" \
             --certificate-identity-regexp "^https://github.com/${{ github.repository }}/.+"
-          cosign verify-attestation "$ref" --type cyclonedx \
+          run_cosign cosign verify-attestation "$ref" --type cyclonedx \
             --certificate-oidc-issuer "$COSIGN_IDENTITY_ISSUER" \
             --certificate-identity-regexp "^https://github.com/${{ github.repository }}/.+"
           echo "Imagen firmada y SBOM atestado: $ref"
