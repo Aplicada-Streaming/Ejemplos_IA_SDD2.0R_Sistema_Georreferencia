@@ -47,7 +47,7 @@
 | Sprint 26 (pulido móvil: caché + posición) | Cerrado (Cumplido; velocity 8) | [plan-iteracion-sprint-26_v1.0.md](plan-iteracion-sprint-26_v1.0.md) | [sprint-review-sprint-26_v1.0.md](sprint-review-sprint-26_v1.0.md) | [sprint-retrospectiva-sprint-26_v1.0.md](sprint-retrospectiva-sprint-26_v1.0.md) |
 | Sprint 27 (consolidación E2E sobre helper) | Cerrado (Cumplido; velocity 8) | [plan-iteracion-sprint-27_v1.0.md](plan-iteracion-sprint-27_v1.0.md) | [sprint-review-sprint-27_v1.0.md](sprint-review-sprint-27_v1.0.md) | [sprint-retrospectiva-sprint-27_v1.0.md](sprint-retrospectiva-sprint-27_v1.0.md) |
 | Sprint 28 (SBOM + firma de imágenes Docker) | Cerrado (Cumplido; velocity 8) | [plan-iteracion-sprint-28_v1.0.md](plan-iteracion-sprint-28_v1.0.md) | [sprint-review-sprint-28_v1.0.md](sprint-review-sprint-28_v1.0.md) | [sprint-retrospectiva-sprint-28_v1.0.md](sprint-retrospectiva-sprint-28_v1.0.md) |
-| Sprint 29 (release v1.0.0) | Cerrado (Cumplido; velocity 8; fix NU5026 + re-release) | [plan-iteracion-sprint-29_v1.0.md](plan-iteracion-sprint-29_v1.0.md) | [sprint-review-sprint-29_v1.0.md](sprint-review-sprint-29_v1.0.md) | [sprint-retrospectiva-sprint-29_v1.0.md](sprint-retrospectiva-sprint-29_v1.0.md) |
+| Sprint 29 (release v1.0.0) | Cerrado (Cumplido; velocity 8; `v1.0.0` publicado tras validar con rc.1–rc.4) | [plan-iteracion-sprint-29_v1.0.md](plan-iteracion-sprint-29_v1.0.md) | [sprint-review-sprint-29_v1.0.md](sprint-review-sprint-29_v1.0.md) | [sprint-retrospectiva-sprint-29_v1.0.md](sprint-retrospectiva-sprint-29_v1.0.md) |
 
 ## Plantillas reusables
 

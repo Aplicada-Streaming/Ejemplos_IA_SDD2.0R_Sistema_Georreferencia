@@ -2,38 +2,38 @@
 
 **Proyecto:** GeoVial
 **Documento:** sprint-retrospectiva-sprint-29_v1.0.md
-**Versión:** 1.0
+**Versión:** 1.1
 **Estado:** Cerrado
-**Fecha:** 2026-06-02
+**Fecha:** 2026-06-03
 **Autor:** Scrum Master (AG-07), Equipo SDD 2.0
 
 ## 1. Qué salió bien
 
-- El disparo por tag funcionó como diseño: un solo `git push` de `v1.0.0` lanzó ambos workflows de publicación (paquete e imágenes).
-- Los Dockerfiles de S28 pasaron su primera construcción real: las tres imágenes (front/backend/db) se compilaron y publicaron a GHCR, y se generó su SBOM CycloneDX.
-- El diagnóstico de NU5026 fue rápido: el log de Actions dio el error y se reprodujo localmente borrando `bin/obj` de la librería, confirmando la causa raíz antes de tocar nada.
-- El fix de NU5026 quedó quirúrgico (sólo el workflow/script) y no rompió el test del gate que inspecciona el `.nupkg`.
+- `v1.0.0` stable quedó **publicado y firmado**: paquete al canal stable de GitHub Packages (firma + SBOM verificados en el pipeline) y las tres imágenes a GHCR (`:latest`, firmadas + SBOM atestado).
+- Validar con tags preview `rc.1`–`rc.4` fue la decisión clave: encontró y permitió corregir **cuatro** bugs de pipeline sin tocar el stable. Cada rc dio una señal concreta (log persistido) para el fix siguiente.
+- Diagnósticos sólidos: NU5026 reproducido localmente borrando `bin/obj`; el cuelgue de firma aislado comparando paquete (1 job, OK) vs imágenes (3 jobs concurrentes, cuelgue) desde el log del paquete.
+- Los fixes quedaron quirúrgicos (workflows/script; el `.csproj` no cambió, el gate sigue verde) y dejan el pipeline reproducible para próximos releases.
 
 ## 2. Qué no salió bien
 
-- **Dos** bugs de publicación llegaron hasta el release stable porque **ningún tag había ejercitado nunca los workflows** (el repo no tenía tags): `publish-sync.yml` y `publish-images.yml` corrieron por primera vez justo en `v1.0.0`.
-- `publish-sync.yml` falló con NU5026 (interacción `GeneratePackageOnBuild` + `dotnet pack` en checkout limpio); la diferencia "pasa local / falla en CI" se debió a estado de build previo en local.
-- `publish-images.yml` **publicó las imágenes pero la firma cosign keyless se colgó** (>10 min) y hubo que cancelar: las imágenes quedaron sin firmar y el step no tenía `timeout`, por lo que el cuelgue no fallaba solo.
-- El release no se completó en un solo intento: requiere re-disparar el tag con los fixes para obtener artefactos firmados.
+- **Cuatro** bugs de pipeline llegaron al release porque **ningún tag había ejercitado nunca los workflows** (el repo no tenía tags): ambos corrieron por primera vez en `v1.0.0`.
+- NU5026 (pack) y el flag del SBOM (`-j`→`-F Json`) son fallos que un tag preview rutinario habría detectado mucho antes.
+- La firma cosign keyless se colgó de entrada y el `timeout-minutes` del runner **no** mató el proceso (espera de red): un cuelgue puede no fallar solo; hizo falta serializar la firma para resolver la causa real (saturación de sigstore por concurrencia).
+- El release tomó cinco corridas (1 stable fallida + 4 rc) hasta quedar verde: mucho ida y vuelta que un preview rutinario en cada sprint de pipeline habría amortizado.
 
 ## 3. Qué probar
 
-- Validar los workflows que sólo corren en tag con un tag **preview** (`-rc.N`) antes del stable: habría detectado NU5026 y el cuelgue de la firma sin afectar el release stable.
-- Poner `timeout-minutes` en todo step de red de larga cola (firma/verificación) para que un cuelgue falle rápido con log, no indefinidamente (ya aplicado a ambos workflows).
+- Institucionalizar el tag preview `-rc.N` como paso obligatorio antes de todo stable (y ante cualquier cambio de workflow de publicación): es la única forma de ejercitar un workflow que sólo corre en tag.
+- Para firmas keyless contra el sigstore public-good, firmar **en serie** (no en matriz paralela) y acotar las ceremonias keyless por step (sign+attest en pipeline; verify en promoción/consumo).
 - Para "pasa local / falla en CI", reproducir siempre sobre un árbol limpio (borrar `bin/obj`) antes de concluir.
 
 ## 4. Acciones concretas
 
 | Acción | Responsable | Fecha compromiso | Estado |
 | --- | --- | --- | --- |
-| Resolver la causa raíz del cuelgue de la firma cosign keyless (revisar log de la corrida cancelada) | AG-09 (DevOps) | 2027-07-24 | En curso |
-| Re-disparar `v1.0.0` con los fixes mergeados y verificar paquete + imágenes (firma + SBOM) post-publish | AG-09 (Release manager) | 2027-07-24 | En curso |
-| Adoptar un tag preview `-rc` para validar los workflows de tag antes de cada stable | AG-09 (DevOps) | 2027-08-07 | Pendiente |
+| Resolver el cuelgue de la firma cosign keyless de imágenes | AG-09 (DevOps) | 2027-07-24 | Completada (causa: 3 firmas concurrentes saturan sigstore → `max-parallel: 1`) |
+| Publicar `v1.0.0` stable verificando paquete + imágenes (firma + SBOM) | AG-09 (Release manager) | 2027-07-24 | Completada (publicado tras validar con `rc.1`–`rc.4`) |
+| Institucionalizar la validación con tag preview `-rc` antes de cada stable | AG-09 (DevOps) | 2027-08-07 | Pendiente (aplicado en este sprint; queda formalizarlo en la guía/checklist) |
 | Gestionar la clave de proveedor de mapas para habilitar el mapa interactivo | AG-08 (móvil) | 2027-08-07 | Pendiente |
 
 ## 5. Seguimiento de acciones del sprint anterior
@@ -47,4 +47,5 @@
 
 | Versión | Fecha | Descripción |
 | --- | --- | --- |
-| 1.0 | 2026-06-02 | Retrospectiva del Sprint 29 (release v1.0.0): release por tag funcional, imágenes OK en su 1ª corrida, NU5026 del paquete diagnosticado y corregido; 3 acciones nuevas (re-release, tag preview de validación, clave de mapas). Generada por AG-07 a partir de `template-sprint-retrospectiva_v1.0.md` |
+| 1.0 | 2026-06-02 | Retrospectiva inicial del Sprint 29 (release v1.0.0) con el estado parcial del primer disparo. Generada por AG-07 a partir de `template-sprint-retrospectiva_v1.0.md` |
+| 1.1 | 2026-06-03 | Actualizada al cierre: `v1.0.0` publicado y firmado tras validar el pipeline con `rc.1`–`rc.4` (cuatro bugs de pipeline corregidos); acciones de cuelgue de firma y publicación completadas. Por AG-07 |

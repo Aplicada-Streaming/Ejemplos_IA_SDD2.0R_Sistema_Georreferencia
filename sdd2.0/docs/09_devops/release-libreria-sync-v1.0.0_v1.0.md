@@ -2,9 +2,9 @@
 
 **Proyecto:** GeoVial
 **Documento:** release-libreria-sync-v1.0.0_v1.0.md
-**Versión:** 1.1
-**Estado:** En release (tag `v1.0.0` creado en el Sprint 29; publicación stable tras corregir NU5026)
-**Fecha:** 2026-06-02
+**Versión:** 1.2
+**Estado:** Released (`v1.0.0` stable publicado y firmado en el Sprint 29)
+**Fecha:** 2026-06-03
 **Autor:** Ingeniero DevOps Senior (AG-09), Equipo SDD 2.0
 **Trazabilidad:** ADR-07 (publicación/versionado); estrategia-versionado §3/§5; guia-publicacion-paquete-github-packages; definition-of-done §1.4
 
@@ -83,26 +83,25 @@ cosign verify-blob geovial-sync.cdx.json \
 > A partir de aquí la superficie pública `Abstractions` queda congelada: todo breaking change bumpea MAJOR.
 > Nota: desde el Sprint 28 el tag `v*` dispara también el build/firma de las imágenes, además del paquete.
 >
-> **Incidencias de la primera ejecución.** Como ningún tag había ejercitado nunca los workflows, el primer
-> push de `v1.0.0` afloró dos bugs latentes:
+> **Validación previa al stable (4 bugs latentes).** Como ningún tag había ejercitado nunca los workflows, el
+> primer disparo afloró bugs no detectables localmente. En vez de arriesgar el stable, se validó el pipeline
+> con tags preview `v1.0.0-rc.1`…`rc.4`, corrigiendo en el camino: (1) **NU5026** en el pack —`dotnet pack`
+> con `GeneratePackageOnBuild=true` en checkout limpio → fix `-p:GeneratePackageOnBuild=false` sólo en el
+> workflow/script—; (2) **SBOM CycloneDX** —la CLI 6.x cambió `-j` por `-F Json`; se ancla el tool a 6.2.0—;
+> (3) **cuelgue de la firma cosign keyless de imágenes** por firmar la matriz en paralelo y saturar el
+> Fulcio/Rekor public-good → fix `max-parallel: 1` (serializar); (4) **presupuesto del step de firma** —las 4
+> ceremonias keyless encadenadas excedían el timeout; el pipeline de imágenes firma y atesta, y difiere la
+> verificación al promotor/consumidor (§3)—.
 >
-> 1. `publish-sync.yml` falló en el step de empaquetado con NU5026 ("la DLL no se encuentra"). Causa raíz: en
->    un checkout limpio, `GeneratePackageOnBuild=true` (que el `.csproj` mantiene para el test del gate que
->    inspecciona el `.nupkg`) interfiere con `dotnet pack`. Fix: empaquetar con
->    `-p:GeneratePackageOnBuild=false` (sólo en el workflow/script, sin tocar el `.csproj`), reproducido y
->    verificado localmente. No llegó a publicarse nada del paquete.
-> 2. `publish-images.yml` construyó y publicó las tres imágenes a GHCR y generó su SBOM, pero el step de firma
->    cosign keyless se colgó (>10 min) y se canceló: las imágenes quedaron publicadas pero **sin firmar**.
->    Mitigación: `timeout-minutes` en los steps de firma de ambos workflows, `COSIGN_YES` para confirmación no
->    interactiva y subida del SBOM como artefacto antes de firmar. La causa raíz del cuelgue se investiga.
->
-> La publicación **firmada** de ambos artefactos se completa re-disparando `v1.0.0` sobre `main` con los fixes
-> mergeados; como nada se publicó del paquete y las imágenes se re-firman en el re-disparo, no hay artefacto
-> firmado que reescribir.
+> Con `rc.4` verde de punta a punta se taggeó **`v1.0.0` stable**: el paquete se publicó al canal stable de
+> GitHub Packages (firmado + SBOM, verificados en el pipeline) y las tres imágenes a GHCR (`1.0.0`, `:latest`,
+> firmadas + SBOM atestado). El `.csproj` no cambió en ningún fix, por lo que el test del gate del `.nupkg`
+> sigue verde.
 
 ## 3. Control de cambios
 
 | Versión | Fecha | Descripción |
 | --- | --- | --- |
 | 1.0 | 2026-06-02 | Notas de release y checklist del primer stable v1.0.0 de GeoVial.Sync (Sprint 21). Empaquetado en build verificado por prueba del contenido del `.nupkg`; publicación por tag con aprobación. Por AG-09 |
-| 1.1 | 2026-06-02 | Release efectivo (Sprint 29): se creó y empujó el tag anotado `v1.0.0` sobre `main` (verde en CI), que disparó `publish-sync.yml` y `publish-images.yml` (paquete + imágenes, con SBOM + firma). Estado a Released; superficie `Abstractions` congelada. Por AG-09 |
+| 1.1 | 2026-06-02 | Release iniciado (Sprint 29): tag `v1.0.0`; el primer disparo expuso bugs latentes de los workflows. Por AG-09 |
+| 1.2 | 2026-06-03 | Release efectivo: tras validar el pipeline con tags preview `rc.1`–`rc.4` (4 bugs de pipeline corregidos), se publicó `v1.0.0` stable —paquete a GitHub Packages (firmado + SBOM) y 3 imágenes a GHCR (`:latest`, firmadas + SBOM atestado)—. Estado a Released; superficie `Abstractions` congelada. Por AG-09 |
