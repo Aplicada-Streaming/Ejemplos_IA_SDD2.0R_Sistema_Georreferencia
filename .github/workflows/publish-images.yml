@@ -19,6 +19,10 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
+      # Serializado (un job a la vez): 3 firmas cosign keyless concurrentes saturan el Fulcio/Rekor
+      # public-good de sigstore y la firma se cuelga; en serie reproduce el patron del paquete (1 job),
+      # que firma sin problemas. Cuesta un poco mas de wall-clock pero hace la firma confiable.
+      max-parallel: 1
       matrix:
         include:
           - name: backend
