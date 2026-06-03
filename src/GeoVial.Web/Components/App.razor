@@ -22,6 +22,13 @@
     <Routes />
     <ReconnectModal />
     <script src="@Assets["_framework/blazor.web.js"]"></script>
+    <!-- Service Worker que cachea las teselas OSM visitadas para verlas sin red (mapa-offline-teselas). -->
+    <script>
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('sw-teselas.js')
+                .catch(function (e) { console.warn('SW de teselas no registrado:', e); });
+        }
+    </script>
 </body>
 
 </html>

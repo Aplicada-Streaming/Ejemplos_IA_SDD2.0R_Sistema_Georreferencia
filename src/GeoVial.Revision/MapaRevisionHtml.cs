@@ -27,6 +27,8 @@ public static class MapaRevisionHtml
 
         // Plantilla con tokens (sin interpolación de C#) para no lidiar con el escape de llaves del JS/CSS.
         return Plantilla
+            .Replace("__URL_TESELAS__", MapaTeselas.UrlPlantilla)
+            .Replace("__ATRIBUCION__", MapaTeselas.Atribucion)
             .Replace("__PINES__", pinesJson)
             .Replace("__CENTRO_LAT__", vista.CentroLat.ToString(ci))
             .Replace("__CENTRO_LON__", vista.CentroLon.ToString(ci))
@@ -52,9 +54,9 @@ public static class MapaRevisionHtml
   <script>
     var pines = __PINES__;
     var mapa = L.map('mapa');
-    L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    L.tileLayer('__URL_TESELAS__', {
       maxZoom: 19,
-      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+      attribution: '__ATRIBUCION__'
     }).addTo(mapa);
     if (pines.length === 0) {
       mapa.setView([__CENTRO_LAT__, __CENTRO_LON__], 4);
