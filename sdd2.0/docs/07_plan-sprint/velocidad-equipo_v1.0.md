@@ -2,12 +2,12 @@
 
 **Proyecto:** GeoVial
 **Documento:** velocidad-equipo_v1.0.md
-**Versión:** 3.12
+**Versión:** 3.13
 **Estado:** En curso
 **Fecha:** 2026-06-03
 **Autor:** Scrum Master (AG-07), Equipo SDD 2.0
 
-> Tracking actualizado al cierre del Sprint 32. La tabla §1 registra la velocity efectiva de los Sprint 00 a 32 ya ejecutados. El promedio móvil de 3 sprints se puebla desde S02 (con S00, S01, S02).
+> Tracking actualizado al cierre del Sprint 33. La tabla §1 registra la velocity efectiva de los Sprint 00 a 33 ya ejecutados. El promedio móvil de 3 sprints se puebla desde S02 (con S00, S01, S02).
 
 ## 1. Por sprint
 
@@ -46,16 +46,17 @@
 | S30 | 8 | 8 | 8 | 8,0 | Mapa interactivo de la revisión (US-21) sobre **OpenStreetMap** en el front web (Leaflet, sin clave): núcleo `VistaMapa` (centro/bounds/proyección) en el gate + render Leaflet/OSM en Blazor. Desbloquea el ítem antes marcado como "bloqueado por clave de mapas" (el bloqueo era sólo el control nativo de Google). 0 carry-over; 320 pruebas verdes (+5 unitarias) |
 | S31 | 8 | 8 | 8 | 8,0 | Endurecimiento del mapa (US-21): vendorizado de Leaflet 1.9.4 en `wwwroot` (sin CDN; `publish` lo bundlea, `imagePath` fijado) + documento de estrategia de teselas/offline (librería offline vs. teselas por red). 0 carry-over; 320 pruebas verdes (frontend/DevOps, sin lógica nueva) |
 | S32 | 8 | 8 | 8 | 8,0 | Mapa interactivo de la revisión sobre OSM en el **móvil** (US-21): núcleo `MapaRevisionHtml` (arma el HTML Leaflet+OSM+pines) en el gate + pantalla MAUI `MapaRevisionPage` (WebView) fuera de CI, sin clave ni dependencia NuGet nueva. Unifica la visualización geográfica web+móvil. 0 carry-over; 325 pruebas verdes (+5 unitarias) |
+| S33 | 8 | 8 | 8 | 8,0 | Mantenimiento supply-chain: `.github/dependabot.yml` (NuGet/Actions/Docker×3, semanal, agrupado) + checklist de release que institucionaliza la validación con tag preview `-rc` antes del stable (lección S29); supply-chain §4 a v1.4. 0 carry-over; 325 pruebas verdes (DevOps, sin lógica nueva) |
 
 El promedio móvil de 3 sprints queda disponible en S02 (29,3 SP, sobre S00/S01/S02).
 
 ## 2. Tendencia
 
-Treinta y tres sprints registrados (S00: 21, S01: 40, S02: 27, S03: 28, S04: 24, S05: 13, S06: 13, S07: 16, S08: 11, S09: 13, S10: 13, S11: 13, S12: 13, S13: 8, S14: 8, S15: 11, S16: 8, S17: 10, S18: 8, S19: 8, S20: 8, S21: 8, S22: 8, S23: 8, S24: 8, S25: 8, S26: 8, S27: 8, S28: 8, S29: 8, S30: 8, S31: 8, S32: 8). El promedio móvil de 3 sprints se mantuvo en 8,0 SP (ventana S30–S32): quince sprints consecutivos de 8 SP (S18–S32), una cadencia muy estable de alcance acotado (E2E, supply-chain, pulido de producto, consolidación de pruebas, release y mapa web+móvil). La desviación de S32 respecto de su ventana previa es 0 %. Descontados los efectos de planificación, los sprints de módulo completo del arranque (S02: 27, S03: 28, S04: 24) siguen marcando el techo de 24–28 SP. Con el release stable v1.0.0 publicado y el mapa interactivo entregado en web y móvil (OpenStreetMap, sin clave), el MVP de producto queda completo; lo restante es mantenimiento post-release y mejoras opcionales (caché de teselas para offline real, bundle de Leaflet en el móvil).
+Treinta y cuatro sprints registrados (S00: 21, S01: 40, S02: 27, S03: 28, S04: 24, S05: 13, S06: 13, S07: 16, S08: 11, S09: 13, S10: 13, S11: 13, S12: 13, S13: 8, S14: 8, S15: 11, S16: 8, S17: 10, S18: 8, S19: 8, S20: 8, S21: 8, S22: 8, S23: 8, S24: 8, S25: 8, S26: 8, S27: 8, S28: 8, S29: 8, S30: 8, S31: 8, S32: 8, S33: 8). El promedio móvil de 3 sprints se mantuvo en 8,0 SP (ventana S31–S33): dieciséis sprints consecutivos de 8 SP (S18–S33), una cadencia muy estable de alcance acotado (E2E, supply-chain, pulido de producto, consolidación de pruebas, release, mapa web+móvil y mantenimiento). La desviación de S33 respecto de su ventana previa es 0 %. Descontados los efectos de planificación, los sprints de módulo completo del arranque (S02: 27, S03: 28, S04: 24) siguen marcando el techo de 24–28 SP. Con el release stable v1.0.0 publicado, el mapa interactivo en web y móvil y el mantenimiento de supply-chain configurado, el MVP de producto queda completo; lo restante son mejoras opcionales (caché de teselas para offline, bundle de Leaflet en el móvil) y el mantenimiento continuo que abra Dependabot.
 
 ## 3. Capacidad ajustada
 
-Con el promedio móvil de 3 sprints en 8,0 SP (S32), la capacidad sugerida estricta para S33 sería de hasta 9 SP (110 % del promedio móvil). Con el MVP de producto completo (release v1.0.0 publicado, mapa interactivo en web y móvil), el trabajo restante son mejoras opcionales (Service Worker/caché de teselas para offline real, bundle de Leaflet en la app móvil) y mantenimiento post-release (Dependabot/CVE por SLA, incluir las libs del mapa en el seguimiento de versiones). La velocity se sigue comparando sobre el equipo con frente backend + móvil; el promedio móvil de 8,0 SP refleja la cadencia de alcance acotado (una historia por sprint), no un límite real de capacidad: los módulos completos del arranque marcaron 24–28 SP.
+Con el promedio móvil de 3 sprints en 8,0 SP (S33), la capacidad sugerida estricta para S34 sería de hasta 9 SP (110 % del promedio móvil). Con el MVP de producto completo y el mantenimiento de supply-chain configurado (Dependabot, checklist de release con `-rc`), el trabajo restante son mejoras opcionales del mapa (Service Worker/caché de teselas para offline real, bundle de Leaflet en la app móvil) y el mantenimiento continuo (atender los PRs/alertas de Dependabot por SLA de CVE; evaluar automatizar la regla `-rc` como check de CI). La velocity se sigue comparando sobre el equipo con frente backend + móvil; el promedio móvil de 8,0 SP refleja la cadencia de alcance acotado (una historia por sprint), no un límite real de capacidad: los módulos completos del arranque marcaron 24–28 SP.
 
 ## 4. Outliers explicados
 
@@ -105,3 +106,4 @@ A medida que se registren velocities, todo sprint cuyo valor se desvíe más del
 | 3.10 | 2026-06-03 | Registro de la velocity efectiva del Sprint 30: S30=8 (0 carry-over). Promedio móvil de 3 sprints (S28–S30) = 8,0; capacidad sugerida estricta para S31 = 9 SP. Mapa interactivo de la revisión sobre OpenStreetMap (sin clave); desviación 0 %. El MVP de producto queda completo. Por AG-07 |
 | 3.11 | 2026-06-03 | Registro de la velocity efectiva del Sprint 31: S31=8 (0 carry-over). Promedio móvil de 3 sprints (S29–S31) = 8,0; capacidad sugerida estricta para S32 = 9 SP. Vendorizado de Leaflet (sin CDN) + estrategia de teselas/offline; desviación 0 %. Por AG-07 |
 | 3.12 | 2026-06-03 | Registro de la velocity efectiva del Sprint 32: S32=8 (0 carry-over). Promedio móvil de 3 sprints (S30–S32) = 8,0; capacidad sugerida estricta para S33 = 9 SP. Mapa interactivo de la revisión sobre OSM en el móvil (WebView+Leaflet, sin clave); desviación 0 %. Por AG-07 |
+| 3.13 | 2026-06-03 | Registro de la velocity efectiva del Sprint 33: S33=8 (0 carry-over). Promedio móvil de 3 sprints (S31–S33) = 8,0; capacidad sugerida estricta para S34 = 9 SP. Mantenimiento supply-chain (Dependabot + checklist de release con `-rc`); desviación 0 %. Por AG-07 |

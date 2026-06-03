@@ -1,0 +1,74 @@
+# Dependabot: actualizacion y alerta automatica de dependencias (supply-chain-seguridad §4).
+# Cubre NuGet (.NET), GitHub Actions y las imagenes base de los tres Dockerfiles del monolito.
+# Nota: Leaflet (vendorizado en wwwroot y por CDN en el WebView movil) NO lo cubre Dependabot
+# (no hay ecosistema para JS hand-vendored); su version se sigue a mano (mapa-offline-teselas).
+version: 2
+updates:
+  # Dependencias NuGet de los proyectos .NET (descubre los .csproj desde la raiz).
+  - package-ecosystem: "nuget"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 5
+    labels:
+      - "dependencies"
+      - "nuget"
+    commit-message:
+      prefix: "deps"
+    groups:
+      # Agrupa minor/patch en un solo PR para reducir ruido; los major van por separado.
+      dotnet-minor-patch:
+        patterns:
+          - "*"
+        update-types:
+          - "minor"
+          - "patch"
+
+  # Acciones usadas en los workflows de .github/workflows.
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 5
+    labels:
+      - "dependencies"
+      - "github-actions"
+    commit-message:
+      prefix: "ci"
+    groups:
+      actions-all:
+        patterns:
+          - "*"
+
+  # Imagen base del backend (mcr.microsoft.com/dotnet/...).
+  - package-ecosystem: "docker"
+    directory: "/src/GeoVial.Api"
+    schedule:
+      interval: "weekly"
+    labels:
+      - "dependencies"
+      - "docker"
+    commit-message:
+      prefix: "deps(docker)"
+
+  # Imagen base del front.
+  - package-ecosystem: "docker"
+    directory: "/src/GeoVial.Web"
+    schedule:
+      interval: "weekly"
+    labels:
+      - "dependencies"
+      - "docker"
+    commit-message:
+      prefix: "deps(docker)"
+
+  # Imagen base de la base de datos (SQL Server).
+  - package-ecosystem: "docker"
+    directory: "/infra/db"
+    schedule:
+      interval: "weekly"
+    labels:
+      - "dependencies"
+      - "docker"
+    commit-message:
+      prefix: "deps(docker)"
