@@ -11,6 +11,10 @@ export function render(elementId, vista) {
         return;
     }
 
+    // Leaflet está vendorizado en wwwroot/lib/leaflet (Sprint 31); fijamos la ruta de los íconos de marcador
+    // para que resuelvan desde ahí (sin esto, Leaflet la autodetecta del CSS y puede fallar al vendorizar).
+    L.Icon.Default.imagePath = "lib/leaflet/images/";
+
     if (!mapa) {
         mapa = L.map(elementId);
         L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
