@@ -13,6 +13,7 @@ public partial class RevisionPage : ContentPage
 
 	private NavegadorRevision? _nav;
 	private Guid? _relevamientoId;
+	private GeoVial.Shared.RevisionRelevamientoDto? _revision;
 
 	public RevisionPage(HttpClient http, ClienteRevisionHttp cliente, ClienteEdicionMarcador editor)
 	{
@@ -40,6 +41,7 @@ public partial class RevisionPage : ContentPage
 				return;
 			}
 
+			_revision = revision;
 			_nav = new NavegadorRevision(revision);
 			await RenderAsync();
 		}
@@ -47,6 +49,20 @@ public partial class RevisionPage : ContentPage
 		{
 			MarcadorLbl.Text = $"Error al cargar: {ex.Message}";
 		}
+	}
+
+	// Abre el mapa interactivo (Leaflet + OSM, sin clave) con los marcadores del relevamiento cargado.
+	private async void OnVerMapa(object? sender, EventArgs e)
+	{
+		if (_revision is null)
+		{
+			MarcadorLbl.Text = "Cargá una revisión antes de ver el mapa.";
+			return;
+		}
+
+		var html = MapaRevisionHtml.Construir(new VistaMapa(_revision.Marcadores));
+		// En NavigationPage para que la barra (con "Cerrar") se muestre sobre el modal.
+		await Navigation.PushModalAsync(new NavigationPage(new MapaRevisionPage(html)));
 	}
 
 	private async void OnSiguienteMarcador(object? sender, EventArgs e) { _nav?.SiguienteMarcador(); await RenderAsync(); }
@@ -175,6 +191,7 @@ public partial class RevisionPage : ContentPage
 		var revision = await _cliente.ObtenerAsync(id);
 		if (revision is not null)
 		{
+			_revision = revision;
 			_nav = new NavegadorRevision(revision);
 			if (marcadorEnFoco is { } mid)
 			{
