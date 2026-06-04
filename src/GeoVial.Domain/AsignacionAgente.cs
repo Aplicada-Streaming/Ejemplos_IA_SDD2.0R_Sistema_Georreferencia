@@ -18,7 +18,10 @@ public sealed class AsignacionAgente
 
     internal AsignacionAgente(Guid relevamientoId, Guid agenteUsuarioId)
     {
-        AsignacionAgenteId = Guid.NewGuid();
+        // La PK (AsignacionAgenteId) NO se asigna acá a propósito: es ValueGeneratedOnAdd y EF la genera al
+        // insertar. Pre-asignarla hacía que, al agregar la asignación por la colección del agregado a un
+        // relevamiento ya rastreado, EF la tratara como entidad existente (clave seteada → Modified → UPDATE
+        // de 0 filas → DbUpdateConcurrencyException), rompiendo la asignación contra un proveedor relacional.
         RelevamientoId = relevamientoId;
         AgenteUsuarioId = agenteUsuarioId;
         Vigente = true;
