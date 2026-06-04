@@ -1,4 +1,5 @@
-﻿using Microsoft.Extensions.DependencyInjection;
+﻿using GeoVial.Sync;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace GeoVial.Mobile;
 
@@ -11,6 +12,15 @@ public partial class App : Application
 
 	protected override Window CreateWindow(IActivationState? activationState)
 	{
-		return new Window(new AppShell());
+		// La app arranca en el login (US-40): hasta no autenticar no se ven las solapas.
+		// LoginPage reemplaza la página de la ventana por el AppShell tras un login exitoso.
+		var servicios = IPlatformApplication.Current?.Services
+			?? throw new InvalidOperationException("El contenedor de servicios no está disponible.");
+
+		// Si el proceso sobrevivió y la sesión sigue activa (p. ej. al volver de la cámara o tras
+		// recrear la actividad por rotación), se va directo a las solapas en vez de rebotar al login.
+		var sesion = servicios.GetRequiredService<ServicioSesion>();
+		Page inicial = sesion.Autenticado ? new AppShell() : servicios.GetRequiredService<LoginPage>();
+		return new Window(inicial);
 	}
 }
