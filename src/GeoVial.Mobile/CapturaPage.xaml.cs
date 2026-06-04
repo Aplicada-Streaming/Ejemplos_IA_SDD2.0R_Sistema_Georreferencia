@@ -221,7 +221,7 @@ public partial class CapturaPage : ContentPage
 	{
 		try
 		{
-			if (await _sesion.PrimerRelevamientoAsync() is { } id)
+			if (await _sesion.RelevamientoActivoAsync() is { } id)
 			{
 				_relevamientoConocido = id;
 				return id;

@@ -66,7 +66,7 @@ public sealed class MapaPage : ContentPage
             _estado.IsVisible = true;
             _web.IsVisible = false;
 
-            if (await _sesion.PrimerRelevamientoAsync() is not { } relevamientoId)
+            if (await _sesion.RelevamientoActivoAsync() is not { } relevamientoId)
             {
                 _estado.Text = "No hay un relevamiento en el backend para mostrar en el mapa.";
                 return;

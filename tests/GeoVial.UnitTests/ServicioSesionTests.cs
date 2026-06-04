@@ -101,19 +101,67 @@ public class ServicioSesionTests
         http.DefaultRequestHeaders.Authorization.Should().BeNull();
     }
 
-    [Fact] // US-40: el primer relevamiento es el destino por defecto del cliente
-    public async Task Primer_relevamiento_devuelve_el_primero_del_backend()
+    [Fact] // F-M-05: sin selección, el relevamiento activo se resuelve por defecto (el único disponible)
+    public async Task Relevamiento_activo_por_defecto_es_el_unico_disponible()
     {
         var id = Guid.NewGuid();
         var handler = new RutasHandler(req =>
             req.RequestUri!.AbsolutePath.EndsWith("/auth/login")
                 ? Json(HttpStatusCode.OK, """{"accessToken":"tok-123"}""")
-                : Json(HttpStatusCode.OK, $$"""[{"relevamientoId":"{{id}}"}]"""));
+                : Json(HttpStatusCode.OK, $$"""[{"relevamientoId":"{{id}}","identificacionObra":"Obra","estado":1,"agentesVigentes":[]}]"""));
         var sesion = new ServicioSesion(new HttpClient(handler) { BaseAddress = new Uri("http://localhost:5080/") });
         await sesion.IngresarAsync("raiz", "GeoVial.Raiz.2026");
 
-        var r = await sesion.PrimerRelevamientoAsync();
+        var r = await sesion.RelevamientoActivoAsync();
 
         r.Should().Be(id);
+    }
+
+    [Fact] // F-M-05: una vez elegido un relevamiento, queda como activo (y sirve offline sin re-consultar)
+    public async Task Seleccionar_relevamiento_lo_fija_como_activo()
+    {
+        var elegido = Guid.NewGuid();
+        var handler = new RutasHandler(_ => Json(HttpStatusCode.OK, """{"accessToken":"tok-123"}"""));
+        var sesion = new ServicioSesion(new HttpClient(handler) { BaseAddress = new Uri("http://localhost:5080/") });
+        await sesion.IngresarAsync("raiz", "GeoVial.Raiz.2026");
+
+        sesion.SeleccionarRelevamiento(elegido);
+
+        sesion.RelevamientoActivoId.Should().Be(elegido);
+        (await sesion.RelevamientoActivoAsync()).Should().Be(elegido); // no vuelve a consultar el backend
+    }
+
+    [Fact] // F-M-04: el listado marca como asignado el relevamiento cuyo agente vigente es el usuario en sesión
+    public async Task Listar_relevamientos_marca_los_asignados_al_usuario()
+    {
+        // sub del usuario en sesión (claim del JWT)
+        var usuarioId = Guid.Parse("11111111-1111-1111-1111-111111111111");
+        var token = JwtConSub(usuarioId);
+        var asignado = Guid.NewGuid();
+        var otro = Guid.NewGuid();
+        var handler = new RutasHandler(req =>
+            req.RequestUri!.AbsolutePath.EndsWith("/auth/login")
+                ? Json(HttpStatusCode.OK, $$"""{"accessToken":"{{token}}"}""")
+                : Json(HttpStatusCode.OK, $$"""
+                    [{"relevamientoId":"{{otro}}","identificacionObra":"Zeta","estado":1,"agentesVigentes":[]},
+                     {"relevamientoId":"{{asignado}}","identificacionObra":"Alfa","estado":1,"agentesVigentes":["{{usuarioId}}"]}]
+                    """));
+        var sesion = new ServicioSesion(new HttpClient(handler) { BaseAddress = new Uri("http://localhost:5080/") });
+        await sesion.IngresarAsync("pedro", "x");
+
+        var lista = await sesion.ListarRelevamientosAsync();
+
+        lista[0].RelevamientoId.Should().Be(asignado, "los asignados van primero");
+        lista[0].Asignado.Should().BeTrue();
+        lista.Single(r => r.RelevamientoId == otro).Asignado.Should().BeFalse();
+        sesion.UsuarioId.Should().Be(usuarioId);
+    }
+
+    // Arma un JWT de prueba (header.payload.firma) con el claim sub indicado; sólo el payload importa.
+    private static string JwtConSub(Guid sub)
+    {
+        static string B64Url(string s) =>
+            Convert.ToBase64String(System.Text.Encoding.UTF8.GetBytes(s)).TrimEnd('=').Replace('+', '-').Replace('/', '_');
+        return $"{B64Url("{\"alg\":\"HS256\"}")}.{B64Url($"{{\"sub\":\"{sub}\"}}")}.firma";
     }
 }
