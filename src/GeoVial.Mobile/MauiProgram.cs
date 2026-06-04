@@ -47,6 +47,14 @@ public static class MauiProgram
 		builder.Services.AddSingleton<ArmadorCapturaCampo>();
 		builder.Services.AddSingleton<ArmadorUbicacionManual>();
 
+		// Captura offline real (US-16, CU-06): cola local de capturas (foto + coordenada) sobre SQLite +
+		// cliente REST que sube observación + binario + motor que drena la cola al sincronizar. Así la
+		// captura se encola sin conexión y se sube al reconectar, en vez de postear directo (F-M-12/13).
+		var rutaCapturas = Path.Combine(FileSystem.AppDataDirectory, "cola-capturas.db");
+		builder.Services.AddSingleton<IColaCapturas>(_ => new ColaCapturasSqlite($"Data Source={rutaCapturas}"));
+		builder.Services.AddSingleton<ICapturaBackendClient>(sp => new ClienteCapturaHttp(sp.GetRequiredService<HttpClient>()));
+		builder.Services.AddSingleton(sp => new MotorCapturas(sp.GetRequiredService<IColaCapturas>(), sp.GetRequiredService<ICapturaBackendClient>()));
+
 		// Revisión sobre mapa (US-21/US-22): cliente de la API de revisión.
 		builder.Services.AddSingleton(sp => new ClienteRevisionHttp(sp.GetRequiredService<HttpClient>()));
 		// Edición sobre el marcador (US-15): cliente de comentarios y etiquetas.
