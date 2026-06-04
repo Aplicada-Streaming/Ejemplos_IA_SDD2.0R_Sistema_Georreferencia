@@ -3,32 +3,36 @@ using GeoVial.Sync;
 namespace GeoVial.Mobile;
 
 /// <summary>
-/// Pantalla de inicio de sesión (US-40). Es la primera pantalla de la app: hasta no
-/// autenticar no se muestran las solapas. Apoya el login en <see cref="ServicioSesion"/>,
-/// que asienta el token en el HttpClient compartido; tras un login exitoso reemplaza la
-/// página de la ventana por el <see cref="AppShell"/>. Página por código (sin XAML) para
-/// no acoplar la cáscara MAUI a más markup. Fuera de CI.
+/// Pantalla de inicio de sesión (US-40) con método de seguridad y reingreso en terreno (RN-06, CU-02).
+/// Es la primera pantalla: hasta no autenticar no se muestran las solapas. El login con conexión asienta el
+/// token, configura el método de seguridad del teléfono y habilita el modo sin conexión; además recuerda el
+/// usuario para el reingreso. Si hay un usuario recordado (p. ej. al reabrir la app en terreno), ofrece
+/// "Reingreso en terreno" sin reescribir la clave (US-05). Página por código (sin XAML). Fuera de CI.
 /// </summary>
 public sealed class LoginPage : ContentPage
 {
     private readonly ServicioSesion _sesion;
+    private readonly SeguridadDispositivo _seguridad;
     private readonly Entry _usuario;
     private readonly Entry _clave;
     private readonly Button _ingresar;
+    private readonly Button _reingresar;
     private readonly Label _estado;
     private readonly ActivityIndicator _spinner;
 
-    public LoginPage(ServicioSesion sesion)
+    public LoginPage(ServicioSesion sesion, SeguridadDispositivo seguridad)
     {
         _sesion = sesion;
+        _seguridad = seguridad;
         Title = "GeoVial";
 
-        // Usuario por defecto de demo precargado; la clave se ingresa siempre.
         _usuario = new Entry { Placeholder = "Usuario", Text = "raiz", ReturnType = ReturnType.Next };
         _clave = new Entry { Placeholder = "Clave", IsPassword = true, ReturnType = ReturnType.Go };
         _ingresar = new Button { Text = "Ingresar" };
         _ingresar.Clicked += OnIngresar;
         _clave.Completed += OnIngresar;
+        _reingresar = new Button { Text = "Reingreso en terreno (sin clave)", IsVisible = false, BackgroundColor = Color.FromArgb("#2e7d32") };
+        _reingresar.Clicked += OnReingresar;
         _estado = new Label { TextColor = Color.FromArgb("#b00020"), IsVisible = false };
         _spinner = new ActivityIndicator { IsRunning = false, IsVisible = false };
 
@@ -46,6 +50,7 @@ public sealed class LoginPage : ContentPage
                     _usuario,
                     _clave,
                     _ingresar,
+                    _reingresar,
                     _spinner,
                     _estado,
                 },
@@ -53,27 +58,77 @@ public sealed class LoginPage : ContentPage
         };
     }
 
+    protected override async void OnAppearing()
+    {
+        base.OnAppearing();
+        // RN-06: si hay un método de seguridad configurado (usuario recordado), ofrecer el reingreso en terreno.
+        var recordado = await _seguridad.UsuarioRecordadoAsync();
+        if (!string.IsNullOrEmpty(recordado))
+        {
+            _usuario.Text = recordado;
+            _reingresar.Text = $"Reingreso en terreno como «{recordado}» (sin clave)";
+            _reingresar.IsVisible = true;
+        }
+    }
+
     private async void OnIngresar(object? sender, EventArgs e)
     {
+        await EjecutarAsync(async () =>
+        {
+            var r = await _sesion.IngresarAsync(_usuario.Text, _clave.Text);
+            if (!r.Exito)
+            {
+                return r.Mensaje;
+            }
+
+            // RN-06: configurar el método de seguridad del teléfono y habilitar el modo sin conexión, y
+            // recordar el usuario para el reingreso en terreno. Best-effort: no bloquea el ingreso si falla.
+            if (await _sesion.ConfigurarMetodoSeguridadAsync())
+            {
+                await _sesion.HabilitarOfflineAsync();
+                await _seguridad.ConfigurarAsync(_usuario.Text?.Trim() ?? "");
+            }
+
+            Application.Current!.Windows[0].Page = new AppShell();
+            return null;
+        });
+    }
+
+    private async void OnReingresar(object? sender, EventArgs e)
+    {
+        await EjecutarAsync(async () =>
+        {
+            var usuario = await _seguridad.UsuarioRecordadoAsync();
+            var presente = await _seguridad.MetodoPresenteAsync();
+            var r = await _sesion.ReingresarAsync(usuario, presente);
+            if (!r.Exito)
+            {
+                return r.Mensaje;
+            }
+
+            Application.Current!.Windows[0].Page = new AppShell();
+            return null;
+        });
+    }
+
+    // Ejecuta una acción de autenticación mostrando spinner y, si devuelve un mensaje, el error.
+    private async Task EjecutarAsync(Func<Task<string?>> accion)
+    {
         _estado.IsVisible = false;
-        _ingresar.IsEnabled = false;
+        _ingresar.IsEnabled = _reingresar.IsEnabled = false;
         _spinner.IsVisible = _spinner.IsRunning = true;
         try
         {
-            var r = await _sesion.IngresarAsync(_usuario.Text, _clave.Text);
-            if (r.Exito)
+            var error = await accion();
+            if (error is not null)
             {
-                // El token ya quedó asentado en el HttpClient compartido: las solapas no re-loguean.
-                Application.Current!.Windows[0].Page = new AppShell();
-                return;
+                _estado.Text = error;
+                _estado.IsVisible = true;
             }
-
-            _estado.Text = r.Mensaje;
-            _estado.IsVisible = true;
         }
         finally
         {
-            _ingresar.IsEnabled = true;
+            _ingresar.IsEnabled = _reingresar.IsEnabled = true;
             _spinner.IsVisible = _spinner.IsRunning = false;
         }
     }
