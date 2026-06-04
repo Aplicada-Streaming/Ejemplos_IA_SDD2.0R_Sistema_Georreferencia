@@ -30,7 +30,7 @@ public partial class RevisionPage : ContentPage
 		{
 			MarcadorLbl.Text = "Cargando…";
 			// La sesión ya está iniciada (token asentado en el HttpClient compartido al loguearse).
-			if (await _sesion.PrimerRelevamientoAsync() is not { } relevamientoId)
+			if (await _sesion.RelevamientoActivoAsync() is not { } relevamientoId)
 			{
 				MarcadorLbl.Text = "No hay un relevamiento en el backend.";
 				return;

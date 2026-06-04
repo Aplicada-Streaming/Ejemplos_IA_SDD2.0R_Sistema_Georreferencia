@@ -13,6 +13,12 @@
 
             <Label Text="Recolección sin conexión y sincronización automática (EP-04)." />
 
+            <!-- F-M-04/05: elegir el relevamiento a trabajar (los asignados van primero, marcados). -->
+            <Label Text="Relevamiento activo" FontAttributes="Bold" />
+            <Picker x:Name="RelevamientoPicker"
+                    Title="Elegí un relevamiento"
+                    SelectedIndexChanged="OnRelevamientoSeleccionado" />
+
             <Label x:Name="PendientesLbl"
                    Text="Pendientes en cola: 0"
                    FontAttributes="Bold"

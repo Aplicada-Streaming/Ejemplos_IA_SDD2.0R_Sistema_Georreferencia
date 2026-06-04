@@ -14,6 +14,7 @@ namespace GeoVial.Sync;
 public sealed class ServicioSesion
 {
     private readonly HttpClient _http;
+    private string? _accessToken;
 
     public ServicioSesion(HttpClient http) => _http = http;
 
@@ -22,6 +23,15 @@ public sealed class ServicioSesion
 
     /// <summary>Hay una sesión activa (token asentado en el HttpClient compartido).</summary>
     public bool Autenticado => _http.DefaultRequestHeaders.Authorization is not null;
+
+    /// <summary>Id del usuario en sesión, leído del token (claim <c>sub</c>); <c>null</c> si no hay sesión.</summary>
+    public Guid? UsuarioId => LectorTokenJwt.LeerUsuarioId(_accessToken);
+
+    /// <summary>Relevamiento elegido por el usuario para trabajar (F-M-05); se recuerda para usarlo offline.</summary>
+    public Guid? RelevamientoActivoId { get; private set; }
+
+    /// <summary>Fija el relevamiento activo elegido por el usuario.</summary>
+    public void SeleccionarRelevamiento(Guid relevamientoId) => RelevamientoActivoId = relevamientoId;
 
     /// <summary>
     /// Inicia sesión contra <c>/api/v1/auth/login</c> y asienta el token en el HttpClient
@@ -60,6 +70,7 @@ public sealed class ServicioSesion
         }
 
         _http.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token.AccessToken);
+        _accessToken = token.AccessToken;
         Usuario = usuario;
         return ResultadoSesion.Ok();
     }
@@ -68,22 +79,45 @@ public sealed class ServicioSesion
     public void Salir()
     {
         _http.DefaultRequestHeaders.Authorization = null;
+        _accessToken = null;
         Usuario = null;
+        RelevamientoActivoId = null;
     }
 
     /// <summary>
-    /// Devuelve el primer relevamiento del backend (destino por defecto del cliente móvil),
-    /// o <c>null</c> si no hay ninguno. Requiere sesión iniciada.
+    /// Lista los relevamientos accesibles para el usuario, marcando los que tiene asignados (F-M-04) y
+    /// ordenándolos (asignados primero). Requiere sesión iniciada.
     /// </summary>
-    public async Task<Guid?> PrimerRelevamientoAsync()
+    public async Task<IReadOnlyList<RelevamientoResumen>> ListarRelevamientosAsync()
     {
-        var relevamientos = await _http.GetFromJsonAsync<List<RelevamientoDto>>("api/v1/relevamientos");
-        return relevamientos is { Count: > 0 } ? relevamientos[0].RelevamientoId : null;
+        var relevamientos = await _http.GetFromJsonAsync<List<RelevamientoDatos>>("api/v1/relevamientos")
+            ?? new List<RelevamientoDatos>();
+        return SelectorRelevamientos.Listar(relevamientos, UsuarioId);
+    }
+
+    /// <summary>
+    /// Devuelve el relevamiento activo (F-M-05): si el usuario ya eligió uno, ese (sirve sin conexión);
+    /// si no, consulta la lista y resuelve por defecto (primer asignado abierto, o el primero), recordándolo.
+    /// <c>null</c> si no hay relevamientos.
+    /// </summary>
+    public async Task<Guid?> RelevamientoActivoAsync()
+    {
+        if (RelevamientoActivoId is { } yaElegido)
+        {
+            return yaElegido;
+        }
+
+        var lista = await ListarRelevamientosAsync();
+        var activo = SelectorRelevamientos.Activo(lista, RelevamientoActivoId);
+        if (activo is { } id)
+        {
+            RelevamientoActivoId = id;
+        }
+
+        return activo;
     }
 
     private sealed record TokenDto(string AccessToken);
-
-    private sealed record RelevamientoDto(Guid RelevamientoId);
 }
 
 /// <summary>Resultado de un intento de inicio de sesión: éxito + mensaje apto para la UI.</summary>
