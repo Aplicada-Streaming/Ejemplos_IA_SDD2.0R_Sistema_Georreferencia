@@ -38,3 +38,47 @@ public sealed class ColectorOffline
     public Task RecolectarAsync(ObservacionCapturada observacion, CancellationToken ct = default) =>
         _cola.EnqueueAsync(ChangeRecordFactory.Comentario(observacion), ct);
 }
+
+/// <summary>
+/// Una captura de campo (foto + coordenada) tomada sin conexión y pendiente de subir (US-16, CU-06).
+/// A diferencia de un <see cref="ChangeRecord"/> (sólo JSON), lleva el binario de la foto, así que se
+/// encola y se sube por su propio camino (observación + binario) en vez de por /sync.
+/// <see cref="CapturaId"/> es la clave de idempotencia local (re-encolar no duplica).
+/// </summary>
+public sealed record CapturaPendiente(
+    Guid CapturaId,
+    Guid RelevamientoId,
+    string ReferenciaArchivo,
+    decimal? LatitudExif,
+    decimal? LongitudExif,
+    byte[] Foto,
+    DateTime Momento);
+
+/// <summary>
+/// Cola local de capturas de campo pendientes de subir (US-16, CU-06; ADR-05). Conserva la foto y la
+/// coordenada hasta que la captura se sube con éxito. Idempotente por <see cref="CapturaPendiente.CapturaId"/>.
+/// </summary>
+public interface IColaCapturas
+{
+    Task EncolarAsync(CapturaPendiente captura, CancellationToken ct = default);
+    Task<IReadOnlyList<CapturaPendiente>> LeerPendientesAsync(int max, CancellationToken ct = default);
+    Task MarcarSubidasAsync(IEnumerable<Guid> capturaIds, CancellationToken ct = default);
+    Task<int> PendientesAsync(CancellationToken ct = default);
+}
+
+/// <summary>
+/// Puerto hacia el backend para subir una captura completa: crea la observación y sube el binario de la
+/// foto (POST observación + POST contenido). Devuelve <c>true</c> si la captura quedó subida; <c>false</c>
+/// si el backend la rechazó (p. ej. 4xx, no reintentar). Lanza ante un corte de conexión (se reintenta).
+/// La implementación REST vive fuera de Abstractions (ADR-07).
+/// </summary>
+public interface ICapturaBackendClient
+{
+    Task<bool> SubirAsync(CapturaPendiente captura, CancellationToken ct = default);
+}
+
+/// <summary>Resultado de drenar la cola de capturas: las capturas subidas con éxito.</summary>
+public sealed record ResultadoCapturas(IReadOnlyList<Guid> Subidas)
+{
+    public static ResultadoCapturas Vacio { get; } = new(Array.Empty<Guid>());
+}
