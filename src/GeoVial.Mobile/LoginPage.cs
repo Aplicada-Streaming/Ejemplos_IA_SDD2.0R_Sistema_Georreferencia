@@ -83,10 +83,17 @@ public sealed class LoginPage : ContentPage
 
             // RN-06: configurar el método de seguridad del teléfono y habilitar el modo sin conexión, y
             // recordar el usuario para el reingreso en terreno. Best-effort: no bloquea el ingreso si falla.
-            if (await _sesion.ConfigurarMetodoSeguridadAsync())
+            try
             {
-                await _sesion.HabilitarOfflineAsync();
-                await _seguridad.ConfigurarAsync(_usuario.Text?.Trim() ?? "");
+                if (await _sesion.ConfigurarMetodoSeguridadAsync())
+                {
+                    await _sesion.HabilitarOfflineAsync();
+                    await _seguridad.ConfigurarAsync(_usuario.Text?.Trim() ?? "");
+                }
+            }
+            catch
+            {
+                // el método de seguridad es opcional para entrar; el reingreso quedará deshabilitado.
             }
 
             Application.Current!.Windows[0].Page = new AppShell();
@@ -125,6 +132,12 @@ public sealed class LoginPage : ContentPage
                 _estado.Text = error;
                 _estado.IsVisible = true;
             }
+        }
+        catch (Exception ex)
+        {
+            // Cualquier fallo inesperado (p. ej. SecureStorage en un dispositivo sin bloqueo) se muestra, no tumba la app.
+            _estado.Text = $"No se pudo completar el acceso: {ex.Message}";
+            _estado.IsVisible = true;
         }
         finally
         {

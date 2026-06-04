@@ -38,11 +38,17 @@ public static class MauiProgram
 		builder.Services.AddSingleton<ISyncBackendClient>(sp => new ClienteSyncHttp(sp.GetRequiredService<HttpClient>()));
 		builder.Services.AddSingleton<ISyncEngine, MotorSincronizacion>();
 
-		// Captura offline (US-16) y sincronización automática por conectividad (US-19).
+		// Captura offline (US-16) y sincronización automática por conectividad (US-19, F-M-14).
 		builder.Services.AddSingleton(Connectivity.Current);
 		builder.Services.AddSingleton<IConnectivityMonitor, MonitorConectividadMaui>();
 		builder.Services.AddSingleton<ColectorOffline>();
-		builder.Services.AddSingleton<CoordinadorAutoSync>();
+		// Al recuperar señal, sincroniza el relevamiento activo (de la sesión) y drena la cola de capturas (S42).
+		builder.Services.AddSingleton(sp => new CoordinadorAutoSync(
+			sp.GetRequiredService<IConnectivityMonitor>(),
+			sp.GetRequiredService<ISyncEngine>(),
+			sp.GetRequiredService<IChangeQueue>(),
+			sp.GetRequiredService<MotorCapturas>(),
+			() => sp.GetRequiredService<ServicioSesion>().RelevamientoActivoId));
 
 		// Captura de campo (US-11): extracción de la coordenada desde EXIF + armado de la petición de captura.
 		builder.Services.AddSingleton<IExtractorGpsExif, LectorGpsExif>();
