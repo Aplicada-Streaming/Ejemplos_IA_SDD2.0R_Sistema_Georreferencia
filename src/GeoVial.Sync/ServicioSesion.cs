@@ -63,7 +63,84 @@ public sealed class ServicioSesion
                 : $"El backend rechazó el login ({(int)login.StatusCode}).");
         }
 
-        var token = await login.Content.ReadFromJsonAsync<TokenDto>();
+        return await AsentarTokenAsync(login, usuario);
+    }
+
+    /// <summary>
+    /// Reingreso en terreno (US-05, CU-02 §5.A, RN-06): re-autentica con el método de seguridad del teléfono
+    /// presente, sin reescribir la clave. <paramref name="metodoPresente"/> lo informa el dispositivo. No lanza.
+    /// </summary>
+    public async Task<ResultadoSesion> ReingresarAsync(string? usuario, bool metodoPresente)
+    {
+        usuario = usuario?.Trim() ?? "";
+        if (usuario.Length == 0)
+        {
+            return ResultadoSesion.Fallo("No hay un usuario recordado para el reingreso.");
+        }
+
+        if (!metodoPresente)
+        {
+            return ResultadoSesion.Fallo("Se necesita el método de seguridad del teléfono para reingresar.");
+        }
+
+        HttpResponseMessage reingreso;
+        try
+        {
+            reingreso = await _http.PostAsJsonAsync(
+                "api/v1/auth/reingreso", new { nombreUsuario = usuario, metodoSeguridadPresente = true });
+        }
+        catch (Exception ex)
+        {
+            return ResultadoSesion.Fallo($"No se pudo conectar con el backend: {ex.Message}");
+        }
+
+        if (!reingreso.IsSuccessStatusCode)
+        {
+            return ResultadoSesion.Fallo(reingreso.StatusCode == HttpStatusCode.Conflict
+                ? "El método de seguridad no está configurado; reingresá con usuario y clave una vez con conexión."
+                : "No se pudo reingresar. Iniciá sesión con usuario y clave.");
+        }
+
+        return await AsentarTokenAsync(reingreso, usuario);
+    }
+
+    /// <summary>
+    /// Configura el método de seguridad del teléfono en el backend (US-04, CU-02 §5.B, RN-06): precondición
+    /// para trabajar sin conexión. Requiere sesión iniciada. Devuelve <c>true</c> si quedó configurado.
+    /// </summary>
+    public async Task<bool> ConfigurarMetodoSeguridadAsync()
+    {
+        try
+        {
+            var resp = await _http.PostAsync("api/v1/auth/metodo-seguridad", content: null);
+            return resp.IsSuccessStatusCode;
+        }
+        catch
+        {
+            return false;
+        }
+    }
+
+    /// <summary>
+    /// Habilita el modo sin conexión (RN-06): el backend lo permite sólo si el método de seguridad está
+    /// configurado. Devuelve <c>true</c> si quedó habilitado (204); <c>false</c> si falta el método (409) o falla.
+    /// </summary>
+    public async Task<bool> HabilitarOfflineAsync()
+    {
+        try
+        {
+            var resp = await _http.PostAsync("api/v1/auth/offline", content: null);
+            return resp.IsSuccessStatusCode;
+        }
+        catch
+        {
+            return false;
+        }
+    }
+
+    private async Task<ResultadoSesion> AsentarTokenAsync(HttpResponseMessage respuesta, string usuario)
+    {
+        var token = await respuesta.Content.ReadFromJsonAsync<TokenDto>();
         if (token is null || string.IsNullOrEmpty(token.AccessToken))
         {
             return ResultadoSesion.Fallo("El backend no devolvió un token válido.");

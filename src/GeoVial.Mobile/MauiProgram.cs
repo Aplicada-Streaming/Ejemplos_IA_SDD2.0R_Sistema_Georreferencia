@@ -33,6 +33,8 @@ public static class MauiProgram
 		// Sesión única (US-40): autentica una vez y asienta el token en el HttpClient compartido,
 		// que reusan todas las páginas (incluido el cliente de sync). Reemplaza el login hardcodeado.
 		builder.Services.AddSingleton(sp => new ServicioSesion(sp.GetRequiredService<HttpClient>()));
+		// Método de seguridad del teléfono para el reingreso en terreno (RN-06): recuerda usuario + marcador.
+		builder.Services.AddSingleton<SeguridadDispositivo>();
 		builder.Services.AddSingleton<ISyncBackendClient>(sp => new ClienteSyncHttp(sp.GetRequiredService<HttpClient>()));
 		builder.Services.AddSingleton<ISyncEngine, MotorSincronizacion>();
 

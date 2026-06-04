@@ -6,16 +6,18 @@ namespace GeoVial.Mobile;
 public partial class MainPage : ContentPage
 {
 	private readonly ServicioSesion _sesion;
+	private readonly SeguridadDispositivo _seguridad;
 	private readonly ColectorOffline _colector;
 	private readonly IChangeQueue _cola;
 	private readonly ISyncEngine _motor;
 
 	private List<RelevamientoResumen> _relevamientos = new();
 
-	public MainPage(ServicioSesion sesion, ColectorOffline colector, IChangeQueue cola, ISyncEngine motor)
+	public MainPage(ServicioSesion sesion, SeguridadDispositivo seguridad, ColectorOffline colector, IChangeQueue cola, ISyncEngine motor)
 	{
 		InitializeComponent();
 		_sesion = sesion;
+		_seguridad = seguridad;
 		_colector = colector;
 		_cola = cola;
 		_motor = motor;
@@ -116,10 +118,12 @@ public partial class MainPage : ContentPage
 		await ActualizarPendientesAsync();
 	}
 
-	// Cierra la sesión y reemplaza las solapas por la pantalla de login.
+	// Cierra la sesión (explícita): limpia el token y olvida el método de seguridad recordado (RN-06),
+	// así el próximo ingreso es con usuario y clave (el reingreso en terreno es para reabrir, no para logout).
 	private void CerrarSesion()
 	{
 		_sesion.Salir();
+		_seguridad.Olvidar();
 		Application.Current!.Windows[0].Page =
 			IPlatformApplication.Current!.Services.GetRequiredService<LoginPage>();
 	}

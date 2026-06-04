@@ -157,6 +157,68 @@ public class ServicioSesionTests
         sesion.UsuarioId.Should().Be(usuarioId);
     }
 
+    [Fact] // RN-06: el reingreso en terreno con método presente re-autentica y asienta el token (sin clave)
+    public async Task Reingreso_con_metodo_presente_asienta_el_token()
+    {
+        var handler = new RutasHandler(req =>
+            req.RequestUri!.AbsolutePath.EndsWith("/auth/reingreso")
+                ? Json(HttpStatusCode.OK, """{"accessToken":"tok-reingreso"}""")
+                : Json(HttpStatusCode.OK, "{}"));
+        var http = new HttpClient(handler) { BaseAddress = new Uri("http://localhost:5080/") };
+        var sesion = new ServicioSesion(http);
+
+        var r = await sesion.ReingresarAsync("pedro", metodoPresente: true);
+
+        r.Exito.Should().BeTrue();
+        sesion.Autenticado.Should().BeTrue();
+        http.DefaultRequestHeaders.Authorization!.Parameter.Should().Be("tok-reingreso");
+    }
+
+    [Fact] // RN-06: sin el método de seguridad presente, el reingreso ni siquiera llama al backend
+    public async Task Reingreso_sin_metodo_no_llama_al_backend()
+    {
+        var handler = new RutasHandler(_ => Json(HttpStatusCode.OK, "{}"));
+        var sesion = new ServicioSesion(new HttpClient(handler) { BaseAddress = new Uri("http://localhost:5080/") });
+
+        var r = await sesion.ReingresarAsync("pedro", metodoPresente: false);
+
+        r.Exito.Should().BeFalse();
+        r.Mensaje.Should().Contain("método de seguridad");
+        handler.Llamadas.Should().Be(0);
+    }
+
+    [Fact] // RN-06: si el método no está configurado en el backend (409), el reingreso da un mensaje claro
+    public async Task Reingreso_sin_metodo_configurado_devuelve_mensaje()
+    {
+        var handler = new RutasHandler(_ => Json(HttpStatusCode.Conflict, """{"codigo":"REINGRESO_SIN_METODO_SEGURIDAD"}"""));
+        var sesion = new ServicioSesion(new HttpClient(handler) { BaseAddress = new Uri("http://localhost:5080/") });
+
+        var r = await sesion.ReingresarAsync("pedro", metodoPresente: true);
+
+        r.Exito.Should().BeFalse();
+        r.Mensaje.Should().Contain("usuario y clave");
+        sesion.Autenticado.Should().BeFalse();
+    }
+
+    [Fact] // RN-06: configurar el método de seguridad (204) habilita luego el modo offline (204)
+    public async Task Configurar_metodo_y_habilitar_offline_ok()
+    {
+        var handler = new RutasHandler(_ => new HttpResponseMessage(HttpStatusCode.NoContent));
+        var sesion = new ServicioSesion(new HttpClient(handler) { BaseAddress = new Uri("http://localhost:5080/") });
+
+        (await sesion.ConfigurarMetodoSeguridadAsync()).Should().BeTrue();
+        (await sesion.HabilitarOfflineAsync()).Should().BeTrue();
+    }
+
+    [Fact] // RN-06: si el backend rechaza habilitar offline (409, falta método), devuelve false sin lanzar
+    public async Task Habilitar_offline_sin_metodo_devuelve_false()
+    {
+        var handler = new RutasHandler(_ => Json(HttpStatusCode.Conflict, """{"codigo":"OFFLINE_NO_HABILITADO"}"""));
+        var sesion = new ServicioSesion(new HttpClient(handler) { BaseAddress = new Uri("http://localhost:5080/") });
+
+        (await sesion.HabilitarOfflineAsync()).Should().BeFalse();
+    }
+
     // Arma un JWT de prueba (header.payload.firma) con el claim sub indicado; sólo el payload importa.
     private static string JwtConSub(Guid sub)
     {
