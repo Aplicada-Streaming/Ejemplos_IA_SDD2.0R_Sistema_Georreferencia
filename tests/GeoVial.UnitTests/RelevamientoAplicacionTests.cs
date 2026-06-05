@@ -188,6 +188,33 @@ public class RelevamientoAplicacionTests
         lista.Select(x => x.RelevamientoId).Should().Contain(relNorte.RelevamientoId).And.NotContain(relSur.RelevamientoId);
     }
 
+    [Fact] // S52: raíz ve los relevamientos de todas las áreas (no se filtra por área)
+    public async Task Listar_raiz_ve_todas_las_areas()
+    {
+        var raiz = Usuario.Crear("raiz", RolJerarquico.Raiz, null).Valor!;
+        var relNorte = RelevamientoDe(AreaNorte);
+        var relSur = RelevamientoDe(AreaSur);
+        var handler = new ListarRelevamientosHandler(
+            new FakeRelevamientoRepository(relNorte, relSur), new FakeUsuarioRepository(raiz));
+
+        var lista = await handler.ManejarAsync(new ListarRelevamientosQuery(raiz.UsuarioId));
+
+        lista.Select(x => x.RelevamientoId).Should().Contain(new[] { relNorte.RelevamientoId, relSur.RelevamientoId });
+    }
+
+    [Fact] // S52: un usuario dado de baja no ve relevamientos (se mantiene el comportamiento previo)
+    public async Task Listar_usuario_no_vigente_devuelve_vacio()
+    {
+        var jefe = JefeArea(AreaNorte);
+        jefe.DarDeBaja();
+        var handler = new ListarRelevamientosHandler(
+            new FakeRelevamientoRepository(RelevamientoDe(AreaNorte)), new FakeUsuarioRepository(jefe));
+
+        var lista = await handler.ManejarAsync(new ListarRelevamientosQuery(jefe.UsuarioId));
+
+        lista.Should().BeEmpty();
+    }
+
     [Fact] // S47/F-M-04: "asignados a mí" devuelve sólo los relevamientos con asignación vigente del agente
     public async Task Listar_asignados_devuelve_solo_los_del_agente()
     {

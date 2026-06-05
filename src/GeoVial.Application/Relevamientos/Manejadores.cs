@@ -268,13 +268,21 @@ public sealed class ListarRelevamientosHandler : IManejador<ListarRelevamientosQ
     public async Task<IReadOnlyList<Relevamiento>> ManejarAsync(ListarRelevamientosQuery query, CancellationToken ct = default)
     {
         var solicitante = await _usuarios.ObtenerPorIdAsync(query.SolicitanteId, ct);
-        if (solicitante is null)
+        if (solicitante is null || !solicitante.EstadoVigencia)
         {
             return Array.Empty<Relevamiento>();
         }
 
-        var todos = await _relevamientos.ListarTodosAsync(ct);
-        return todos.Where(r => Autorizacion.PuedeAccederArea(solicitante, r.AreaId)).ToList();
+        // S52: se filtra en la base en vez de traer todo y filtrar en memoria. Raíz/jefe general ven todo;
+        // el resto, sólo su área. Mismo resultado que el filtro por Autorizacion.PuedeAccederArea, sin el barrido.
+        if (Autorizacion.AccedeATodasLasAreas(solicitante))
+        {
+            return await _relevamientos.ListarTodosAsync(ct);
+        }
+
+        return solicitante.AreaId is { } area
+            ? await _relevamientos.ListarPorAreaAsync(area, ct)
+            : Array.Empty<Relevamiento>();
     }
 }
 
