@@ -63,6 +63,13 @@ public static class MauiProgram
 		builder.Services.AddSingleton<ICapturaBackendClient>(sp => new ClienteCapturaHttp(sp.GetRequiredService<HttpClient>()));
 		builder.Services.AddSingleton(sp => new MotorCapturas(sp.GetRequiredService<IColaCapturas>(), sp.GetRequiredService<ICapturaBackendClient>()));
 
+		// Indicador de estado de sincronización (acción de retro S45-S47): el monitor calcula el estado
+		// (al día / pendiente / sincronizando / sin conexión / error) desde las dos colas + la conectividad.
+		builder.Services.AddSingleton(sp => new MonitorSincronizacion(
+			sp.GetRequiredService<IConnectivityMonitor>(),
+			sp.GetRequiredService<IChangeQueue>(),
+			sp.GetRequiredService<IColaCapturas>()));
+
 		// Revisión sobre mapa (US-21/US-22): cliente de la API de revisión.
 		builder.Services.AddSingleton(sp => new ClienteRevisionHttp(sp.GetRequiredService<HttpClient>()));
 		// Edición sobre el marcador (US-15): cliente de comentarios y etiquetas.
