@@ -83,11 +83,16 @@ public sealed record RevisionMarcadorDto(
     IReadOnlyList<RevisionFotoDto> Fotos,
     IReadOnlyList<RevisionComentarioDto> Comentarios);
 
+// Bandeja: enriquece ObservacionesSinGeorreferenciar (sólo IDs) con momento + foto para mostrarla en la app
+// (S50). Opcional y al final para no romper a los consumidores/constructores previos del DTO.
+public sealed record ObservacionSinGeoDto(Guid ObservacionId, DateTime MomentoCaptura, string? ReferenciaArchivo);
+
 public sealed record RevisionRelevamientoDto(
     Guid RelevamientoId,
     int Estado,
     IReadOnlyList<RevisionMarcadorDto> Marcadores,
-    IReadOnlyList<Guid> ObservacionesSinGeorreferenciar);
+    IReadOnlyList<Guid> ObservacionesSinGeorreferenciar,
+    IReadOnlyList<ObservacionSinGeoDto>? Bandeja = null);
 
 // --- Detección y resolución de conflictos por radio (CU-11, CU-12; US-25/26) ---
 

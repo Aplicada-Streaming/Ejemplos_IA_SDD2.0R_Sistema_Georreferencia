@@ -23,6 +23,10 @@
             Title="Mapa"
             ContentTemplate="{DataTemplate local:MapaPage}"
             Route="MapaPage" />
+        <ShellContent
+            Title="Bandeja"
+            ContentTemplate="{DataTemplate local:BandejaPage}"
+            Route="BandejaPage" />
     </TabBar>
 
 </Shell>

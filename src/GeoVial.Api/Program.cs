@@ -542,7 +542,8 @@ static RevisionRelevamientoDto AMapaRevision(RevisionRelevamiento r) =>
             m.MarcadorId, m.Latitud, m.Longitud, m.EnConflicto,
             m.Fotos.Select(f => new RevisionFotoDto(f.FotoId, f.ReferenciaArchivo, f.Etiquetas)).ToList(),
             m.Comentarios.Select(c => new RevisionComentarioDto(c.ComentarioId, c.Texto, c.FotoId, c.Etiquetas)).ToList())).ToList(),
-        r.ObservacionesSinGeorreferenciar);
+        r.ObservacionesSinGeorreferenciar,
+        r.Bandeja.Select(b => new ObservacionSinGeoDto(b.ObservacionId, b.MomentoCaptura, b.ReferenciaArchivo)).ToList());
 
 /// <summary>Punto de entrada expuesto para pruebas de integración (WebApplicationFactory).</summary>
 public partial class Program;

@@ -33,7 +33,16 @@ public sealed record RevisionRelevamiento(
     Guid RelevamientoId,
     int Estado,
     IReadOnlyList<RevisionMarcador> Marcadores,
-    IReadOnlyList<Guid> ObservacionesSinGeorreferenciar);
+    IReadOnlyList<Guid> ObservacionesSinGeorreferenciar,
+    IReadOnlyList<ObservacionSinGeo> Bandeja);
+
+/// <summary>
+/// Entrada de la bandeja sin georreferenciar (RN-03): una observación cuya foto no traía GPS y espera
+/// ubicación manual (CU-05). Lleva el momento de captura y la referencia de la foto para que el agente la
+/// reconozca en la app (S50). Enriquece a <see cref="RevisionRelevamiento.ObservacionesSinGeorreferenciar"/>
+/// (que sólo lleva los IDs, conservado por compatibilidad).
+/// </summary>
+public sealed record ObservacionSinGeo(Guid ObservacionId, DateTime MomentoCaptura, string? ReferenciaArchivo);
 
 public sealed record RevisionMarcador(
     Guid MarcadorId,
