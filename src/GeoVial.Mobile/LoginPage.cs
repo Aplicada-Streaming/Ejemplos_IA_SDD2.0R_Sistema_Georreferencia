@@ -3,34 +3,37 @@ using GeoVial.Sync;
 namespace GeoVial.Mobile;
 
 /// <summary>
-/// Pantalla de inicio de sesión (US-40) con método de seguridad y reingreso en terreno (RN-06, CU-02).
-/// Es la primera pantalla: hasta no autenticar no se muestran las solapas. El login con conexión asienta el
-/// token, configura el método de seguridad del teléfono y habilita el modo sin conexión; además recuerda el
-/// usuario para el reingreso. Si hay un usuario recordado (p. ej. al reabrir la app en terreno), ofrece
-/// "Reingreso en terreno" sin reescribir la clave (US-05). Página por código (sin XAML). Fuera de CI.
+/// Pantalla de acceso (US-40, CU-02, RN-06). Primera pantalla. Decide el arranque (S55): si hay sesión
+/// persistida y el teléfono tiene método de seguridad, pide el patrón/huella/PIN para volver a la sesión
+/// (sin clave); si se vuelve de la cámara, entra directo; si no, pide usuario y clave. "Cerrar sesión" es
+/// logout total (vuelve a usuario y clave). El login con conexión configura el método y habilita el offline
+/// (RN-06). Página por código (sin XAML). Fuera de CI.
 /// </summary>
 public sealed class LoginPage : ContentPage
 {
     private readonly ServicioSesion _sesion;
     private readonly SeguridadDispositivo _seguridad;
-    private readonly CoordinadorReingreso _reingresoBiometrico;
+    private readonly CoordinadorArranque _arranque;
+    private readonly IAutenticadorBiometrico _biometrico;
     private readonly Entry _usuario;
     private readonly Entry _clave;
     private readonly Button _ingresar;
-    private readonly Button _reingresar;
+    private readonly Button _desbloquear;
     private readonly Label _estado;
     private readonly ActivityIndicator _spinner;
+    private bool _decisionTomada;
 
-    public LoginPage(ServicioSesion sesion, SeguridadDispositivo seguridad, CoordinadorReingreso reingresoBiometrico)
+    public LoginPage(ServicioSesion sesion, SeguridadDispositivo seguridad, CoordinadorArranque arranque, IAutenticadorBiometrico biometrico)
     {
         _sesion = sesion;
         _seguridad = seguridad;
-        _reingresoBiometrico = reingresoBiometrico;
+        _arranque = arranque;
+        _biometrico = biometrico;
         Title = "GeoVial";
 
-        _usuario = new Entry { Placeholder = "Usuario", Text = "raiz", ReturnType = ReturnType.Next };
+        _usuario = new Entry { Placeholder = "Usuario", ReturnType = ReturnType.Next };
         _clave = new Entry { Placeholder = "Clave", IsPassword = true, ReturnType = ReturnType.Go };
-        // Ojito: mostrar/ocultar la clave para evitar errores de tipeo en el teléfono.
+        // Ojito: mostrar/ocultar la clave para evitar errores de tipeo en el teléfono (S54).
         var verClave = new Button { Text = "👁", WidthRequest = 52, BackgroundColor = Colors.Transparent, FontSize = 18 };
         verClave.Clicked += (_, _) =>
         {
@@ -43,8 +46,9 @@ public sealed class LoginPage : ContentPage
         _ingresar = new Button { Text = "Ingresar" };
         _ingresar.Clicked += OnIngresar;
         _clave.Completed += OnIngresar;
-        _reingresar = new Button { Text = "Reingreso en terreno (sin clave)", IsVisible = false, BackgroundColor = Color.FromArgb("#2e7d32") };
-        _reingresar.Clicked += OnReingresar;
+        // Desbloqueo con el método del teléfono: visible sólo cuando la sesión quedó bloqueada (S55).
+        _desbloquear = new Button { Text = "Desbloquear con el patrón / huella", IsVisible = false, BackgroundColor = Color.FromArgb("#2e7d32") };
+        _desbloquear.Clicked += OnDesbloquear;
         _estado = new Label { TextColor = Color.FromArgb("#b00020"), IsVisible = false };
         _spinner = new ActivityIndicator { IsRunning = false, IsVisible = false };
 
@@ -62,7 +66,7 @@ public sealed class LoginPage : ContentPage
                     _usuario,
                     filaClave,
                     _ingresar,
-                    _reingresar,
+                    _desbloquear,
                     _spinner,
                     _estado,
                 },
@@ -73,15 +77,75 @@ public sealed class LoginPage : ContentPage
     protected override async void OnAppearing()
     {
         base.OnAppearing();
-        // RN-06: si hay un método de seguridad configurado (usuario recordado), ofrecer el reingreso en terreno.
+        if (_decisionTomada)
+        {
+            return; // no re-disparar el método al volver a aparecer la página
+        }
+
+        _decisionTomada = true;
+        // Prefijar el usuario recordado (si lo hay) para el formulario de usuario/clave.
         var recordado = await _seguridad.UsuarioRecordadoAsync();
         if (!string.IsNullOrEmpty(recordado))
         {
             _usuario.Text = recordado;
-            _reingresar.Text = $"Reingreso en terreno como «{recordado}» (sin clave)";
-            _reingresar.IsVisible = true;
+        }
+
+        try
+        {
+            await AplicarDecisionAsync(await _arranque.DecidirInicialAsync());
+        }
+        catch
+        {
+            MostrarFormulario(); // ante cualquier fallo, queda el acceso por usuario y clave
         }
     }
+
+    // Ejecuta la acción que indica la política de arranque (S55).
+    private async Task AplicarDecisionAsync(DecisionArranque decision)
+    {
+        switch (decision)
+        {
+            case DecisionArranque.Entrar:
+                IrAlShell();
+                break;
+            case DecisionArranque.PedirBiometrico:
+                await DesbloquearAsync();
+                break;
+            case DecisionArranque.Bloqueado:
+                _estado.Text = "Sesión bloqueada. Desbloqueá con el patrón/huella o entrá con usuario y clave.";
+                _estado.TextColor = Color.FromArgb("#b00020");
+                _estado.IsVisible = true;
+                _desbloquear.IsVisible = true;
+                break;
+            default: // PedirClave
+                MostrarFormulario();
+                break;
+        }
+    }
+
+    private void MostrarFormulario()
+    {
+        _desbloquear.IsVisible = false;
+        _estado.IsVisible = false;
+    }
+
+    private void IrAlShell() => Application.Current!.Windows[0].Page = new AppShell();
+
+    private async Task DesbloquearAsync() =>
+        await EjecutarAsync(async () =>
+        {
+            var decision = await _arranque.DesbloquearConBiometricoAsync();
+            if (decision == DecisionArranque.Entrar)
+            {
+                IrAlShell();
+                return null;
+            }
+
+            await AplicarDecisionAsync(decision); // Bloqueado → muestra el botón de reintento; PedirClave → formulario
+            return null;
+        });
+
+    private async void OnDesbloquear(object? sender, EventArgs e) => await DesbloquearAsync();
 
     private async void OnIngresar(object? sender, EventArgs e)
     {
@@ -94,11 +158,11 @@ public sealed class LoginPage : ContentPage
             }
 
             // RN-06: configurar el método de seguridad y habilitar el offline + recordar el usuario sólo si el
-            // teléfono tiene un método nativo (huella/rostro/PIN), porque el reingreso ahora lo exige (S53).
+            // teléfono tiene un método nativo (huella/rostro/patrón/PIN), porque el reingreso lo exige.
             // Best-effort: no bloquea el ingreso si falla.
             try
             {
-                if (await _reingresoBiometrico.HayMetodoDisponibleAsync()
+                if (await _biometrico.HayMetodoDisponibleAsync()
                     && await _sesion.ConfigurarMetodoSeguridadAsync())
                 {
                     await _sesion.HabilitarOfflineAsync();
@@ -110,25 +174,7 @@ public sealed class LoginPage : ContentPage
                 // el método de seguridad es opcional para entrar; el reingreso quedará deshabilitado.
             }
 
-            Application.Current!.Windows[0].Page = new AppShell();
-            return null;
-        });
-    }
-
-    private async void OnReingresar(object? sender, EventArgs e)
-    {
-        await EjecutarAsync(async () =>
-        {
-            // RN-06 (S53): el reingreso exige verificación biométrica nativa (huella/rostro/PIN) antes de
-            // re-autenticar sin clave; el coordinador la pide y, sólo si tiene éxito, reingresa contra el backend.
-            var usuario = await _seguridad.UsuarioRecordadoAsync();
-            var r = await _reingresoBiometrico.ReingresarAsync(usuario);
-            if (!r.Exito)
-            {
-                return r.Mensaje;
-            }
-
-            Application.Current!.Windows[0].Page = new AppShell();
+            IrAlShell();
             return null;
         });
     }
@@ -137,7 +183,7 @@ public sealed class LoginPage : ContentPage
     private async Task EjecutarAsync(Func<Task<string?>> accion)
     {
         _estado.IsVisible = false;
-        _ingresar.IsEnabled = _reingresar.IsEnabled = false;
+        _ingresar.IsEnabled = _desbloquear.IsEnabled = false;
         _spinner.IsVisible = _spinner.IsRunning = true;
         try
         {
@@ -145,18 +191,18 @@ public sealed class LoginPage : ContentPage
             if (error is not null)
             {
                 _estado.Text = error;
+                _estado.TextColor = Color.FromArgb("#b00020");
                 _estado.IsVisible = true;
             }
         }
         catch (Exception ex)
         {
-            // Cualquier fallo inesperado (p. ej. SecureStorage en un dispositivo sin bloqueo) se muestra, no tumba la app.
             _estado.Text = $"No se pudo completar el acceso: {ex.Message}";
             _estado.IsVisible = true;
         }
         finally
         {
-            _ingresar.IsEnabled = _reingresar.IsEnabled = true;
+            _ingresar.IsEnabled = _desbloquear.IsEnabled = true;
             _spinner.IsVisible = _spinner.IsRunning = false;
         }
     }

@@ -176,6 +176,25 @@ public sealed class ServicioSesion
         return ResultadoSesion.Ok();
     }
 
+    /// <summary>Indica si hay una sesión persistida (token guardado), para decidir el arranque (S55) sin asentarla aún.</summary>
+    public async Task<bool> HayTokenPersistidoAsync()
+    {
+        if (_almacen is null)
+        {
+            return false;
+        }
+
+        try
+        {
+            var guardado = await _almacen.LeerAsync();
+            return guardado is { } g && !string.IsNullOrEmpty(g.Token);
+        }
+        catch
+        {
+            return false;
+        }
+    }
+
     /// <summary>
     /// Restaura la sesión persistida (S54): si hay un token guardado, lo asienta en el HttpClient compartido.
     /// Se llama al arrancar para que la app vuelva autenticada tras una recreación de proceso. Devuelve si quedó

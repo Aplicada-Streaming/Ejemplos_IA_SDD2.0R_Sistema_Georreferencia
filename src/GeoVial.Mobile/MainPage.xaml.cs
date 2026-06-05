@@ -27,7 +27,8 @@ public partial class MainPage : ContentPage
 		_autoSync = autoSync;
 
 		// Cerrar sesión (US-40): limpia el token del HttpClient compartido y vuelve al login.
-		ToolbarItems.Add(new ToolbarItem("Cerrar sesión", null, CerrarSesion));
+		// Logout total (S55): el próximo ingreso es con usuario y clave (el patrón es para volver a la sesión, no tras cerrarla).
+		ToolbarItems.Add(new ToolbarItem("Cerrar sesión (pedirá clave)", null, CerrarSesion));
 	}
 
 	protected override async void OnAppearing()
@@ -38,6 +39,7 @@ public partial class MainPage : ContentPage
 		_estadoSync.Cambiado += OnEstadoSyncCambiado;
 		_autoSync.SincronizacionCompletada += OnAutoSyncCompletada;
 
+		UsuarioLbl.Text = string.IsNullOrEmpty(_sesion.Usuario) ? "Sin sesión" : $"Sesión: {_sesion.Usuario}";
 		await CargarRelevamientosAsync();
 		await ActualizarPendientesAsync();
 		await _estadoSync.RefrescarAsync();

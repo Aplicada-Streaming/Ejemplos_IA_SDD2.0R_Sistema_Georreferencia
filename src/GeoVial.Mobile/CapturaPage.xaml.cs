@@ -12,6 +12,7 @@ public partial class CapturaPage : ContentPage
 	private readonly ArmadorUbicacionManual _ubicador;
 	private readonly IColaCapturas _cola;
 	private readonly MotorCapturas _motor;
+	private readonly IMarcadorCaptura _marcadorCaptura;
 
 	// Relevamiento destino conocido (se obtiene online y se recuerda para poder capturar sin conexión).
 	private static Guid? _relevamientoConocido;
@@ -22,7 +23,7 @@ public partial class CapturaPage : ContentPage
 	private decimal? _latManual;
 	private decimal? _lonManual;
 
-	public CapturaPage(ServicioSesion sesion, ArmadorCapturaCampo armador, ArmadorUbicacionManual ubicador, IColaCapturas cola, MotorCapturas motor)
+	public CapturaPage(ServicioSesion sesion, ArmadorCapturaCampo armador, ArmadorUbicacionManual ubicador, IColaCapturas cola, MotorCapturas motor, IMarcadorCaptura marcadorCaptura)
 	{
 		InitializeComponent();
 		_sesion = sesion;
@@ -30,6 +31,7 @@ public partial class CapturaPage : ContentPage
 		_ubicador = ubicador;
 		_cola = cola;
 		_motor = motor;
+		_marcadorCaptura = marcadorCaptura;
 
 		// US-16/F-M-12: subir las capturas encoladas cuando haya conexión.
 		ToolbarItems.Add(new ToolbarItem("Sincronizar capturas", null, async () => await DrenarAsync("Sincronización de capturas.")));
@@ -73,8 +75,19 @@ public partial class CapturaPage : ContentPage
 				return;
 			}
 
-			var foto = await MediaPicker.Default.CapturePhotoAsync();
-			await ProcesarAsync(foto);
+			// S55: marcar "captura en curso" antes de abrir la cámara. Si el SO mata el proceso mientras la
+			// cámara está en primer plano, al volver el arranque sabrá que es una vuelta de cámara y no re-pedirá
+			// el método de seguridad (no rebota al login).
+			await _marcadorCaptura.MarcarEnCursoAsync();
+			try
+			{
+				var foto = await MediaPicker.Default.CapturePhotoAsync();
+				await ProcesarAsync(foto);
+			}
+			finally
+			{
+				await _marcadorCaptura.LimpiarAsync();
+			}
 		}
 		catch (Exception ex)
 		{

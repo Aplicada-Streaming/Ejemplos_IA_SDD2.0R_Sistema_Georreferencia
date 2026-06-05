@@ -13,6 +13,12 @@
 
             <Label Text="Recolección sin conexión y sincronización automática (EP-04)." />
 
+            <!-- S55: indicar con qué usuario está abierta la sesión. -->
+            <Label x:Name="UsuarioLbl"
+                   Text="Sesión iniciada"
+                   FontAttributes="Italic"
+                   TextColor="#1565c0" />
+
             <!-- F-M-04/05: elegir el relevamiento a trabajar (los asignados van primero, marcados). -->
             <Label Text="Relevamiento activo" FontAttributes="Bold" />
             <Picker x:Name="RelevamientoPicker"

@@ -65,7 +65,14 @@ public partial class RevisionPage : ContentPage
 
 		var html = MapaRevisionHtml.Construir(new VistaMapa(_revision.Marcadores));
 		// En NavigationPage para que la barra (con "Cerrar") se muestre sobre el modal.
-		await Navigation.PushModalAsync(new NavigationPage(new MapaRevisionPage(html)));
+		var mapa = new MapaRevisionPage(html);
+		await Navigation.PushModalAsync(new NavigationPage(mapa));
+		// S55: si el agente tocó un pin, al cerrarse el mapa se abre ese marcador en el carrusel.
+		if (await mapa.MarcadorElegido is { } marcadorId)
+		{
+			_nav?.IrAlMarcador(marcadorId);
+			await RenderAsync();
+		}
 	}
 
 	private async void OnSiguienteMarcador(object? sender, EventArgs e) { _nav?.SiguienteMarcador(); await RenderAsync(); }

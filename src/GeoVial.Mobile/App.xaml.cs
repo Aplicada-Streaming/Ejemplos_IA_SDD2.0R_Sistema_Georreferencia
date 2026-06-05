@@ -21,21 +21,10 @@ public partial class App : Application
 		// y sincronice (relevamiento activo + capturas encoladas) al recuperar señal, sin acción del usuario.
 		servicios.GetRequiredService<CoordinadorAutoSync>();
 
-		// S54: si el SO mató el proceso (típico al abrir la cámara en equipos con poca RAM), la sesión en
-		// memoria se perdió; se restaura desde el almacén seguro para volver a las solapas en vez de rebotar
-		// al login. Se restaura en un hilo del pool para no bloquear la UI ni arriesgar un deadlock al arrancar.
-		var sesion = servicios.GetRequiredService<ServicioSesion>();
-		bool autenticado;
-		try
-		{
-			autenticado = Task.Run(() => sesion.RestaurarAsync()).GetAwaiter().GetResult();
-		}
-		catch
-		{
-			autenticado = sesion.Autenticado;
-		}
-
-		Page inicial = autenticado ? new AppShell() : servicios.GetRequiredService<LoginPage>();
-		return new Window(inicial);
+		// S55: la app arranca SIEMPRE en LoginPage; ahí (con una Activity viva, necesaria para el método de
+		// seguridad del teléfono) se decide el arranque: entrar (vuelta de cámara), pedir el patrón/PIN para
+		// desbloquear la sesión persistida, o pedir usuario y clave. Antes (S54) se restauraba en silencio, lo
+		// que dejaba entrar sin autenticar; ahora el reingreso exige el método del dispositivo.
+		return new Window(servicios.GetRequiredService<LoginPage>());
 	}
 }

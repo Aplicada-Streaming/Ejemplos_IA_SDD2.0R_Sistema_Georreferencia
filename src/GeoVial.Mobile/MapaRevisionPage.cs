@@ -10,16 +10,35 @@ namespace GeoVial.Mobile;
 /// </summary>
 public sealed class MapaRevisionPage : ContentPage
 {
+    private readonly TaskCompletionSource<Guid?> _marcadorElegido = new();
+
+    /// <summary>Se completa con el id del marcador tocado (S55), o null si se cerró el mapa sin elegir.</summary>
+    public Task<Guid?> MarcadorElegido => _marcadorElegido.Task;
+
     public MapaRevisionPage(string html)
     {
         Title = "Mapa de la revisión";
-        ToolbarItems.Add(new ToolbarItem("Cerrar", null, async () => await Navigation.PopModalAsync()));
+        ToolbarItems.Add(new ToolbarItem("Cerrar", null, async () =>
+        {
+            _marcadorElegido.TrySetResult(null);
+            await Navigation.PopModalAsync();
+        }));
 
         var web = new WebView
         {
             Source = new HtmlWebViewSource { Html = html },
             VerticalOptions = LayoutOptions.Fill,
             HorizontalOptions = LayoutOptions.Fill,
+        };
+        // S55: al tocar un pin, el HTML navega al esquema centinela; se intercepta, se devuelve el id y se cierra.
+        web.Navigating += async (_, e) =>
+        {
+            if (ParseadorMensajeMarcador.Intentar(e.Url) is { } marcadorId)
+            {
+                e.Cancel = true;
+                _marcadorElegido.TrySetResult(marcadorId);
+                await Navigation.PopModalAsync();
+            }
         };
 
 #if ANDROID
@@ -35,5 +54,11 @@ public sealed class MapaRevisionPage : ContentPage
 #endif
 
         Content = web;
+    }
+
+    protected override bool OnBackButtonPressed()
+    {
+        _marcadorElegido.TrySetResult(null);
+        return base.OnBackButtonPressed();
     }
 }
