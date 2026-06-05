@@ -32,7 +32,10 @@ public static class MauiProgram
 		builder.Services.AddSingleton(_ => new HttpClient { BaseAddress = new Uri("http://localhost:5080/") });
 		// Sesión única (US-40): autentica una vez y asienta el token en el HttpClient compartido,
 		// que reusan todas las páginas (incluido el cliente de sync). Reemplaza el login hardcodeado.
-		builder.Services.AddSingleton(sp => new ServicioSesion(sp.GetRequiredService<HttpClient>()));
+		// S54: persiste el token en SecureStorage para sobrevivir a que el SO mate el proceso (al usar la cámara).
+		builder.Services.AddSingleton<IAlmacenTokenSesion, AlmacenTokenSecureStorage>();
+		builder.Services.AddSingleton(sp => new ServicioSesion(
+			sp.GetRequiredService<HttpClient>(), sp.GetRequiredService<IAlmacenTokenSesion>()));
 		// Método de seguridad del teléfono para el reingreso en terreno (RN-06): recuerda usuario + marcador.
 		builder.Services.AddSingleton<SeguridadDispositivo>();
 		// Biométrico nativo (RN-06, S53): verificación con huella/rostro/PIN antes del reingreso sin clave.

@@ -219,6 +219,56 @@ public class ServicioSesionTests
         (await sesion.HabilitarOfflineAsync()).Should().BeFalse();
     }
 
+    private sealed class AlmacenFake : IAlmacenTokenSesion
+    {
+        private (string Token, string Usuario)? _guardado;
+        public bool Vacio => _guardado is null;
+        public Task GuardarAsync(string token, string usuario) { _guardado = (token, usuario); return Task.CompletedTask; }
+        public Task<(string Token, string Usuario)?> LeerAsync() => Task.FromResult(_guardado);
+        public Task LimpiarAsync() { _guardado = null; return Task.CompletedTask; }
+    }
+
+    private static HttpClient Http(Func<HttpRequestMessage, HttpResponseMessage> responder) =>
+        new(new RutasHandler(responder)) { BaseAddress = new Uri("http://localhost:5080/") };
+
+    [Fact] // S54: la sesión se persiste y se restaura tras una recreación de proceso (no rebota al login)
+    public async Task Sesion_persistida_se_restaura()
+    {
+        var almacen = new AlmacenFake();
+        var s1 = new ServicioSesion(Http(_ => Json(HttpStatusCode.OK, """{"accessToken":"tok-xyz"}""")), almacen);
+        await s1.IngresarAsync("campo1", "x");
+
+        // Simula que el SO mató el proceso: nueva sesión + nuevo HttpClient, mismo almacén seguro.
+        var http2 = Http(_ => Json(HttpStatusCode.OK, "{}"));
+        var s2 = new ServicioSesion(http2, almacen);
+        s2.Autenticado.Should().BeFalse();
+
+        (await s2.RestaurarAsync()).Should().BeTrue();
+        s2.Autenticado.Should().BeTrue();
+        s2.Usuario.Should().Be("campo1");
+        http2.DefaultRequestHeaders.Authorization!.Parameter.Should().Be("tok-xyz");
+    }
+
+    [Fact] // S54: cerrar sesión limpia el token persistido (no se restaura después)
+    public async Task Salir_limpia_la_persistencia()
+    {
+        var almacen = new AlmacenFake();
+        var s1 = new ServicioSesion(Http(_ => Json(HttpStatusCode.OK, """{"accessToken":"t"}""")), almacen);
+        await s1.IngresarAsync("u", "x");
+
+        s1.Salir();
+
+        almacen.Vacio.Should().BeTrue();
+        (await new ServicioSesion(Http(_ => Json(HttpStatusCode.OK, "{}")), almacen).RestaurarAsync()).Should().BeFalse();
+    }
+
+    [Fact] // S54 (compat): sin almacén, restaurar no hace nada y no rompe
+    public async Task Restaurar_sin_almacen_es_false()
+    {
+        var sesion = new ServicioSesion(Http(_ => Json(HttpStatusCode.OK, "{}")));
+        (await sesion.RestaurarAsync()).Should().BeFalse();
+    }
+
     // Arma un JWT de prueba (header.payload.firma) con el claim sub indicado; sólo el payload importa.
     private static string JwtConSub(Guid sub)
     {

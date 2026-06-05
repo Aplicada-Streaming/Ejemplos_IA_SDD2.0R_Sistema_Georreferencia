@@ -30,6 +30,16 @@ public sealed class LoginPage : ContentPage
 
         _usuario = new Entry { Placeholder = "Usuario", Text = "raiz", ReturnType = ReturnType.Next };
         _clave = new Entry { Placeholder = "Clave", IsPassword = true, ReturnType = ReturnType.Go };
+        // Ojito: mostrar/ocultar la clave para evitar errores de tipeo en el teléfono.
+        var verClave = new Button { Text = "👁", WidthRequest = 52, BackgroundColor = Colors.Transparent, FontSize = 18 };
+        verClave.Clicked += (_, _) =>
+        {
+            _clave.IsPassword = !_clave.IsPassword;
+            verClave.Text = _clave.IsPassword ? "👁" : "🙈";
+        };
+        var filaClave = new Grid { ColumnDefinitions = { new ColumnDefinition(GridLength.Star), new ColumnDefinition(GridLength.Auto) } };
+        filaClave.Add(_clave, 0, 0);
+        filaClave.Add(verClave, 1, 0);
         _ingresar = new Button { Text = "Ingresar" };
         _ingresar.Clicked += OnIngresar;
         _clave.Completed += OnIngresar;
@@ -50,7 +60,7 @@ public sealed class LoginPage : ContentPage
                     new Label { Text = "GeoVial", FontSize = 28, FontAttributes = FontAttributes.Bold, HorizontalOptions = LayoutOptions.Center },
                     new Label { Text = "Iniciá sesión para sincronizar, capturar y revisar.", FontSize = 13, TextColor = Color.FromArgb("#666666"), HorizontalOptions = LayoutOptions.Center },
                     _usuario,
-                    _clave,
+                    filaClave,
                     _ingresar,
                     _reingresar,
                     _spinner,

@@ -21,10 +21,21 @@ public partial class App : Application
 		// y sincronice (relevamiento activo + capturas encoladas) al recuperar señal, sin acción del usuario.
 		servicios.GetRequiredService<CoordinadorAutoSync>();
 
-		// Si el proceso sobrevivió y la sesión sigue activa (p. ej. al volver de la cámara o tras
-		// recrear la actividad por rotación), se va directo a las solapas en vez de rebotar al login.
+		// S54: si el SO mató el proceso (típico al abrir la cámara en equipos con poca RAM), la sesión en
+		// memoria se perdió; se restaura desde el almacén seguro para volver a las solapas en vez de rebotar
+		// al login. Se restaura en un hilo del pool para no bloquear la UI ni arriesgar un deadlock al arrancar.
 		var sesion = servicios.GetRequiredService<ServicioSesion>();
-		Page inicial = sesion.Autenticado ? new AppShell() : servicios.GetRequiredService<LoginPage>();
+		bool autenticado;
+		try
+		{
+			autenticado = Task.Run(() => sesion.RestaurarAsync()).GetAwaiter().GetResult();
+		}
+		catch
+		{
+			autenticado = sesion.Autenticado;
+		}
+
+		Page inicial = autenticado ? new AppShell() : servicios.GetRequiredService<LoginPage>();
 		return new Window(inicial);
 	}
 }

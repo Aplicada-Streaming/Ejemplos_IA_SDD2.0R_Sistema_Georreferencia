@@ -11,12 +11,29 @@ namespace GeoVial.Sync;
 /// Reemplaza el login hardcodeado (<c>raiz</c>/<c>GeoVial.Raiz.2026</c>) que cada página
 /// hacía por su cuenta, que además impedía iniciar sesión con otro usuario.
 /// </summary>
+/// <summary>
+/// Almacén seguro del token de sesión para que sobreviva a que el SO mate el proceso (p. ej. al abrir la
+/// cámara): si no se persiste, al volver la app arranca sin sesión y rebota al login. La implementación móvil
+/// usa SecureStorage (Keystore). Abstracción aquí para mantener el núcleo testeable y sin dependencia del SO.
+/// </summary>
+public interface IAlmacenTokenSesion
+{
+    Task GuardarAsync(string token, string usuario);
+    Task<(string Token, string Usuario)?> LeerAsync();
+    Task LimpiarAsync();
+}
+
 public sealed class ServicioSesion
 {
     private readonly HttpClient _http;
+    private readonly IAlmacenTokenSesion? _almacen;
     private string? _accessToken;
 
-    public ServicioSesion(HttpClient http) => _http = http;
+    public ServicioSesion(HttpClient http, IAlmacenTokenSesion? almacen = null)
+    {
+        _http = http;
+        _almacen = almacen;
+    }
 
     /// <summary>Usuario con sesión iniciada; <c>null</c> si no hay sesión.</summary>
     public string? Usuario { get; private set; }
@@ -149,16 +166,57 @@ public sealed class ServicioSesion
         _http.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token.AccessToken);
         _accessToken = token.AccessToken;
         Usuario = usuario;
+        // Persiste la sesión para sobrevivir a que el SO mate el proceso (p. ej. al abrir la cámara): así, al
+        // volver, la app la restaura en vez de rebotar al login (S54). Best-effort: no rompe el login si falla.
+        if (_almacen is not null)
+        {
+            try { await _almacen.GuardarAsync(token.AccessToken, usuario); } catch { /* la sesión en memoria ya vale */ }
+        }
+
         return ResultadoSesion.Ok();
     }
 
-    /// <summary>Cierra la sesión y limpia el token del HttpClient compartido.</summary>
+    /// <summary>
+    /// Restaura la sesión persistida (S54): si hay un token guardado, lo asienta en el HttpClient compartido.
+    /// Se llama al arrancar para que la app vuelva autenticada tras una recreación de proceso. Devuelve si quedó
+    /// autenticada.
+    /// </summary>
+    public async Task<bool> RestaurarAsync()
+    {
+        if (Autenticado)
+        {
+            return true;
+        }
+
+        if (_almacen is null)
+        {
+            return false;
+        }
+
+        (string Token, string Usuario)? guardado;
+        try { guardado = await _almacen.LeerAsync(); } catch { return false; }
+        if (guardado is not { } g || string.IsNullOrEmpty(g.Token))
+        {
+            return false;
+        }
+
+        _http.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", g.Token);
+        _accessToken = g.Token;
+        Usuario = g.Usuario;
+        return true;
+    }
+
+    /// <summary>Cierra la sesión y limpia el token del HttpClient compartido y del almacén seguro.</summary>
     public void Salir()
     {
         _http.DefaultRequestHeaders.Authorization = null;
         _accessToken = null;
         Usuario = null;
         RelevamientoActivoId = null;
+        if (_almacen is not null)
+        {
+            _ = _almacen.LimpiarAsync(); // best-effort; la sesión en memoria ya quedó cerrada
+        }
     }
 
     /// <summary>
