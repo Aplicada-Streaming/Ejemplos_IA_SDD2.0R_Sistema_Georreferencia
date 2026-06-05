@@ -29,6 +29,13 @@
                    Text="Todo sincronizado"
                    FontSize="14" />
 
+            <!-- Aviso de conflictos detectados al sincronizar (S49): visible sólo si hay conflictos. -->
+            <Label x:Name="AvisoConflictosLbl"
+                   IsVisible="False"
+                   TextColor="#b00020"
+                   FontAttributes="Bold"
+                   FontSize="14" />
+
             <Button x:Name="CapturarBtn"
                     Text="Capturar observación (offline)"
                     Clicked="OnCapturar"

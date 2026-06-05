@@ -37,6 +37,13 @@ public sealed class CoordinadorAutoSync : IDisposable
     /// <summary>Se dispara con la cantidad de cambios que había pendientes al recuperar conexión.</summary>
     public event EventHandler<int>? CambiosPendientesDetectados;
 
+    /// <summary>
+    /// Se dispara al terminar una sincronización (con éxito o con error), con un resumen del resultado.
+    /// Permite que la UI actualice el indicador en vivo y avise de conflictos sin que el agente toque la
+    /// pantalla (S49: cierra la salvedad de S48, donde el indicador sólo se refrescaba en eventos de UI).
+    /// </summary>
+    public event EventHandler<ResultadoAutoSync>? SincronizacionCompletada;
+
     /// <summary>Sincroniza si hay conexión y un relevamiento activo. Núcleo testeable del disparo automático.</summary>
     public async Task<SyncResult> SincronizarSiCorrespondeAsync(CancellationToken ct = default)
     {
@@ -52,13 +59,26 @@ public sealed class CoordinadorAutoSync : IDisposable
             CambiosPendientesDetectados?.Invoke(this, pendientes);
         }
 
-        // F-M-14: al recuperar señal, también se suben las capturas encoladas sin conexión (S42).
-        if (_capturas is not null)
+        var capturasSubidas = 0;
+        try
         {
-            await _capturas.SincronizarAsync(ct);
-        }
+            // F-M-14: al recuperar señal, también se suben las capturas encoladas sin conexión (S42).
+            if (_capturas is not null)
+            {
+                capturasSubidas = (await _capturas.SincronizarAsync(ct)).Subidas.Count;
+            }
 
-        return await _motor.SynchronizeAsync(id, null, ct);
+            var resultado = await _motor.SynchronizeAsync(id, null, ct);
+            SincronizacionCompletada?.Invoke(this,
+                new ResultadoAutoSync(resultado.Confirmed.Count, resultado.Conflicts.Count, capturasSubidas, HuboError: false));
+            return resultado;
+        }
+        catch
+        {
+            // Un corte a mitad (capturas o comentarios) se reporta como error: lo subido hasta acá queda contado.
+            SincronizacionCompletada?.Invoke(this, new ResultadoAutoSync(0, 0, capturasSubidas, HuboError: true));
+            throw;
+        }
     }
 
     private async void AlRecuperarConexion(object? sender, EventArgs e)
@@ -75,3 +95,11 @@ public sealed class CoordinadorAutoSync : IDisposable
 
     public void Dispose() => _conectividad.ConnectivityRestored -= AlRecuperarConexion;
 }
+
+/// <summary>
+/// Resumen del resultado de una sincronización automática (S49), para que la UI actualice el indicador y
+/// avise de conflictos. <paramref name="Confirmados"/> y <paramref name="Conflictos"/> vienen del motor de
+/// comentarios; <paramref name="CapturasSubidas"/>, del drenado de la cola de capturas (S42).
+/// <paramref name="HuboError"/> indica que el intento se interrumpió (se reintentará en la próxima señal).
+/// </summary>
+public sealed record ResultadoAutoSync(int Confirmados, int Conflictos, int CapturasSubidas, bool HuboError);
