@@ -277,3 +277,30 @@ public sealed class ListarRelevamientosHandler : IManejador<ListarRelevamientosQ
         return todos.Where(r => Autorizacion.PuedeAccederArea(solicitante, r.AreaId)).ToList();
     }
 }
+
+/// <summary>
+/// "Relevamientos asignados a mí" (F-M-04/05): los que tienen una asignación vigente del agente autenticado.
+/// Filtra en la base por la asignación (no trae todo el área); un usuario dado de baja no recibe nada.
+/// </summary>
+public sealed class ListarRelevamientosAsignadosHandler : IManejador<ListarRelevamientosAsignadosQuery, IReadOnlyList<Relevamiento>>
+{
+    private readonly IRelevamientoRepository _relevamientos;
+    private readonly IUsuarioRepository _usuarios;
+
+    public ListarRelevamientosAsignadosHandler(IRelevamientoRepository relevamientos, IUsuarioRepository usuarios)
+    {
+        _relevamientos = relevamientos;
+        _usuarios = usuarios;
+    }
+
+    public async Task<IReadOnlyList<Relevamiento>> ManejarAsync(ListarRelevamientosAsignadosQuery query, CancellationToken ct = default)
+    {
+        var agente = await _usuarios.ObtenerPorIdAsync(query.AgenteId, ct);
+        if (agente is null || !agente.EstadoVigencia)
+        {
+            return Array.Empty<Relevamiento>();
+        }
+
+        return await _relevamientos.ListarPorAgenteAsignadoAsync(query.AgenteId, ct);
+    }
+}

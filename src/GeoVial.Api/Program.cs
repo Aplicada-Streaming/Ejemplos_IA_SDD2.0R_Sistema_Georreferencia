@@ -237,6 +237,19 @@ relevamientos.MapGet("/", async (ClaimsPrincipal solicitante, IMediador mediador
     return Results.Ok(lista.Select(AMapaRelevamiento));
 });
 
+// "Asignados a mí" (F-M-04/05): sólo los relevamientos con asignación vigente del agente autenticado, para que
+// su dispositivo reciba sólo su trabajo (minimización de datos). La ruta literal no colisiona con /{id:guid}.
+relevamientos.MapGet("/mios", async (ClaimsPrincipal agente, IMediador mediador, CancellationToken ct) =>
+{
+    if (!TryGetUsuarioId(agente, out var id))
+    {
+        return Results.Unauthorized();
+    }
+
+    var lista = await mediador.EnviarAsync(new ListarRelevamientosAsignadosQuery(id), ct);
+    return Results.Ok(lista.Select(AMapaRelevamiento));
+});
+
 // --- Captura y georreferenciación (CU-04, CU-05; US-11/12/13/14) ---
 relevamientos.MapPost("/{relevamientoId:guid}/observaciones", async (Guid relevamientoId, CapturarObservacionRequest req, ClaimsPrincipal agente, IMediador mediador, CancellationToken ct) =>
 {

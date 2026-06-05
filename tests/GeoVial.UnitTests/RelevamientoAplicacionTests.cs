@@ -187,4 +187,35 @@ public class RelevamientoAplicacionTests
 
         lista.Select(x => x.RelevamientoId).Should().Contain(relNorte.RelevamientoId).And.NotContain(relSur.RelevamientoId);
     }
+
+    [Fact] // S47/F-M-04: "asignados a mí" devuelve sólo los relevamientos con asignación vigente del agente
+    public async Task Listar_asignados_devuelve_solo_los_del_agente()
+    {
+        var agente = Agente(AreaNorte);
+        var asignado = RelevamientoDe(AreaNorte);
+        asignado.AsignarAgente(agente);
+        var noAsignado = RelevamientoDe(AreaNorte); // mismo área, pero sin asignar al agente
+        var handler = new ListarRelevamientosAsignadosHandler(
+            new FakeRelevamientoRepository(asignado, noAsignado), new FakeUsuarioRepository(agente));
+
+        var lista = await handler.ManejarAsync(new ListarRelevamientosAsignadosQuery(agente.UsuarioId));
+
+        lista.Select(x => x.RelevamientoId).Should().ContainSingle()
+            .Which.Should().Be(asignado.RelevamientoId);
+    }
+
+    [Fact] // S47: un agente dado de baja no recibe relevamientos aunque tenga asignaciones
+    public async Task Listar_asignados_excluye_agente_dado_de_baja()
+    {
+        var agente = Agente(AreaNorte);
+        var asignado = RelevamientoDe(AreaNorte);
+        asignado.AsignarAgente(agente);
+        agente.DarDeBaja();
+        var handler = new ListarRelevamientosAsignadosHandler(
+            new FakeRelevamientoRepository(asignado), new FakeUsuarioRepository(agente));
+
+        var lista = await handler.ManejarAsync(new ListarRelevamientosAsignadosQuery(agente.UsuarioId));
+
+        lista.Should().BeEmpty();
+    }
 }

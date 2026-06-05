@@ -47,6 +47,11 @@ public sealed class RelevamientoRepository : IRelevamientoRepository
     public async Task<IReadOnlyList<Relevamiento>> ListarTodosAsync(CancellationToken ct = default) =>
         await _db.Relevamientos.Include(r => r.Asignaciones).AsNoTracking().ToListAsync(ct);
 
+    public async Task<IReadOnlyList<Relevamiento>> ListarPorAgenteAsignadoAsync(Guid agenteId, CancellationToken ct = default) =>
+        await _db.Relevamientos.Include(r => r.Asignaciones).AsNoTracking()
+            .Where(r => r.Asignaciones.Any(a => a.AgenteUsuarioId == agenteId && a.Vigente))
+            .ToListAsync(ct);
+
     public async Task AgregarAsync(Relevamiento relevamiento, CancellationToken ct = default) =>
         await _db.Relevamientos.AddAsync(relevamiento, ct);
 

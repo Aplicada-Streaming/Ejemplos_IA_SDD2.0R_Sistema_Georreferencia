@@ -106,6 +106,9 @@ internal sealed class FakeRelevamientoRepository : IRelevamientoRepository
     public Task<IReadOnlyList<Relevamiento>> ListarTodosAsync(CancellationToken ct = default) =>
         Task.FromResult<IReadOnlyList<Relevamiento>>(_datos.Values.ToList());
 
+    public Task<IReadOnlyList<Relevamiento>> ListarPorAgenteAsignadoAsync(Guid agenteId, CancellationToken ct = default) =>
+        Task.FromResult<IReadOnlyList<Relevamiento>>(_datos.Values.Where(r => r.AgentesVigentes().Contains(agenteId)).ToList());
+
     public Task AgregarAsync(Relevamiento relevamiento, CancellationToken ct = default)
     {
         _datos[relevamiento.RelevamientoId] = relevamiento;
