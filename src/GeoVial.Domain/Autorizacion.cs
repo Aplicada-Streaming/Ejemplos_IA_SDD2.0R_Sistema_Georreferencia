@@ -28,6 +28,13 @@ public static class Autorizacion
     }
 
     /// <summary>
+    /// Indica si el usuario ve recursos de todas las áreas (raíz y jefe general). Permite filtrar el listado
+    /// en la base —área propia para el resto— sin duplicar la lógica de rol fuera de este módulo (RN-01).
+    /// </summary>
+    public static bool AccedeATodasLasAreas(Usuario usuario) =>
+        usuario.EstadoVigencia && usuario.Rol is RolJerarquico.Raiz or RolJerarquico.JefeGeneral;
+
+    /// <summary>
     /// Acceso a datos personales de otro usuario (CU-14 §5.B). Raíz y jefe general pueden;
     /// el jefe de área solo a usuarios de su área; un agente solo a sus propios datos (RN-08).
     /// </summary>

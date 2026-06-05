@@ -83,6 +83,25 @@ public class AutorizacionTests
         var a = Crear(RolJerarquico.AgenteCampo, AreaNorte);
         Autorizacion.PuedeAccederDatoPersonal(a, a).Should().BeTrue();
     }
+
+    [Theory] // S52: raíz y jefe general ven todas las áreas; jefe de área y agente no
+    [InlineData(RolJerarquico.Raiz, true)]
+    [InlineData(RolJerarquico.JefeGeneral, true)]
+    [InlineData(RolJerarquico.JefeArea, false)]
+    [InlineData(RolJerarquico.AgenteCampo, false)]
+    public void AccedeATodasLasAreas_segun_rol(RolJerarquico rol, bool esperado)
+    {
+        var area = rol is RolJerarquico.JefeArea or RolJerarquico.AgenteCampo ? (Guid?)AreaNorte : null;
+        Autorizacion.AccedeATodasLasAreas(Crear(rol, area)).Should().Be(esperado);
+    }
+
+    [Fact] // S52: un usuario dado de baja no ve todas las áreas aunque sea jefe general
+    public void AccedeATodasLasAreas_falso_si_no_vigente()
+    {
+        var jg = Crear(RolJerarquico.JefeGeneral);
+        jg.DarDeBaja();
+        Autorizacion.AccedeATodasLasAreas(jg).Should().BeFalse();
+    }
 }
 
 /// <summary>Invariantes de la entidad Usuario (RC-05).</summary>

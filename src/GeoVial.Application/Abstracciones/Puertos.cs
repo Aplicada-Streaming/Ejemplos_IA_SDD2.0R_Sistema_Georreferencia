@@ -21,6 +21,9 @@ public interface IRelevamientoRepository
     Task<Relevamiento?> ObtenerPorIdAsync(Guid relevamientoId, CancellationToken ct = default);
     Task<IReadOnlyList<Relevamiento>> ListarTodosAsync(CancellationToken ct = default);
 
+    /// <summary>Relevamientos de un área (filtrado en la base); sostiene el listado por área sin barrer toda la tabla (S52).</summary>
+    Task<IReadOnlyList<Relevamiento>> ListarPorAreaAsync(Guid areaId, CancellationToken ct = default);
+
     /// <summary>Relevamientos con una asignación vigente del agente (filtrado en la base); sostiene "asignados a mí" (F-M-04/05).</summary>
     Task<IReadOnlyList<Relevamiento>> ListarPorAgenteAsignadoAsync(Guid agenteId, CancellationToken ct = default);
 
