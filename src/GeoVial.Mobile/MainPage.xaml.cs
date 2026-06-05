@@ -11,10 +11,11 @@ public partial class MainPage : ContentPage
 	private readonly IChangeQueue _cola;
 	private readonly ISyncEngine _motor;
 	private readonly MonitorSincronizacion _estadoSync;
+	private readonly CoordinadorAutoSync _autoSync;
 
 	private List<RelevamientoResumen> _relevamientos = new();
 
-	public MainPage(ServicioSesion sesion, SeguridadDispositivo seguridad, ColectorOffline colector, IChangeQueue cola, ISyncEngine motor, MonitorSincronizacion estadoSync)
+	public MainPage(ServicioSesion sesion, SeguridadDispositivo seguridad, ColectorOffline colector, IChangeQueue cola, ISyncEngine motor, MonitorSincronizacion estadoSync, CoordinadorAutoSync autoSync)
 	{
 		InitializeComponent();
 		_sesion = sesion;
@@ -23,9 +24,7 @@ public partial class MainPage : ContentPage
 		_cola = cola;
 		_motor = motor;
 		_estadoSync = estadoSync;
-
-		// Indicador de sincronización (S48): el monitor notifica cambios de estado; se refleja en el label.
-		_estadoSync.Cambiado += OnEstadoSyncCambiado;
+		_autoSync = autoSync;
 
 		// Cerrar sesión (US-40): limpia el token del HttpClient compartido y vuelve al login.
 		ToolbarItems.Add(new ToolbarItem("Cerrar sesión", null, CerrarSesion));
@@ -34,13 +33,45 @@ public partial class MainPage : ContentPage
 	protected override async void OnAppearing()
 	{
 		base.OnAppearing();
+		// Suscripciones acotadas a la vida visible de la página (evita fugas/duplicados al navegar entre solapas):
+		// el indicador (S48) refleja cambios de estado; el evento de fin de auto-sync (S49) lo refresca en vivo.
+		_estadoSync.Cambiado += OnEstadoSyncCambiado;
+		_autoSync.SincronizacionCompletada += OnAutoSyncCompletada;
+
 		await CargarRelevamientosAsync();
 		await ActualizarPendientesAsync();
 		await _estadoSync.RefrescarAsync();
 	}
 
+	protected override void OnDisappearing()
+	{
+		base.OnDisappearing();
+		_estadoSync.Cambiado -= OnEstadoSyncCambiado;
+		_autoSync.SincronizacionCompletada -= OnAutoSyncCompletada;
+	}
+
 	private void OnEstadoSyncCambiado(object? sender, ResumenSincronizacion resumen) =>
 		MainThread.BeginInvokeOnMainThread(() => SyncEstadoLbl.Text = resumen.Texto);
+
+	// S49: al terminar un auto-sync (p. ej. al recuperar señal), refresca el indicador en vivo y avisa de
+	// conflictos sin que el agente toque la pantalla. Cierra la salvedad de S48.
+	private void OnAutoSyncCompletada(object? sender, ResultadoAutoSync r) =>
+		MainThread.BeginInvokeOnMainThread(async () =>
+		{
+			MostrarAvisoConflictos(r.Conflictos);
+			await _estadoSync.RefrescarAsync(r.HuboError);
+		});
+
+	private void MostrarAvisoConflictos(int conflictos)
+	{
+		AvisoConflictosLbl.IsVisible = conflictos > 0;
+		if (conflictos > 0)
+		{
+			AvisoConflictosLbl.Text = conflictos == 1
+				? "⚠ 1 conflicto detectado — revisalo en la web/revisión."
+				: $"⚠ {conflictos} conflictos detectados — revisalos en la web/revisión.";
+		}
+	}
 
 	// F-M-04/05: trae los relevamientos accesibles, marca los asignados y deja elegido el activo.
 	private async Task CargarRelevamientosAsync()
@@ -121,6 +152,7 @@ public partial class MainPage : ContentPage
 
 			var r = await _motor.SynchronizeAsync(relevamientoId);
 			EstadoLbl.Text = $"Sincronización OK contra el backend.\nConfirmados: {r.Confirmed.Count} · Conflictos: {r.Conflicts.Count} · Actualizaciones: {r.Updates.Count}";
+			MostrarAvisoConflictos(r.Conflicts.Count); // S49: también avisa en la sync manual
 		}
 		catch (Exception ex)
 		{
