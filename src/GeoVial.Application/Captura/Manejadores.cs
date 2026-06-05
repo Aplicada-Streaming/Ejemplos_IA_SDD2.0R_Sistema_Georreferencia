@@ -54,6 +54,20 @@ public sealed class CapturarObservacionHandler : IManejador<CapturarObservacionC
 
     public async Task<Resultado<ResultadoCaptura>> ManejarAsync(CapturarObservacionCommand cmd, CancellationToken ct = default)
     {
+        // Idempotencia (S42/S45): si el cliente reenvía una captura ya registrada con esta clave —p. ej. el
+        // auto-sync reintenta tras un corte posterior al alta—, se devuelve la observación original tal cual,
+        // sin crear otra ni reauditar y sin reevaluar el estado del relevamiento (la operación ya tuvo éxito).
+        if (cmd.CapturaId is { } capturaId)
+        {
+            var previa = await _observaciones.ObtenerPorCapturaIdAsync(capturaId, ct);
+            if (previa is not null)
+            {
+                var fotoPrevia = await _fotos.ObtenerPorObservacionAsync(previa.ObservacionId, ct);
+                return Resultado<ResultadoCaptura>.Exito(
+                    new ResultadoCaptura(previa.ObservacionId, previa.MarcadorId, previa.SinGeorreferenciar, fotoPrevia?.FotoId ?? Guid.Empty));
+            }
+        }
+
         var relevamiento = await _relevamientos.ObtenerPorIdAsync(cmd.RelevamientoId, ct);
         if (relevamiento is null)
         {
@@ -86,13 +100,13 @@ public sealed class CapturarObservacionHandler : IManejador<CapturarObservacionC
         {
             // RN-03: los metadatos de la foto son la fuente primaria. RN-02: agrupación por radio.
             var marcador = await ResolucionMarcador.ResolverAsync(_marcadores, relevamiento, new Coordenada(lat, lon), ct);
-            observacion = Observacion.Georreferenciada(relevamiento.RelevamientoId, agente.UsuarioId, momento, marcador.MarcadorId);
+            observacion = Observacion.Georreferenciada(relevamiento.RelevamientoId, agente.UsuarioId, momento, marcador.MarcadorId, cmd.CapturaId);
             foto = Foto.Crear(observacion.ObservacionId, marcador.MarcadorId, tieneMetadatos: true, FuenteCoordenada.Metadatos, cmd.ReferenciaArchivo);
         }
         else
         {
             // RN-03: sin metadatos, la observación va a la bandeja sin georreferenciar a la espera de ubicación manual.
-            observacion = Observacion.EnBandejaSinGeorreferenciar(relevamiento.RelevamientoId, agente.UsuarioId, momento);
+            observacion = Observacion.EnBandejaSinGeorreferenciar(relevamiento.RelevamientoId, agente.UsuarioId, momento, cmd.CapturaId);
             foto = Foto.Crear(observacion.ObservacionId, null, tieneMetadatos: false, fuente: null, cmd.ReferenciaArchivo);
         }
 

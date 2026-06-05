@@ -160,6 +160,9 @@ internal sealed class FakeObservacionRepository : IObservacionRepository
     public Task<Observacion?> ObtenerPorIdAsync(Guid observacionId, CancellationToken ct = default) =>
         Task.FromResult(_datos.GetValueOrDefault(observacionId));
 
+    public Task<Observacion?> ObtenerPorCapturaIdAsync(Guid capturaId, CancellationToken ct = default) =>
+        Task.FromResult<Observacion?>(_datos.Values.FirstOrDefault(o => o.CapturaId == capturaId));
+
     public Task<IReadOnlyList<Observacion>> ListarPorRelevamientoAsync(Guid relevamientoId, CancellationToken ct = default) =>
         Task.FromResult<IReadOnlyList<Observacion>>(_datos.Values.Where(o => o.RelevamientoId == relevamientoId).ToList());
 

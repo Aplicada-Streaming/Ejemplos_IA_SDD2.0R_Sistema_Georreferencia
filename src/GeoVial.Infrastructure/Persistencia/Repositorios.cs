@@ -89,6 +89,9 @@ public sealed class ObservacionRepository : IObservacionRepository
     public Task<Observacion?> ObtenerPorIdAsync(Guid observacionId, CancellationToken ct = default) =>
         _db.Observaciones.FirstOrDefaultAsync(o => o.ObservacionId == observacionId, ct);
 
+    public Task<Observacion?> ObtenerPorCapturaIdAsync(Guid capturaId, CancellationToken ct = default) =>
+        _db.Observaciones.AsNoTracking().FirstOrDefaultAsync(o => o.CapturaId == capturaId, ct);
+
     public async Task<IReadOnlyList<Observacion>> ListarPorRelevamientoAsync(Guid relevamientoId, CancellationToken ct = default) =>
         await _db.Observaciones.AsNoTracking().Where(o => o.RelevamientoId == relevamientoId).ToListAsync(ct);
 

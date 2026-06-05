@@ -19,7 +19,9 @@ public sealed class ClienteCapturaHttp : ICapturaBackendClient
 
     public async Task<bool> SubirAsync(CapturaPendiente captura, CancellationToken ct = default)
     {
-        var peticion = new CapturarObservacionRequest(captura.ReferenciaArchivo, captura.LatitudExif, captura.LongitudExif);
+        // S46: se envía la CapturaId (clave de idempotencia local, S42) para que un reenvío —el motor
+        // reintenta tras un corte posterior al alta— no duplique la observación en el backend.
+        var peticion = new CapturarObservacionRequest(captura.ReferenciaArchivo, captura.LatitudExif, captura.LongitudExif, captura.CapturaId);
         var resp = await _http.PostAsJsonAsync($"api/v1/relevamientos/{captura.RelevamientoId}/observaciones", peticion, ct);
 
         if ((int)resp.StatusCode is >= 400 and < 500)

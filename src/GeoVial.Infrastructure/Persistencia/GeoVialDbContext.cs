@@ -106,6 +106,11 @@ public sealed class GeoVialDbContext : DbContext
             e.Property(o => o.SinGeorreferenciar).IsRequired();
             e.HasIndex(o => o.RelevamientoId).HasDatabaseName("IX_Observacion_Relevamiento");
             e.HasIndex(o => o.MarcadorId).HasDatabaseName("IX_Observacion_Marcador");
+            // Idempotencia de captura (S46): índice único filtrado sobre la clave del cliente. Filtrado para
+            // permitir múltiples observaciones sin clave (NULL) en SqlServer, que admite un solo NULL en un
+            // índice único no filtrado. Red de seguridad ante la carrera concurrente; la dedup secuencial la
+            // resuelve el handler. InMemory ignora índices, por eso el gate valida la dedup por el handler.
+            e.HasIndex(o => o.CapturaId).IsUnique().HasFilter("[CapturaId] IS NOT NULL").HasDatabaseName("UX_Observacion_CapturaId");
         });
 
         modelo.Entity<Foto>(e =>
