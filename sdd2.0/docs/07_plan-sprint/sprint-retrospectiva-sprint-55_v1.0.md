@@ -20,6 +20,7 @@
 - **Token persistido vencido offline**: tras desbloquear, si el JWT expiró, el primer request dará 401 hasta re-loguear online. Sin refresh token, es deuda real (afecta jornadas largas sin señal).
 - La verificación on-device del flujo nuevo (patrón al reabrir, cancelar, vuelta de cámara, tap del pin) **depende del usuario**; el equipo sólo confirmó build + arranque sin crash + el núcleo en el gate.
 - `SeguridadDispositivo` (marcador blando `metodo.configurado`/usuario) y `AlmacenTokenSecureStorage` guardan ambos el "usuario": hay redundancia de almacenamiento que conviene unificar.
+- **Bug del puente WebView hallado on-device:** al tocar el pin daba `ERR_UNKNOWN_URL_SCHEME`. Causa: el `MapaWebViewClient` (que se setea para cachear teselas) **reemplaza** al client interno de MAUI, y con eso el evento `Navigating` —en el que se apoyaban el tap del pin (S55) y el "ubicar" (S51)— deja de dispararse. Se corrigió interceptando el esquema centinela **dentro** del `MapaWebViewClient` (`ShouldOverrideUrlLoading`) con un callback. Esto **también arregla el "ubicar" de S51**, que tenía el mismo defecto y nunca se había probado en dispositivo — confirma, una vez más, que la interacción WebView hay que verificarla on-device.
 
 ## 3. Qué probar
 

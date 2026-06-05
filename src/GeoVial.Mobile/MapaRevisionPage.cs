@@ -30,31 +30,33 @@ public sealed class MapaRevisionPage : ContentPage
             VerticalOptions = LayoutOptions.Fill,
             HorizontalOptions = LayoutOptions.Fill,
         };
-        // S55: al tocar un pin, el HTML navega al esquema centinela; se intercepta, se devuelve el id y se cierra.
-        web.Navigating += async (_, e) =>
-        {
-            if (ParseadorMensajeMarcador.Intentar(e.Url) is { } marcadorId)
-            {
-                e.Cancel = true;
-                _marcadorElegido.TrySetResult(marcadorId);
-                await Navigation.PopModalAsync();
-            }
-        };
 
 #if ANDROID
-        // Al estar listo el WebView nativo, se le asigna el cliente que cachea las teselas en disco (offline).
+        // Al estar listo el WebView nativo, se le asigna el cliente que cachea las teselas en disco (offline)
+        // y que intercepta el esquema centinela del pin tocado (S55) — como reemplaza al client de MAUI, la
+        // intercepción del esquema debe hacerse en el client, no por el evento Navigating (que deja de dispararse).
         web.HandlerChanged += (_, _) =>
         {
             if (web.Handler?.PlatformView is Android.Webkit.WebView nativo)
             {
                 var carpeta = Path.Combine(FileSystem.CacheDirectory, "teselas");
-                nativo.SetWebViewClient(new MapaWebViewClient(new CacheTeselasDisco(carpeta)));
+                nativo.SetWebViewClient(new MapaWebViewClient(new CacheTeselasDisco(carpeta), OnEsquemaMarcador));
             }
         };
 #endif
 
         Content = web;
     }
+
+    // S55: el HTML avisa por geovial-marcador://abrir?id=…; se extrae el id, se devuelve y se cierra el mapa.
+    private void OnEsquemaMarcador(string url) => MainThread.BeginInvokeOnMainThread(async () =>
+    {
+        if (ParseadorMensajeMarcador.Intentar(url) is { } marcadorId)
+        {
+            _marcadorElegido.TrySetResult(marcadorId);
+            await Navigation.PopModalAsync();
+        }
+    });
 
     protected override bool OnBackButtonPressed()
     {
