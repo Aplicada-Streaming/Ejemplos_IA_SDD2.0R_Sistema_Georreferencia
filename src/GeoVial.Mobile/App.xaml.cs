@@ -17,6 +17,10 @@ public partial class App : Application
 		var servicios = IPlatformApplication.Current?.Services
 			?? throw new InvalidOperationException("El contenedor de servicios no está disponible.");
 
+		// F-M-14: instanciar el coordinador de auto-sync para que se suscriba al monitor de conectividad
+		// y sincronice (relevamiento activo + capturas encoladas) al recuperar señal, sin acción del usuario.
+		servicios.GetRequiredService<CoordinadorAutoSync>();
+
 		// Si el proceso sobrevivió y la sesión sigue activa (p. ej. al volver de la cámara o tras
 		// recrear la actividad por rotación), se va directo a las solapas en vez de rebotar al login.
 		var sesion = servicios.GetRequiredService<ServicioSesion>();
