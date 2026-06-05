@@ -7,8 +7,8 @@ namespace GeoVial.Mobile;
 /// <summary>
 /// Solapa "Bandeja" (S50/S51, RN-03): lista las observaciones del relevamiento activo cuya foto no traía GPS
 /// y esperan ubicación manual (CU-05). Trae la revisión (<see cref="ClienteRevisionHttp"/>), arma las filas
-/// con <see cref="PresentadorBandeja"/> (núcleo del gate) y, al tocar una, abre el mapa para ubicarla
-/// (<see cref="MapaUbicacionPage"/>, S51). Fuera de CI (cáscara MAUI).
+/// con <see cref="PresentadorBandeja"/> (núcleo del gate) y, al tocar una, abre el mapa para elegir el punto
+/// (<see cref="MapaSeleccionPuntoPage"/>, S56) y postear la ubicación (CU-05). Fuera de CI (cáscara MAUI).
 /// </summary>
 public sealed class BandejaPage : ContentPage
 {
@@ -103,12 +103,23 @@ public sealed class BandejaPage : ContentPage
 
         _lista.SelectedItem = null; // permite volver a tocar la misma fila luego
 
-        var pagina = new MapaUbicacionPage(_ubicacion, fila.ObservacionId, _centroLat, _centroLon);
-        await Navigation.PushModalAsync(new NavigationPage(pagina));
-        if (await pagina.Resultado)
+        // S56: el mapa sólo devuelve el punto elegido; la bandeja lo postea (CU-05). Página compartida con la captura.
+        var mapa = new MapaSeleccionPuntoPage(_centroLat, _centroLon);
+        await Navigation.PushModalAsync(new NavigationPage(mapa));
+        if (await mapa.PuntoElegido is not { } punto)
+        {
+            return;
+        }
+
+        var ok = await _ubicacion.UbicarAsync(fila.ObservacionId, punto.Latitud, punto.Longitud);
+        if (ok)
         {
             await DisplayAlertAsync("Bandeja", "Observación ubicada.", "OK");
             await CargarAsync();
+        }
+        else
+        {
+            await DisplayAlertAsync("Bandeja", "No se pudo ubicar la observación. Reintentá.", "OK");
         }
     }
 }
