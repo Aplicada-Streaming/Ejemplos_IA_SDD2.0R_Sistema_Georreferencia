@@ -46,7 +46,9 @@ public sealed record RelevamientoDto(
 
 // --- Captura y georreferenciación (CU-04, CU-05; US-11/12/13/14) ---
 
-public sealed record CapturarObservacionRequest(string ReferenciaArchivo, decimal? LatitudExif, decimal? LongitudExif);
+// CapturaId: clave de idempotencia generada por el cliente (S42). Opcional y al final para no romper a los
+// llamadores previos; cuando viene, el backend deduplica el reenvío de la misma captura (auto-sync, S45).
+public sealed record CapturarObservacionRequest(string ReferenciaArchivo, decimal? LatitudExif, decimal? LongitudExif, Guid? CapturaId = null);
 
 public sealed record UbicarManualRequest(decimal Latitud, decimal Longitud);
 

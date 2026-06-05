@@ -157,6 +157,55 @@ public class CapturaAplicacionTests
         r.Codigo.Should().Be(CodigosError.RelevamientoSoloLectura);
     }
 
+    [Fact] // S46: reenviar la misma CapturaId devuelve la observación original (mismo ObservacionId y FotoId)
+    public async Task Reenvio_con_misma_captura_id_devuelve_la_original()
+    {
+        var (agente, rel) = Escenario();
+        var handler = CapturaHandler(agente, rel);
+        var capturaId = Guid.NewGuid();
+        var cmd = new CapturarObservacionCommand(agente.UsuarioId, rel.RelevamientoId, "foto.jpg", Punto.Latitud, Punto.Longitud, capturaId);
+
+        var primera = await handler.ManejarAsync(cmd);
+        var reenvio = await handler.ManejarAsync(cmd);
+
+        reenvio.EsExito.Should().BeTrue();
+        reenvio.Valor!.ObservacionId.Should().Be(primera.Valor!.ObservacionId);
+        reenvio.Valor!.FotoId.Should().Be(primera.Valor!.FotoId);
+        reenvio.Valor!.MarcadorId.Should().Be(primera.Valor!.MarcadorId);
+    }
+
+    [Fact] // S46: el reenvío idempotente no crea una segunda observación ni reaudita la captura
+    public async Task Reenvio_con_misma_captura_id_no_duplica_ni_reaudita()
+    {
+        var (agente, rel) = Escenario();
+        var observaciones = new FakeObservacionRepository();
+        var fotos = new FakeFotoRepository();
+        var auditoria = new FakeAuditoria();
+        var handler = new CapturarObservacionHandler(
+            new FakeRelevamientoRepository(rel), new FakeUsuarioRepository(agente),
+            new FakeMarcadorRepository(), observaciones, fotos, auditoria, new FakeReloj());
+        var cmd = new CapturarObservacionCommand(agente.UsuarioId, rel.RelevamientoId, "foto.jpg", Punto.Latitud, Punto.Longitud, Guid.NewGuid());
+
+        await handler.ManejarAsync(cmd);
+        await handler.ManejarAsync(cmd);
+
+        (await observaciones.ListarPorRelevamientoAsync(rel.RelevamientoId)).Should().HaveCount(1);
+        auditoria.Registros.Count(r => r.StartsWith("CAPTURA_OBSERVACION")).Should().Be(1);
+    }
+
+    [Fact] // S46 (compatibilidad): sin CapturaId no hay dedup — dos capturas crean dos observaciones (comportamiento previo)
+    public async Task Sin_captura_id_no_hay_dedup()
+    {
+        var (agente, rel) = Escenario();
+        var handler = CapturaHandler(agente, rel);
+        var cmd = new CapturarObservacionCommand(agente.UsuarioId, rel.RelevamientoId, "foto.jpg", Punto.Latitud, Punto.Longitud);
+
+        var primera = await handler.ManejarAsync(cmd);
+        var segunda = await handler.ManejarAsync(cmd);
+
+        segunda.Valor!.ObservacionId.Should().NotBe(primera.Valor!.ObservacionId);
+    }
+
     [Fact] // CU-05 CA-01: ubicación manual de una observación sin georreferenciar
     public async Task Ubicar_manual_georreferencia_la_observacion()
     {

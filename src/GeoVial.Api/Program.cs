@@ -246,7 +246,7 @@ relevamientos.MapPost("/{relevamientoId:guid}/observaciones", async (Guid releva
     }
 
     var r = await mediador.EnviarAsync(
-        new CapturarObservacionCommand(agenteId, relevamientoId, req.ReferenciaArchivo, req.LatitudExif, req.LongitudExif), ct);
+        new CapturarObservacionCommand(agenteId, relevamientoId, req.ReferenciaArchivo, req.LatitudExif, req.LongitudExif, req.CapturaId), ct);
     if (!r.EsExito)
     {
         return MapeoErrores.AProblema(r.Codigo);

@@ -91,6 +91,31 @@ public class CapturaE2ETests : IClassFixture<WebApplicationFactory<Program>>
         rev.ObservacionesSinGeorreferenciar.Should().BeEmpty();
     }
 
+    [Fact] // E2E / S46: reenviar la misma CapturaId no duplica — devuelve la observación original y la revisión muestra un solo marcador
+    public async Task Reenvio_de_captura_es_idempotente()
+    {
+        var esc = await EscenarioE2E.SembrarAsync(_factory);
+        var cliente = await EscenarioE2E.ClienteAutenticadoAsync(_factory, esc.Usuario, esc.Clave);
+
+        var capturaId = Guid.NewGuid();
+        var peticion = new CapturarObservacionRequest("obra/idem.jpg", -34.6m, -58.4m, capturaId);
+
+        var primera = (await (await cliente.PostAsJsonAsync(
+            $"/api/v1/relevamientos/{esc.RelevamientoId}/observaciones", peticion)).Content.ReadFromJsonAsync<CapturaResponse>())!;
+
+        // Reenvío de la MISMA captura (simula el reintento del auto-sync tras un corte posterior al alta).
+        var reenvio = (await (await cliente.PostAsJsonAsync(
+            $"/api/v1/relevamientos/{esc.RelevamientoId}/observaciones", peticion)).Content.ReadFromJsonAsync<CapturaResponse>())!;
+
+        reenvio.ObservacionId.Should().Be(primera.ObservacionId);
+        reenvio.FotoId.Should().Be(primera.FotoId);
+
+        // La revisión no muestra duplicados: un único marcador con una sola foto.
+        var rev = (await (await cliente.GetAsync($"/api/v1/relevamientos/{esc.RelevamientoId}/revision"))
+            .Content.ReadFromJsonAsync<RevisionRelevamientoDto>())!;
+        rev.Marcadores.Should().ContainSingle().Which.Fotos.Should().ContainSingle();
+    }
+
     [Fact] // E2E / RN-01: un agente de otra área no puede capturar en el relevamiento
     public async Task Agente_de_otra_area_no_captura()
     {

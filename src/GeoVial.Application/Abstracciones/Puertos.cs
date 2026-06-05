@@ -42,6 +42,10 @@ public interface IMarcadorRepository
 public interface IObservacionRepository
 {
     Task<Observacion?> ObtenerPorIdAsync(Guid observacionId, CancellationToken ct = default);
+
+    /// <summary>Busca una observación por la clave de idempotencia del cliente (S42); null si no existe. Sostiene la dedup de captura.</summary>
+    Task<Observacion?> ObtenerPorCapturaIdAsync(Guid capturaId, CancellationToken ct = default);
+
     Task<IReadOnlyList<Observacion>> ListarPorRelevamientoAsync(Guid relevamientoId, CancellationToken ct = default);
 
     /// <summary>Lista las observaciones del marcador con seguimiento de cambios para reasignarlas (CU-12 §5.A).</summary>

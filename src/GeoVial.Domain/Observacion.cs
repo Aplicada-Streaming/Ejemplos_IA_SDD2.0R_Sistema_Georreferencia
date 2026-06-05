@@ -13,12 +13,19 @@ public sealed class Observacion
     public DateTime MomentoCaptura { get; private set; }
     public bool SinGeorreferenciar { get; private set; }
 
+    /// <summary>
+    /// Clave de idempotencia generada por el cliente al encolar la captura (S42). Permite que un reenvío
+    /// de la misma captura —p. ej. cuando el auto-sync (S45) reintenta tras un corte posterior al alta— no
+    /// duplique la observación. <c>null</c> para observaciones sin clave (creadas sin cliente idempotente).
+    /// </summary>
+    public Guid? CapturaId { get; private set; }
+
     // ctor para materialización del ORM
     private Observacion()
     {
     }
 
-    private Observacion(Guid relevamientoId, Guid agenteUsuarioId, DateTime momentoCaptura, Guid? marcadorId, bool sinGeorreferenciar)
+    private Observacion(Guid relevamientoId, Guid agenteUsuarioId, DateTime momentoCaptura, Guid? marcadorId, bool sinGeorreferenciar, Guid? capturaId)
     {
         ObservacionId = Guid.NewGuid();
         RelevamientoId = relevamientoId;
@@ -26,13 +33,14 @@ public sealed class Observacion
         MomentoCaptura = momentoCaptura;
         MarcadorId = marcadorId;
         SinGeorreferenciar = sinGeorreferenciar;
+        CapturaId = capturaId;
     }
 
-    public static Observacion Georreferenciada(Guid relevamientoId, Guid agenteUsuarioId, DateTime momentoCaptura, Guid marcadorId) =>
-        new(relevamientoId, agenteUsuarioId, momentoCaptura, marcadorId, sinGeorreferenciar: false);
+    public static Observacion Georreferenciada(Guid relevamientoId, Guid agenteUsuarioId, DateTime momentoCaptura, Guid marcadorId, Guid? capturaId = null) =>
+        new(relevamientoId, agenteUsuarioId, momentoCaptura, marcadorId, sinGeorreferenciar: false, capturaId);
 
-    public static Observacion EnBandejaSinGeorreferenciar(Guid relevamientoId, Guid agenteUsuarioId, DateTime momentoCaptura) =>
-        new(relevamientoId, agenteUsuarioId, momentoCaptura, marcadorId: null, sinGeorreferenciar: true);
+    public static Observacion EnBandejaSinGeorreferenciar(Guid relevamientoId, Guid agenteUsuarioId, DateTime momentoCaptura, Guid? capturaId = null) =>
+        new(relevamientoId, agenteUsuarioId, momentoCaptura, marcadorId: null, sinGeorreferenciar: true, capturaId);
 
     /// <summary>Asocia la observación a un marcador y la saca de la bandeja sin georreferenciar (RC-02).</summary>
     public void AsociarMarcador(Guid marcadorId)
