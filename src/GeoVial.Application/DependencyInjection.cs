@@ -30,6 +30,7 @@ public static class DependencyInjection
         servicios.AddScoped<IManejador<TransicionarEstadoCommand, Resultado>, TransicionarEstadoHandler>();
         servicios.AddScoped<IManejador<ReabrirRelevamientoCommand, Resultado>, ReabrirRelevamientoHandler>();
         servicios.AddScoped<IManejador<ListarRelevamientosQuery, IReadOnlyList<Relevamiento>>, ListarRelevamientosHandler>();
+        servicios.AddScoped<IManejador<ListarRelevamientosAsignadosQuery, IReadOnlyList<Relevamiento>>, ListarRelevamientosAsignadosHandler>();
 
         // Módulo de captura y georreferenciación (CU-04, CU-05).
         servicios.AddScoped<IManejador<CapturarObservacionCommand, Resultado<ResultadoCaptura>>, CapturarObservacionHandler>();

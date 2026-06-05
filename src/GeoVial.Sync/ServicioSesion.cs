@@ -162,12 +162,13 @@ public sealed class ServicioSesion
     }
 
     /// <summary>
-    /// Lista los relevamientos accesibles para el usuario, marcando los que tiene asignados (F-M-04) y
-    /// ordenándolos (asignados primero). Requiere sesión iniciada.
+    /// Lista los relevamientos asignados al agente (F-M-04/05). Consume el endpoint "asignados a mí", que ya
+    /// filtra del lado del servidor por la asignación vigente (S47), así el dispositivo sólo recibe su trabajo.
+    /// El <see cref="SelectorRelevamientos"/> conserva el marcado/orden y la resolución del activo. Requiere sesión.
     /// </summary>
     public async Task<IReadOnlyList<RelevamientoResumen>> ListarRelevamientosAsync()
     {
-        var relevamientos = await _http.GetFromJsonAsync<List<RelevamientoDatos>>("api/v1/relevamientos")
+        var relevamientos = await _http.GetFromJsonAsync<List<RelevamientoDatos>>("api/v1/relevamientos/mios")
             ?? new List<RelevamientoDatos>();
         return SelectorRelevamientos.Listar(relevamientos, UsuarioId);
     }

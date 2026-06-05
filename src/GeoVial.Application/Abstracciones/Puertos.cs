@@ -20,6 +20,10 @@ public interface IRelevamientoRepository
 {
     Task<Relevamiento?> ObtenerPorIdAsync(Guid relevamientoId, CancellationToken ct = default);
     Task<IReadOnlyList<Relevamiento>> ListarTodosAsync(CancellationToken ct = default);
+
+    /// <summary>Relevamientos con una asignación vigente del agente (filtrado en la base); sostiene "asignados a mí" (F-M-04/05).</summary>
+    Task<IReadOnlyList<Relevamiento>> ListarPorAgenteAsignadoAsync(Guid agenteId, CancellationToken ct = default);
+
     Task AgregarAsync(Relevamiento relevamiento, CancellationToken ct = default);
     Task GuardarCambiosAsync(CancellationToken ct = default);
 }
