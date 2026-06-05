@@ -13,6 +13,7 @@ public sealed class LoginPage : ContentPage
 {
     private readonly ServicioSesion _sesion;
     private readonly SeguridadDispositivo _seguridad;
+    private readonly CoordinadorReingreso _reingresoBiometrico;
     private readonly Entry _usuario;
     private readonly Entry _clave;
     private readonly Button _ingresar;
@@ -20,10 +21,11 @@ public sealed class LoginPage : ContentPage
     private readonly Label _estado;
     private readonly ActivityIndicator _spinner;
 
-    public LoginPage(ServicioSesion sesion, SeguridadDispositivo seguridad)
+    public LoginPage(ServicioSesion sesion, SeguridadDispositivo seguridad, CoordinadorReingreso reingresoBiometrico)
     {
         _sesion = sesion;
         _seguridad = seguridad;
+        _reingresoBiometrico = reingresoBiometrico;
         Title = "GeoVial";
 
         _usuario = new Entry { Placeholder = "Usuario", Text = "raiz", ReturnType = ReturnType.Next };
@@ -81,11 +83,13 @@ public sealed class LoginPage : ContentPage
                 return r.Mensaje;
             }
 
-            // RN-06: configurar el método de seguridad del teléfono y habilitar el modo sin conexión, y
-            // recordar el usuario para el reingreso en terreno. Best-effort: no bloquea el ingreso si falla.
+            // RN-06: configurar el método de seguridad y habilitar el offline + recordar el usuario sólo si el
+            // teléfono tiene un método nativo (huella/rostro/PIN), porque el reingreso ahora lo exige (S53).
+            // Best-effort: no bloquea el ingreso si falla.
             try
             {
-                if (await _sesion.ConfigurarMetodoSeguridadAsync())
+                if (await _reingresoBiometrico.HayMetodoDisponibleAsync()
+                    && await _sesion.ConfigurarMetodoSeguridadAsync())
                 {
                     await _sesion.HabilitarOfflineAsync();
                     await _seguridad.ConfigurarAsync(_usuario.Text?.Trim() ?? "");
@@ -105,9 +109,10 @@ public sealed class LoginPage : ContentPage
     {
         await EjecutarAsync(async () =>
         {
+            // RN-06 (S53): el reingreso exige verificación biométrica nativa (huella/rostro/PIN) antes de
+            // re-autenticar sin clave; el coordinador la pide y, sólo si tiene éxito, reingresa contra el backend.
             var usuario = await _seguridad.UsuarioRecordadoAsync();
-            var presente = await _seguridad.MetodoPresenteAsync();
-            var r = await _sesion.ReingresarAsync(usuario, presente);
+            var r = await _reingresoBiometrico.ReingresarAsync(usuario);
             if (!r.Exito)
             {
                 return r.Mensaje;

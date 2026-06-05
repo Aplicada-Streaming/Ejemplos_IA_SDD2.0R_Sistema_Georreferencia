@@ -6,4 +6,6 @@
 	<!-- US-40: tomar foto con la cámara (el FileProvider lo aporta MAUI Essentials automáticamente). -->
 	<uses-permission android:name="android.permission.CAMERA" />
 	<uses-feature android:name="android.hardware.camera" android:required="false" />
+	<!-- RN-06 (S53): verificación biométrica nativa (BiometricPrompt) para el reingreso en terreno. -->
+	<uses-permission android:name="android.permission.USE_BIOMETRIC" />
 </manifest>

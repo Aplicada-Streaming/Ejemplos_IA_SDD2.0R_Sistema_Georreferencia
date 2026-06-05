@@ -35,6 +35,10 @@ public static class MauiProgram
 		builder.Services.AddSingleton(sp => new ServicioSesion(sp.GetRequiredService<HttpClient>()));
 		// Método de seguridad del teléfono para el reingreso en terreno (RN-06): recuerda usuario + marcador.
 		builder.Services.AddSingleton<SeguridadDispositivo>();
+		// Biométrico nativo (RN-06, S53): verificación con huella/rostro/PIN antes del reingreso sin clave.
+		builder.Services.AddSingleton<IAutenticadorBiometrico, AutenticadorBiometricoAndroid>();
+		builder.Services.AddSingleton(sp => new CoordinadorReingreso(
+			sp.GetRequiredService<ServicioSesion>(), sp.GetRequiredService<IAutenticadorBiometrico>()));
 		builder.Services.AddSingleton<ISyncBackendClient>(sp => new ClienteSyncHttp(sp.GetRequiredService<HttpClient>()));
 		builder.Services.AddSingleton<ISyncEngine, MotorSincronizacion>();
 
