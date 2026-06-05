@@ -283,16 +283,27 @@ public sealed class RevisarRelevamientoHandler : IManejador<RevisarRelevamientoQ
         }
 
         var observaciones = await _observaciones.ListarPorRelevamientoAsync(query.RelevamientoId, ct);
-        var sinGeorreferenciar = observaciones.Where(o => o.SinGeorreferenciar).Select(o => o.ObservacionId).ToList();
+        var observacionesSinGeo = observaciones.Where(o => o.SinGeorreferenciar).ToList();
+        var sinGeorreferenciar = observacionesSinGeo.Select(o => o.ObservacionId).ToList();
+
+        // S50: bandeja enriquecida (RN-03) — cada observación sin georreferenciar con su momento y la
+        // referencia de su foto, para que el agente la reconozca en la app antes de ubicarla (CU-05).
+        var bandeja = new List<ObservacionSinGeo>();
+        foreach (var o in observacionesSinGeo)
+        {
+            var foto = await _fotos.ObtenerPorObservacionAsync(o.ObservacionId, ct);
+            bandeja.Add(new ObservacionSinGeo(o.ObservacionId, o.MomentoCaptura, foto?.ReferenciaArchivo));
+        }
 
         if (query.Etiquetas.Count > 0)
         {
             // US-23 / CU-08 §5.C: filtra fotos y comentarios por etiqueta y descarta los marcadores sin coincidencias.
             revisionMarcadores = FiltrarPorEtiquetas(revisionMarcadores, query.Etiquetas);
             sinGeorreferenciar = new List<Guid>(); // las observaciones sin georreferenciar no tienen etiquetas
+            bandeja = new List<ObservacionSinGeo>();
         }
 
-        return new RevisionRelevamiento((relevamiento.RelevamientoId), (int)relevamiento.Estado, revisionMarcadores, sinGeorreferenciar);
+        return new RevisionRelevamiento((relevamiento.RelevamientoId), (int)relevamiento.Estado, revisionMarcadores, sinGeorreferenciar, bandeja);
     }
 
     private static List<RevisionMarcador> FiltrarPorEtiquetas(List<RevisionMarcador> marcadores, IReadOnlyList<string> etiquetas)

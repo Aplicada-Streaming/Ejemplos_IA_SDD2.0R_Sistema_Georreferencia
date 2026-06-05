@@ -80,6 +80,7 @@ public static class MauiProgram
 		builder.Services.AddTransient<CapturaPage>();
 		builder.Services.AddTransient<RevisionPage>();
 		builder.Services.AddTransient<MapaPage>();
+		builder.Services.AddTransient<BandejaPage>();
 
 #if DEBUG
 		builder.Logging.AddDebug();

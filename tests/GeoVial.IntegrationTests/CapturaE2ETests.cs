@@ -79,6 +79,13 @@ public class CapturaE2ETests : IClassFixture<WebApplicationFactory<Program>>
         capt.SinGeorreferenciar.Should().BeTrue();
         capt.MarcadorId.Should().BeNull();
 
+        // S50: la revisión expone la bandeja enriquecida (id + momento + referencia de foto) antes de ubicar
+        var antes = (await (await cliente.GetAsync($"/api/v1/relevamientos/{esc.RelevamientoId}/revision"))
+            .Content.ReadFromJsonAsync<RevisionRelevamientoDto>())!;
+        var enBandeja = antes.Bandeja.Should().ContainSingle().Subject;
+        enBandeja.ObservacionId.Should().Be(capt.ObservacionId);
+        enBandeja.ReferenciaArchivo.Should().Be("obra/sin-gps.jpg");
+
         // Ubicar manualmente el punto
         var ubicar = await cliente.PostAsJsonAsync(
             $"/api/v1/observaciones/{capt.ObservacionId}/ubicacion", new UbicarManualRequest(-34.61m, -58.41m));
@@ -89,6 +96,7 @@ public class CapturaE2ETests : IClassFixture<WebApplicationFactory<Program>>
             .Content.ReadFromJsonAsync<RevisionRelevamientoDto>())!;
         rev.Marcadores.Should().ContainSingle();
         rev.ObservacionesSinGeorreferenciar.Should().BeEmpty();
+        rev.Bandeja.Should().BeEmpty();
     }
 
     [Fact] // E2E / S46: reenviar la misma CapturaId no duplica — devuelve la observación original y la revisión muestra un solo marcador

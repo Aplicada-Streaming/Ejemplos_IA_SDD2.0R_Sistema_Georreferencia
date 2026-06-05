@@ -205,6 +205,27 @@ public class RevisionTests
         rm.Comentarios.Should().ContainSingle().Which.Texto.Should().Be("Fisura");
     }
 
+    [Fact] // S50 / RN-03: la revisión enriquece la bandeja sin georreferenciar con momento y referencia de foto
+    public async Task Revisar_devuelve_bandeja_enriquecida()
+    {
+        var (jefe, rel, _) = Escenario();
+        var momento = new DateTime(2026, 6, 1, 9, 30, 0, DateTimeKind.Utc);
+        var obs = Observacion.EnBandejaSinGeorreferenciar(rel.RelevamientoId, jefe.UsuarioId, momento);
+        var foto = Foto.Crear(obs.ObservacionId, null, tieneMetadatos: false, fuente: null, "obra/sin-gps.jpg");
+        var handler = new RevisarRelevamientoHandler(
+            new FakeUsuarioRepository(jefe), new FakeRelevamientoRepository(rel), new FakeMarcadorRepository(),
+            new FakeObservacionRepository(obs), new FakeFotoRepository(foto), new FakeComentarioRepository(), new FakeEtiquetaRepository());
+
+        var revision = await handler.ManejarAsync(new RevisarRelevamientoQuery(jefe.UsuarioId, rel.RelevamientoId));
+
+        revision.Should().NotBeNull();
+        revision!.ObservacionesSinGeorreferenciar.Should().ContainSingle().Which.Should().Be(obs.ObservacionId);
+        var entrada = revision.Bandeja.Should().ContainSingle().Subject;
+        entrada.ObservacionId.Should().Be(obs.ObservacionId);
+        entrada.MomentoCaptura.Should().Be(momento);
+        entrada.ReferenciaArchivo.Should().Be("obra/sin-gps.jpg");
+    }
+
     [Fact] // CU-08 CA-03 / RN-01: un jefe de otra área no revisa el relevamiento
     public async Task Revisar_otra_area_devuelve_null()
     {
