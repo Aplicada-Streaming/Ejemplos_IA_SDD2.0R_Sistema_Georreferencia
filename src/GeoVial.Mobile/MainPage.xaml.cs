@@ -10,10 +10,11 @@ public partial class MainPage : ContentPage
 	private readonly ColectorOffline _colector;
 	private readonly IChangeQueue _cola;
 	private readonly ISyncEngine _motor;
+	private readonly MonitorSincronizacion _estadoSync;
 
 	private List<RelevamientoResumen> _relevamientos = new();
 
-	public MainPage(ServicioSesion sesion, SeguridadDispositivo seguridad, ColectorOffline colector, IChangeQueue cola, ISyncEngine motor)
+	public MainPage(ServicioSesion sesion, SeguridadDispositivo seguridad, ColectorOffline colector, IChangeQueue cola, ISyncEngine motor, MonitorSincronizacion estadoSync)
 	{
 		InitializeComponent();
 		_sesion = sesion;
@@ -21,6 +22,10 @@ public partial class MainPage : ContentPage
 		_colector = colector;
 		_cola = cola;
 		_motor = motor;
+		_estadoSync = estadoSync;
+
+		// Indicador de sincronización (S48): el monitor notifica cambios de estado; se refleja en el label.
+		_estadoSync.Cambiado += OnEstadoSyncCambiado;
 
 		// Cerrar sesión (US-40): limpia el token del HttpClient compartido y vuelve al login.
 		ToolbarItems.Add(new ToolbarItem("Cerrar sesión", null, CerrarSesion));
@@ -31,7 +36,11 @@ public partial class MainPage : ContentPage
 		base.OnAppearing();
 		await CargarRelevamientosAsync();
 		await ActualizarPendientesAsync();
+		await _estadoSync.RefrescarAsync();
 	}
+
+	private void OnEstadoSyncCambiado(object? sender, ResumenSincronizacion resumen) =>
+		MainThread.BeginInvokeOnMainThread(() => SyncEstadoLbl.Text = resumen.Texto);
 
 	// F-M-04/05: trae los relevamientos accesibles, marca los asignados y deja elegido el activo.
 	private async Task CargarRelevamientosAsync()
@@ -93,14 +102,17 @@ public partial class MainPage : ContentPage
 		}
 
 		await ActualizarPendientesAsync();
+		await _estadoSync.RefrescarAsync(); // capturar agrega un pendiente: refleja el nuevo estado
 	}
 
 	private async void OnSincronizar(object? sender, EventArgs e)
 	{
+		var huboError = false;
 		try
 		{
 			// La sesión ya está iniciada (el token se asentó en el HttpClient compartido al loguearse).
 			EstadoLbl.Text = "Sincronizando el relevamiento activo…";
+			_estadoSync.MarcarSincronizando();
 			if (await _sesion.RelevamientoActivoAsync() is not { } relevamientoId)
 			{
 				EstadoLbl.Text = "Conexión OK, pero no hay un relevamiento destino. Elegí uno arriba.";
@@ -112,10 +124,12 @@ public partial class MainPage : ContentPage
 		}
 		catch (Exception ex)
 		{
+			huboError = true;
 			EstadoLbl.Text = $"No se pudo sincronizar: {ex.Message}";
 		}
 
 		await ActualizarPendientesAsync();
+		await _estadoSync.RefrescarAsync(huboError); // refleja si quedó al día o con pendientes/error
 	}
 
 	// Cierra la sesión (explícita): limpia el token y olvida el método de seguridad recordado (RN-06),

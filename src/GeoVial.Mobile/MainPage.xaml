@@ -24,6 +24,11 @@
                    FontAttributes="Bold"
                    FontSize="18" />
 
+            <!-- Indicador de estado de sincronización (S48): al día / pendiente / sincronizando / sin conexión / error. -->
+            <Label x:Name="SyncEstadoLbl"
+                   Text="Todo sincronizado"
+                   FontSize="14" />
+
             <Button x:Name="CapturarBtn"
                     Text="Capturar observación (offline)"
                     Clicked="OnCapturar"
