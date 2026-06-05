@@ -72,6 +72,8 @@ public static class MauiProgram
 
 		// Revisión sobre mapa (US-21/US-22): cliente de la API de revisión.
 		builder.Services.AddSingleton(sp => new ClienteRevisionHttp(sp.GetRequiredService<HttpClient>()));
+		// Ubicación manual desde la app (S51, CU-05): postea la coordenada elegida en el mapa de la bandeja.
+		builder.Services.AddSingleton(sp => new ClienteUbicacionManual(sp.GetRequiredService<HttpClient>()));
 		// Edición sobre el marcador (US-15): cliente de comentarios y etiquetas.
 		builder.Services.AddSingleton(sp => new ClienteEdicionMarcador(sp.GetRequiredService<HttpClient>()));
 
