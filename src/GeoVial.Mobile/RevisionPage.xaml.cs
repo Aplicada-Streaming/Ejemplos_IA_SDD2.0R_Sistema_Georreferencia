@@ -9,19 +9,35 @@ public partial class RevisionPage : ContentPage
 	private readonly ServicioSesion _sesion;
 	private readonly ClienteRevisionHttp _cliente;
 	private readonly ClienteEdicionMarcador _editor;
+	private readonly ArmadorFotoMarcador _armadorFoto;
+	private readonly IColaCapturas _cola;
+	private readonly MotorCapturas _motor;
+	private readonly IMarcadorCaptura _marcadorCaptura;
 	private readonly CacheFotos _cacheFotos = new();
 
 	private NavegadorRevision? _nav;
 	private Guid? _relevamientoId;
 	private GeoVial.Shared.RevisionRelevamientoDto? _revision;
 
-	public RevisionPage(HttpClient http, ServicioSesion sesion, ClienteRevisionHttp cliente, ClienteEdicionMarcador editor)
+	public RevisionPage(
+		HttpClient http,
+		ServicioSesion sesion,
+		ClienteRevisionHttp cliente,
+		ClienteEdicionMarcador editor,
+		ArmadorFotoMarcador armadorFoto,
+		IColaCapturas cola,
+		MotorCapturas motor,
+		IMarcadorCaptura marcadorCaptura)
 	{
 		InitializeComponent();
 		_http = http;
 		_sesion = sesion;
 		_cliente = cliente;
 		_editor = editor;
+		_armadorFoto = armadorFoto;
+		_cola = cola;
+		_motor = motor;
+		_marcadorCaptura = marcadorCaptura;
 	}
 
 	private async void OnCargar(object? sender, EventArgs e)
@@ -136,6 +152,129 @@ public partial class RevisionPage : ContentPage
 		{
 			return null; // el binario puede no estar alojado todavía
 		}
+	}
+
+	// US-15/CU-09: agrega una foto (cámara o galería) al marcador en foco, en SU posición. La coordenada es la
+	// del marcador (no el EXIF de la foto): así una foto del catálogo igual cae en este marcador por radio (RN-02).
+	// Reusa la cola de capturas (offline) y su subida; el backend rechaza si el relevamiento está cerrado (RN-05).
+	private async void OnAgregarFoto(object? sender, EventArgs e)
+	{
+		if (_nav?.MarcadorActual is not { } marcador)
+		{
+			return;
+		}
+
+		if (_relevamientoId is not { } relevamientoId)
+		{
+			EdicionLbl.Text = "Cargá una revisión antes de agregar una foto.";
+			return;
+		}
+
+		var origen = await DisplayActionSheetAsync("Agregar foto al marcador", "Cancelar", null, "📷 Cámara", "🖼 Galería");
+		if (origen is null or "Cancelar")
+		{
+			return;
+		}
+
+		try
+		{
+			var foto = await TomarOElegirFotoAsync(origen);
+			if (foto is null)
+			{
+				return;
+			}
+
+			using var stream = await foto.OpenReadAsync();
+			using var ms = new MemoryStream();
+			await stream.CopyToAsync(ms);
+
+			var captura = _armadorFoto.Armar(
+				Guid.NewGuid(), relevamientoId, marcador.Latitud, marcador.Longitud, ms.ToArray(), foto.FileName, DateTime.UtcNow);
+			if (captura is null)
+			{
+				EdicionLbl.Text = "No se pudo preparar la foto (vacía o coordenada del marcador inválida).";
+				return;
+			}
+
+			try
+			{
+				await _cola.EncolarAsync(captura);
+			}
+			catch (AlmacenamientoLocalInsuficienteException)
+			{
+				EdicionLbl.Text = "Sin espacio local; no se pudo encolar la foto.";
+				return;
+			}
+
+			await SubirYRecargarAsync();
+		}
+		catch (Exception ex)
+		{
+			EdicionLbl.Text = $"No se pudo agregar la foto: {ex.Message}";
+		}
+	}
+
+	// Toma con cámara (pidiendo el permiso en runtime) o elige de la galería. Marca "captura en curso" alrededor
+	// de la cámara (S55) para que, si el SO mata el proceso, al volver el arranque no rebote al login pidiendo patrón.
+	private async Task<FileResult?> TomarOElegirFotoAsync(string origen)
+	{
+		if (origen.Contains("Galería"))
+		{
+			var fotos = await MediaPicker.Default.PickPhotosAsync();
+			return fotos?.FirstOrDefault();
+		}
+
+		if (!await AsegurarPermisoCamaraAsync())
+		{
+			EdicionLbl.Text = "Se necesita permiso de cámara. Habilitalo en Ajustes.";
+			return null;
+		}
+
+		if (!MediaPicker.Default.IsCaptureSupported)
+		{
+			EdicionLbl.Text = "Este dispositivo no permite capturar fotos con la cámara.";
+			return null;
+		}
+
+		await _marcadorCaptura.MarcarEnCursoAsync();
+		try
+		{
+			return await MediaPicker.Default.CapturePhotoAsync();
+		}
+		finally
+		{
+			await _marcadorCaptura.LimpiarAsync();
+		}
+	}
+
+	private static async Task<bool> AsegurarPermisoCamaraAsync()
+	{
+		var estado = await Permissions.CheckStatusAsync<Permissions.Camera>();
+		if (estado != PermissionStatus.Granted)
+		{
+			estado = await Permissions.RequestAsync<Permissions.Camera>();
+		}
+
+		return estado == PermissionStatus.Granted;
+	}
+
+	// Drena la cola de capturas (sube la foto recién encolada) y recarga la revisión para que aparezca en el
+	// marcador. Sin conexión queda en cola y se subirá al reconectar (no se pierde).
+	private async Task SubirYRecargarAsync()
+	{
+		try
+		{
+			var r = await _motor.SincronizarAsync();
+			EdicionLbl.Text = r.Subidas.Count > 0
+				? "Foto agregada al marcador."
+				: $"Foto encolada; pendientes de subir: {await _cola.PendientesAsync()}.";
+		}
+		catch (SyncInterruptedException)
+		{
+			EdicionLbl.Text = $"Sin conexión: la foto quedó en cola ({await _cola.PendientesAsync()} pendiente(s)); se subirá al reconectar.";
+		}
+
+		await RecargarAsync();
 	}
 
 	private async void OnAgregarComentario(object? sender, EventArgs e)
