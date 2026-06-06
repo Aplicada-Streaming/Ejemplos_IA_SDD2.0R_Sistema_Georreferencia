@@ -68,4 +68,10 @@ public sealed class Comentario
 
     /// <summary>Reasigna el comentario a otro marcador al unificar marcadores en conflicto (CU-12 §5.A).</summary>
     public void ReasignarMarcador(Guid marcadorId) => MarcadorId = marcadorId;
+
+    /// <summary>
+    /// Desliga el comentario de su foto al quitar esa foto del marcador (US-15/CU-09 §5.A): el comentario
+    /// sobrevive a nivel marcador (conserva su texto y etiquetas) en vez de borrarse junto con la foto.
+    /// </summary>
+    public void DesvincularFoto() => FotoId = null;
 }

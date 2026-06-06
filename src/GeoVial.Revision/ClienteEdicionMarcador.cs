@@ -34,6 +34,15 @@ public sealed class ClienteEdicionMarcador
     public Task<ResultadoEdicion> EtiquetarComentarioAsync(Guid comentarioId, string etiqueta, CancellationToken ct = default) =>
         EtiquetarAsync($"api/v1/comentarios/{comentarioId}/etiquetas", etiqueta, ct);
 
+    /// <summary>Quita una foto del marcador (US-15, CU-09 §5.A): DELETE al endpoint de la foto. El backend rechaza si el relevamiento está cerrado.</summary>
+    public async Task<ResultadoEdicion> QuitarFotoAsync(Guid fotoId, CancellationToken ct = default)
+    {
+        var resp = await _http.DeleteAsync($"api/v1/fotos/{fotoId}", ct);
+        return resp.IsSuccessStatusCode
+            ? new ResultadoEdicion(true, "Foto quitada del marcador.")
+            : new ResultadoEdicion(false, $"El backend rechazó la operación ({(int)resp.StatusCode}).");
+    }
+
     private Task<ResultadoEdicion> EtiquetarAsync(string ruta, string etiqueta, CancellationToken ct)
     {
         if (string.IsNullOrWhiteSpace(etiqueta))

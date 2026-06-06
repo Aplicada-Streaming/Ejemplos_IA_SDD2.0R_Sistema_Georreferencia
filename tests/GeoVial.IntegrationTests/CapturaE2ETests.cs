@@ -124,6 +124,30 @@ public class CapturaE2ETests : IClassFixture<WebApplicationFactory<Program>>
         rev.Marcadores.Should().ContainSingle().Which.Fotos.Should().ContainSingle();
     }
 
+    [Fact] // E2E / US-15 / CU-09 §5.A: capturar → quitar la foto → la revisión ya no la muestra y el binario no se descarga
+    public async Task Quitar_foto_del_marcador_completo()
+    {
+        var esc = await EscenarioE2E.SembrarAsync(_factory);
+        var cliente = await EscenarioE2E.ClienteAutenticadoAsync(_factory, esc.Usuario, esc.Clave);
+
+        // Capturar (georreferenciada) y subir el binario
+        var capt = (await (await cliente.PostAsJsonAsync(
+            $"/api/v1/relevamientos/{esc.RelevamientoId}/observaciones",
+            new CapturarObservacionRequest("obra/quitar.jpg", -34.6m, -58.4m))).Content.ReadFromJsonAsync<CapturaResponse>())!;
+        using var contenido = new MultipartFormDataContent { { new ByteArrayContent(new byte[] { 1, 2, 3 }), "archivo", "quitar.jpg" } };
+        (await cliente.PostAsync($"/api/v1/fotos/{capt.FotoId}/contenido", contenido)).StatusCode.Should().Be(HttpStatusCode.NoContent);
+
+        // Quitar la foto del marcador
+        var quitar = await cliente.DeleteAsync($"/api/v1/fotos/{capt.FotoId}");
+        quitar.StatusCode.Should().Be(HttpStatusCode.NoContent);
+
+        // El binario ya no se descarga y la revisión no muestra ese marcador con foto
+        (await cliente.GetAsync($"/api/v1/fotos/{capt.FotoId}/contenido")).StatusCode.Should().Be(HttpStatusCode.NotFound);
+        var rev = (await (await cliente.GetAsync($"/api/v1/relevamientos/{esc.RelevamientoId}/revision"))
+            .Content.ReadFromJsonAsync<RevisionRelevamientoDto>())!;
+        rev.Marcadores.Where(m => m.MarcadorId == capt.MarcadorId).SelectMany(m => m.Fotos).Should().BeEmpty();
+    }
+
     [Fact] // E2E / RN-01: un agente de otra área no puede capturar en el relevamiento
     public async Task Agente_de_otra_area_no_captura()
     {

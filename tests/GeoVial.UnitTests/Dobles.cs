@@ -181,6 +181,12 @@ internal sealed class FakeObservacionRepository : IObservacionRepository
         return Task.CompletedTask;
     }
 
+    public Task EliminarAsync(Observacion observacion, CancellationToken ct = default)
+    {
+        _datos.Remove(observacion.ObservacionId);
+        return Task.CompletedTask;
+    }
+
     public Task GuardarCambiosAsync(CancellationToken ct = default) => Task.CompletedTask;
 }
 
@@ -208,6 +214,12 @@ internal sealed class FakeFotoRepository : IFotoRepository
     public Task AgregarAsync(Foto foto, CancellationToken ct = default)
     {
         _datos.Add(foto);
+        return Task.CompletedTask;
+    }
+
+    public Task EliminarAsync(Foto foto, CancellationToken ct = default)
+    {
+        _datos.Remove(foto);
         return Task.CompletedTask;
     }
 
@@ -309,6 +321,12 @@ internal sealed class FakeEtiquetaRepository : IEtiquetaRepository
         Task.FromResult<IReadOnlyList<string>>(
             _comentarioEtiquetas.Where(u => u.ComentarioId == comentarioId)
                 .Select(u => _etiquetas.Values.First(e => e.EtiquetaId == u.EtiquetaId).Nombre).ToList());
+
+    public Task EliminarEtiquetasDeFotoAsync(Guid fotoId, CancellationToken ct = default)
+    {
+        _fotoEtiquetas.RemoveAll(u => u.FotoId == fotoId);
+        return Task.CompletedTask;
+    }
 
     public Task GuardarCambiosAsync(CancellationToken ct = default) => Task.CompletedTask;
 }

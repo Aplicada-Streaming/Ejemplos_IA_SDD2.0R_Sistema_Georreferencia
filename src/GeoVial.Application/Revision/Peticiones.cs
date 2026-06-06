@@ -14,6 +14,10 @@ public sealed record EtiquetarFotoCommand(Guid UsuarioId, Guid FotoId, string Et
 public sealed record EtiquetarComentarioCommand(Guid UsuarioId, Guid ComentarioId, string Etiqueta)
     : IPeticion<Resultado>;
 
+/// <summary>Quita una foto de su marcador (US-15, CU-09 §5.A): borra la foto, su observación y su binario; desvincula los comentarios que la referenciaban.</summary>
+public sealed record EliminarFotoCommand(Guid UsuarioId, Guid FotoId)
+    : IPeticion<Resultado>;
+
 /// <summary>
 /// Revisión del relevamiento (US-21). Si <paramref name="Etiquetas"/> no está vacío, filtra fotos y
 /// comentarios por esas etiquetas y descarta los marcadores sin contenido coincidente (US-23, CU-08 §5.C).
