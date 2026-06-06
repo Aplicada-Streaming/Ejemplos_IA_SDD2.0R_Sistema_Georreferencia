@@ -32,13 +32,23 @@ public static class MauiProgram
 		builder.Services.AddSingleton(_ => new HttpClient { BaseAddress = new Uri("http://localhost:5080/") });
 		// Sesión única (US-40): autentica una vez y asienta el token en el HttpClient compartido,
 		// que reusan todas las páginas (incluido el cliente de sync). Reemplaza el login hardcodeado.
-		builder.Services.AddSingleton(sp => new ServicioSesion(sp.GetRequiredService<HttpClient>()));
+		// S54: persiste el token en SecureStorage para sobrevivir a que el SO mate el proceso (al usar la cámara).
+		builder.Services.AddSingleton<IAlmacenTokenSesion, AlmacenTokenSecureStorage>();
+		builder.Services.AddSingleton(sp => new ServicioSesion(
+			sp.GetRequiredService<HttpClient>(), sp.GetRequiredService<IAlmacenTokenSesion>()));
 		// Método de seguridad del teléfono para el reingreso en terreno (RN-06): recuerda usuario + marcador.
 		builder.Services.AddSingleton<SeguridadDispositivo>();
-		// Biométrico nativo (RN-06, S53): verificación con huella/rostro/PIN antes del reingreso sin clave.
+		// Biométrico nativo (RN-06, S53): verificación con huella/rostro/patrón/PIN antes del reingreso sin clave.
 		builder.Services.AddSingleton<IAutenticadorBiometrico, AutenticadorBiometricoAndroid>();
 		builder.Services.AddSingleton(sp => new CoordinadorReingreso(
 			sp.GetRequiredService<ServicioSesion>(), sp.GetRequiredService<IAutenticadorBiometrico>()));
+		// Arranque/relogueo (S55): decide entrar / pedir patrón / pedir clave; marca de "captura en curso"
+		// para no re-pedir el método al volver de la cámara.
+		builder.Services.AddSingleton<IMarcadorCaptura, MarcadorCapturaPreferences>();
+		builder.Services.AddSingleton(sp => new CoordinadorArranque(
+			sp.GetRequiredService<ServicioSesion>(),
+			sp.GetRequiredService<IAutenticadorBiometrico>(),
+			sp.GetRequiredService<IMarcadorCaptura>()));
 		builder.Services.AddSingleton<ISyncBackendClient>(sp => new ClienteSyncHttp(sp.GetRequiredService<HttpClient>()));
 		builder.Services.AddSingleton<ISyncEngine, MotorSincronizacion>();
 

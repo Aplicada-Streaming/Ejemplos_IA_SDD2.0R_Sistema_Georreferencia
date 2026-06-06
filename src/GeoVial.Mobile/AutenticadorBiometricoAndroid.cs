@@ -15,7 +15,9 @@ public sealed class AutenticadorBiometricoAndroid : IAutenticadorBiometrico
 {
     public Task<bool> HayMetodoDisponibleAsync()
     {
-        if (!OperatingSystem.IsAndroidVersionAtLeast(28))
+        // Piso API 29 (Android 10): permite combinar verificación con credencial del dispositivo (patrón/PIN);
+        // en versiones previas no se ofrece reingreso biométrico (se cae a usuario + clave).
+        if (!OperatingSystem.IsAndroidVersionAtLeast(29))
         {
             return Task.FromResult(false);
         }
@@ -28,7 +30,7 @@ public sealed class AutenticadorBiometricoAndroid : IAutenticadorBiometrico
 
     public Task<ResultadoBiometrico> AutenticarAsync(string motivo, CancellationToken ct = default)
     {
-        if (!OperatingSystem.IsAndroidVersionAtLeast(28))
+        if (!OperatingSystem.IsAndroidVersionAtLeast(29))
         {
             return Task.FromResult(ResultadoBiometrico.NoDisponible);
         }
@@ -39,12 +41,28 @@ public sealed class AutenticadorBiometricoAndroid : IAutenticadorBiometrico
         }
 
         var tcs = new TaskCompletionSource<ResultadoBiometrico>();
-        var prompt = new BiometricPrompt.Builder(actividad)
+        var constructor = new BiometricPrompt.Builder(actividad)
             .SetTitle("GeoVial — Reingreso en terreno")
-            .SetDescription(motivo)
-            .SetNegativeButton("Usar clave", ejecutor, new CancelarListener(tcs))
-            .Build();
+            .SetDescription(motivo);
 
+        // RN-06: "método de seguridad del teléfono" = huella/rostro **o** patrón/PIN. Se permite la credencial
+        // del dispositivo para que funcione en teléfonos sin biométrico enrolado (sólo patrón/PIN). Con la
+        // credencial habilitada NO se debe fijar botón negativo (el prompt ya ofrece "usar patrón/PIN").
+        if (OperatingSystem.IsAndroidVersionAtLeast(30))
+        {
+            // Valores de plataforma de BiometricManager.Authenticators (estables): BIOMETRIC_WEAK | DEVICE_CREDENTIAL.
+            const int biometricoDebil = 0x00FF;
+            const int credencialDispositivo = 1 << 15;
+            constructor.SetAllowedAuthenticators(biometricoDebil | credencialDispositivo);
+        }
+        else
+        {
+#pragma warning disable CA1422 // SetDeviceCredentialAllowed: obsoleto en API 30+, necesario en 28-29
+            constructor.SetDeviceCredentialAllowed(true);
+#pragma warning restore CA1422
+        }
+
+        var prompt = constructor.Build();
         prompt.Authenticate(new Android.OS.CancellationSignal(), ejecutor, new Callback(tcs));
         return tcs.Task;
     }
@@ -66,13 +84,5 @@ public sealed class AutenticadorBiometricoAndroid : IAutenticadorBiometrico
         }
 
         // OnAuthenticationFailed (intento no reconocido) es transitorio: el sistema reintenta o termina con error.
-    }
-
-    private sealed class CancelarListener : Java.Lang.Object, Android.Content.IDialogInterfaceOnClickListener
-    {
-        private readonly TaskCompletionSource<ResultadoBiometrico> _tcs;
-        public CancelarListener(TaskCompletionSource<ResultadoBiometrico> tcs) => _tcs = tcs;
-        public void OnClick(Android.Content.IDialogInterface? dialog, int which) =>
-            _tcs.TrySetResult(ResultadoBiometrico.Cancelado);
     }
 }

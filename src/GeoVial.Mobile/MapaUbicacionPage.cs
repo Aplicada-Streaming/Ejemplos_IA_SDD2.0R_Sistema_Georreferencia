@@ -31,16 +31,16 @@ public sealed class MapaUbicacionPage : ContentPage
             VerticalOptions = LayoutOptions.Fill,
             HorizontalOptions = LayoutOptions.Fill,
         };
-        web.Navigating += OnNavigating;
-
 #if ANDROID
-        // Cachea las teselas de OSM en disco, igual que el mapa de la revisión (offline parcial).
+        // Cachea las teselas de OSM en disco (offline parcial) e intercepta el esquema centinela del punto
+        // confirmado (S55): como el client reemplaza al de MAUI, la intercepción va en el client, no por Navigating.
         web.HandlerChanged += (_, _) =>
         {
             if (web.Handler?.PlatformView is Android.Webkit.WebView nativo)
             {
                 var carpeta = Path.Combine(FileSystem.CacheDirectory, "teselas");
-                nativo.SetWebViewClient(new MapaWebViewClient(new CacheTeselasDisco(carpeta)));
+                nativo.SetWebViewClient(new MapaWebViewClient(new CacheTeselasDisco(carpeta),
+                    url => MainThread.BeginInvokeOnMainThread(async () => await OnEsquemaUbicacionAsync(url))));
             }
         };
 #endif
@@ -54,14 +54,14 @@ public sealed class MapaUbicacionPage : ContentPage
         Content = web;
     }
 
-    private async void OnNavigating(object? sender, WebNavigatingEventArgs e)
+    // S55: el HTML avisa la coordenada por geovial-ubicar://place?lat=…&lon=…; se postea y se cierra.
+    private async Task OnEsquemaUbicacionAsync(string url)
     {
-        if (ParseadorMensajeUbicacion.Intentar(e.Url) is not { } coordenada)
+        if (ParseadorMensajeUbicacion.Intentar(url) is not { } coordenada)
         {
-            return; // navegación normal del mapa (teselas, Leaflet): se deja pasar
+            return; // otra navegación: se ignora
         }
 
-        e.Cancel = true; // el esquema centinela no se abre: es el mensaje del puente
         if (_enviando)
         {
             return;

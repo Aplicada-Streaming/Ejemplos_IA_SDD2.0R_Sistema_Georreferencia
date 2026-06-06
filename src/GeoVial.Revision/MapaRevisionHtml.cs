@@ -18,6 +18,7 @@ public static class MapaRevisionHtml
         var ci = CultureInfo.InvariantCulture;
         var pinesJson = JsonSerializer.Serialize(vista.Pins.Select(p => new
         {
+            id = p.MarcadorId,
             lat = p.Latitud,
             lon = p.Longitud,
             conflicto = p.EnConflicto,
@@ -29,6 +30,7 @@ public static class MapaRevisionHtml
         return Plantilla
             .Replace("__URL_TESELAS__", MapaTeselas.UrlPlantilla)
             .Replace("__ATRIBUCION__", MapaTeselas.Atribucion)
+            .Replace("__ESQUEMA_MARCADOR__", ParseadorMensajeMarcador.Esquema)
             .Replace("__PINES__", pinesJson)
             .Replace("__CENTRO_LAT__", vista.CentroLat.ToString(ci))
             .Replace("__CENTRO_LON__", vista.CentroLon.ToString(ci))
@@ -64,8 +66,11 @@ public static class MapaRevisionHtml
       pines.forEach(function (p) {
         var txt = 'Marcador (' + p.lat.toFixed(5) + ', ' + p.lon.toFixed(5) + ')' +
           (p.conflicto ? ' &mdash; en conflicto' : '') +
-          '<br>Fotos: ' + p.fotos + ' &middot; Comentarios: ' + p.comentarios;
-        L.marker([p.lat, p.lon]).bindPopup(txt).addTo(mapa);
+          '<br>Fotos: ' + p.fotos + ' &middot; Comentarios: ' + p.comentarios +
+          '<br><a href="__ESQUEMA_MARCADOR__://abrir?id=' + p.id + '">Abrir en la revisión</a>';
+        var m = L.marker([p.lat, p.lon]).bindPopup(txt).addTo(mapa);
+        // Tocar el pin abre su carrusel en la revisión (S55): avisa por el esquema centinela que intercepta la app.
+        m.on('click', function () { window.location.href = '__ESQUEMA_MARCADOR__://abrir?id=' + p.id; });
       });
       if (pines.length === 1) {
         mapa.setView([pines[0].lat, pines[0].lon], 16);
