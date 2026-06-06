@@ -92,9 +92,15 @@ public partial class MainPage : ContentPage
 				RelevamientoPicker.SelectedIndex = idx; // dispara OnRelevamientoSeleccionado → fija el activo
 			}
 		}
-		catch (Exception ex)
+		catch (System.Net.Http.HttpRequestException ex) when (ex.StatusCode == System.Net.HttpStatusCode.Unauthorized)
 		{
-			EstadoLbl.Text = $"No se pudieron cargar los relevamientos: {ex.Message}";
+			// UX experiencia-de-uso §8: nunca mostrar el código crudo (p. ej. "401 Unauthorized"); mensaje en
+			// lenguaje llano con la acción siguiente.
+			EstadoLbl.Text = "Tu sesión expiró. Cerrá sesión y volvé a ingresar con conexión.";
+		}
+		catch (Exception)
+		{
+			EstadoLbl.Text = "No se pudieron cargar los relevamientos. Revisá tu conexión e intentá de nuevo.";
 		}
 	}
 
@@ -156,10 +162,11 @@ public partial class MainPage : ContentPage
 			EstadoLbl.Text = $"Sincronización OK contra el backend.\nConfirmados: {r.Confirmed.Count} · Conflictos: {r.Conflicts.Count} · Actualizaciones: {r.Updates.Count}";
 			MostrarAvisoConflictos(r.Conflicts.Count); // S49: también avisa en la sync manual
 		}
-		catch (Exception ex)
+		catch (Exception)
 		{
 			huboError = true;
-			EstadoLbl.Text = $"No se pudo sincronizar: {ex.Message}";
+			// UX experiencia-de-uso §8: mensaje llano con la acción siguiente, sin el detalle técnico de la excepción.
+			EstadoLbl.Text = "No se pudo sincronizar. No se perdió nada; reintentá cuando tengas señal.";
 		}
 
 		await ActualizarPendientesAsync();

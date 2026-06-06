@@ -18,7 +18,8 @@
                 <Label x:Name="GeorrefLbl" Text="Sin foto seleccionada." />
             </Border>
 
-            <Button x:Name="EnviarBtn" Text="Enviar captura (y subir la foto)" Clicked="OnEnviar" IsEnabled="False" />
+            <!-- UX: el texto largo se truncaba ("…y subir la"); se acorta y el detalle va en el estado de abajo. -->
+            <Button x:Name="EnviarBtn" Text="Enviar captura" Clicked="OnEnviar" IsEnabled="False" />
 
             <Border Padding="12" Stroke="#cccccc" StrokeThickness="1">
                 <Label x:Name="EstadoLbl" Text="" />
