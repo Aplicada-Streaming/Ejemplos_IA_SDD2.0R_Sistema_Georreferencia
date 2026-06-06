@@ -1,6 +1,7 @@
 using GeoVial.Application.Abstracciones;
 using GeoVial.Application.Cqrs;
 using GeoVial.Domain;
+using GeoVial.FileHosting;
 
 namespace GeoVial.Application.Revision;
 
@@ -223,6 +224,94 @@ public sealed class EtiquetarComentarioHandler : IManejador<EtiquetarComentarioC
         }
 
         await _etiquetas.GuardarCambiosAsync(ct);
+        return Resultado.Exito();
+    }
+}
+
+public sealed class EliminarFotoHandler : IManejador<EliminarFotoCommand, Resultado>
+{
+    private readonly IUsuarioRepository _usuarios;
+    private readonly IMarcadorRepository _marcadores;
+    private readonly IRelevamientoRepository _relevamientos;
+    private readonly IFotoRepository _fotos;
+    private readonly IObservacionRepository _observaciones;
+    private readonly IComentarioRepository _comentarios;
+    private readonly IEtiquetaRepository _etiquetas;
+    private readonly IAlmacenFotos _almacen;
+    private readonly IServicioAuditoria _auditoria;
+
+    public EliminarFotoHandler(
+        IUsuarioRepository usuarios, IMarcadorRepository marcadores, IRelevamientoRepository relevamientos,
+        IFotoRepository fotos, IObservacionRepository observaciones, IComentarioRepository comentarios,
+        IEtiquetaRepository etiquetas, IAlmacenFotos almacen, IServicioAuditoria auditoria)
+    {
+        _usuarios = usuarios;
+        _marcadores = marcadores;
+        _relevamientos = relevamientos;
+        _fotos = fotos;
+        _observaciones = observaciones;
+        _comentarios = comentarios;
+        _etiquetas = etiquetas;
+        _almacen = almacen;
+        _auditoria = auditoria;
+    }
+
+    public async Task<Resultado> ManejarAsync(EliminarFotoCommand cmd, CancellationToken ct = default)
+    {
+        var foto = await _fotos.ObtenerParaEdicionAsync(cmd.FotoId, ct);
+        if (foto is null)
+        {
+            return Resultado.Fallo(CodigosError.FotoInexistente);
+        }
+
+        if (foto.MarcadorId is null)
+        {
+            // Una foto sin marcador vive en la bandeja sin georreferenciar (RN-03); no es "quitar de un marcador".
+            return Resultado.Fallo(CodigosError.MarcadorInexistente);
+        }
+
+        var (relevamiento, error) = await AccesoMarcador.CargarPorMarcadorAsync(
+            _usuarios, _marcadores, _relevamientos, cmd.UsuarioId, foto.MarcadorId.Value, ct);
+        if (error is not null)
+        {
+            return Resultado.Fallo(error);
+        }
+
+        if (relevamiento!.EsSoloLectura)
+        {
+            return Resultado.Fallo(CodigosError.RelevamientoSoloLectura);
+        }
+
+        // CU-09 §5.A: los comentarios que referenciaban la foto sobreviven a nivel marcador (se desvinculan, no se borran).
+        var comentarios = await _comentarios.ListarPorMarcadorParaEdicionAsync(foto.MarcadorId.Value, ct);
+        foreach (var comentario in comentarios.Where(c => c.FotoId == foto.FotoId))
+        {
+            comentario.DesvincularFoto();
+        }
+
+        await _etiquetas.EliminarEtiquetasDeFotoAsync(foto.FotoId, ct);
+        await _fotos.EliminarAsync(foto, ct);
+
+        // La foto y su observación son 1:1 (cada captura crea una observación con su foto): se borra también la observación.
+        var observacion = await _observaciones.ObtenerPorIdAsync(foto.ObservacionId, ct);
+        if (observacion is not null)
+        {
+            await _observaciones.EliminarAsync(observacion, ct);
+        }
+
+        if (!await _auditoria.RegistrarAsync(cmd.UsuarioId, "ELIMINAR_FOTO", $"foto={cmd.FotoId}", ct))
+        {
+            return Resultado.Fallo(CodigosError.AccionNoAuditada);
+        }
+
+        await _comentarios.GuardarCambiosAsync(ct); // un solo DbContext scoped: persiste desvinculaciones + borrados
+
+        // Best-effort: borra el binario alojado (ADR-08); el registro ya quedó eliminado aunque el alojamiento falle.
+        if (!string.IsNullOrEmpty(foto.ReferenciaArchivo))
+        {
+            try { await _almacen.EliminarAsync(foto.ReferenciaArchivo, ct); } catch { /* el registro ya se borró */ }
+        }
+
         return Resultado.Exito();
     }
 }

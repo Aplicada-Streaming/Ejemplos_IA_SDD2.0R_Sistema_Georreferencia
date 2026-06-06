@@ -111,6 +111,12 @@ public sealed class ObservacionRepository : IObservacionRepository
     public async Task AgregarAsync(Observacion observacion, CancellationToken ct = default) =>
         await _db.Observaciones.AddAsync(observacion, ct);
 
+    public Task EliminarAsync(Observacion observacion, CancellationToken ct = default)
+    {
+        _db.Observaciones.Remove(observacion);
+        return Task.CompletedTask;
+    }
+
     public Task GuardarCambiosAsync(CancellationToken ct = default) => _db.SaveChangesAsync(ct);
 }
 
@@ -137,6 +143,12 @@ public sealed class FotoRepository : IFotoRepository
 
     public async Task AgregarAsync(Foto foto, CancellationToken ct = default) =>
         await _db.Fotos.AddAsync(foto, ct);
+
+    public Task EliminarAsync(Foto foto, CancellationToken ct = default)
+    {
+        _db.Fotos.Remove(foto);
+        return Task.CompletedTask;
+    }
 
     public Task GuardarCambiosAsync(CancellationToken ct = default) => _db.SaveChangesAsync(ct);
 }
@@ -264,6 +276,12 @@ public sealed class EtiquetaRepository : IEtiquetaRepository
         await _db.ComentarioEtiquetas.Where(u => u.ComentarioId == comentarioId)
             .Join(_db.Etiquetas, u => u.EtiquetaId, e => e.EtiquetaId, (u, e) => e.Nombre)
             .ToListAsync(ct);
+
+    public async Task EliminarEtiquetasDeFotoAsync(Guid fotoId, CancellationToken ct = default)
+    {
+        var uniones = await _db.FotoEtiquetas.Where(u => u.FotoId == fotoId).ToListAsync(ct);
+        _db.FotoEtiquetas.RemoveRange(uniones);
+    }
 
     public Task GuardarCambiosAsync(CancellationToken ct = default) => _db.SaveChangesAsync(ct);
 }

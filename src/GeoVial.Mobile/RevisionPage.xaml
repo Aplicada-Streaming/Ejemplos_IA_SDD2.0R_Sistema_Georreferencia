@@ -40,6 +40,8 @@
                 <Label Text="Editar el marcador" FontAttributes="Bold" />
                 <!-- US-15/CU-09: agregar una foto (cámara o galería) al marcador, en su posición. -->
                 <Button x:Name="AgregarFotoBtn" Text="📷 Agregar foto al marcador" Clicked="OnAgregarFoto" />
+                <!-- US-15/CU-09 §5.A: quitar la foto en foco del marcador (con confirmación). -->
+                <Button x:Name="QuitarFotoBtn" Text="🗑 Quitar la foto en foco" Clicked="OnQuitarFoto" />
                 <Entry x:Name="ComentarioEntry" Placeholder="Comentario para el marcador" />
                 <Button Text="Agregar comentario" Clicked="OnAgregarComentario" />
                 <Entry x:Name="EtiquetaEntry" Placeholder="Etiqueta para la foto en foco" />

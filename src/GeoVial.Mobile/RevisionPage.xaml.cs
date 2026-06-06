@@ -310,6 +310,30 @@ public partial class RevisionPage : ContentPage
 		}
 	}
 
+	// US-15/CU-09 §5.A: quita la foto en foco del marcador (con confirmación). El backend borra foto + observación
+	// + binario y desvincula los comentarios que la referenciaban; rechaza si el relevamiento está cerrado (RN-05).
+	private async void OnQuitarFoto(object? sender, EventArgs e)
+	{
+		if (_nav?.FotoActual is not { } foto)
+		{
+			EdicionLbl.Text = "El marcador en foco no tiene una foto para quitar.";
+			return;
+		}
+
+		var confirma = await DisplayAlertAsync("Quitar foto", "¿Quitar esta foto del marcador? No se puede deshacer.", "Quitar", "Cancelar");
+		if (!confirma)
+		{
+			return;
+		}
+
+		var r = await _editor.QuitarFotoAsync(foto.FotoId);
+		EdicionLbl.Text = r.Mensaje;
+		if (r.Exito)
+		{
+			await RecargarAsync();
+		}
+	}
+
 	// Recarga la revisión tras una edición para reflejar el cambio, conservando el marcador en foco.
 	private async Task RecargarAsync()
 	{

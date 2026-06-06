@@ -43,6 +43,7 @@ public static class DependencyInjection
         servicios.AddScoped<IManejador<AgregarComentarioCommand, Resultado>, AgregarComentarioHandler>();
         servicios.AddScoped<IManejador<EtiquetarFotoCommand, Resultado>, EtiquetarFotoHandler>();
         servicios.AddScoped<IManejador<EtiquetarComentarioCommand, Resultado>, EtiquetarComentarioHandler>();
+        servicios.AddScoped<IManejador<EliminarFotoCommand, Resultado>, EliminarFotoHandler>();
         servicios.AddScoped<IManejador<RevisarRelevamientoQuery, RevisionRelevamiento?>, RevisarRelevamientoHandler>();
 
         // Módulo de detección y resolución de conflictos por radio (CU-11, CU-12; EP-06).

@@ -362,6 +362,18 @@ fotos.MapPost("/{fotoId:guid}/contenido", async (Guid fotoId, IFormFile archivo,
     return r.EsExito ? Results.NoContent() : MapeoErrores.AProblema(r.Codigo);
 }).DisableAntiforgery();
 
+// Quitar una foto de su marcador (US-15, CU-09 §5.A): borra foto + observación + binario; desvincula sus comentarios.
+fotos.MapDelete("/{fotoId:guid}", async (Guid fotoId, ClaimsPrincipal usuario, IMediador mediador, CancellationToken ct) =>
+{
+    if (!TryGetUsuarioId(usuario, out var usuarioId))
+    {
+        return Results.Unauthorized();
+    }
+
+    var r = await mediador.EnviarAsync(new EliminarFotoCommand(usuarioId, fotoId), ct);
+    return r.EsExito ? Results.NoContent() : MapeoErrores.AProblema(r.Codigo);
+});
+
 // Descarga del binario de una foto para el visor a pantalla completa (CU-09, US-24).
 fotos.MapGet("/{fotoId:guid}/contenido", async (Guid fotoId, ClaimsPrincipal usuario, IMediador mediador, CancellationToken ct) =>
 {

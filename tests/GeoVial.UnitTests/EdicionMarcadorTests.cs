@@ -13,11 +13,13 @@ public class ClienteEdicionMarcadorTests
         public int Llamadas { get; private set; }
         public Uri? UltimaUri { get; private set; }
         public string? UltimoCuerpo { get; private set; }
+        public HttpMethod? UltimoMetodo { get; private set; }
 
         protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
         {
             Llamadas++;
             UltimaUri = request.RequestUri;
+            UltimoMetodo = request.Method;
             UltimoCuerpo = request.Content is null ? null : await request.Content.ReadAsStringAsync(cancellationToken);
             return new HttpResponseMessage(estado);
         }
@@ -95,6 +97,30 @@ public class ClienteEdicionMarcadorTests
         var (cliente, _) = Crear(HttpStatusCode.UnprocessableEntity);
 
         var r = await cliente.AgregarComentarioAsync(Guid.NewGuid(), null, "tarde");
+
+        r.Exito.Should().BeFalse();
+        r.Mensaje.Should().Contain("422");
+    }
+
+    [Fact] // US-15/CU-09 §5.A: quitar una foto hace DELETE al endpoint de la foto
+    public async Task Quitar_foto_hace_delete_al_endpoint()
+    {
+        var (cliente, handler) = Crear(HttpStatusCode.NoContent);
+        var fotoId = Guid.NewGuid();
+
+        var r = await cliente.QuitarFotoAsync(fotoId);
+
+        r.Exito.Should().BeTrue();
+        handler.UltimoMetodo.Should().Be(HttpMethod.Delete);
+        handler.UltimaUri!.AbsolutePath.Should().Be($"/api/v1/fotos/{fotoId}");
+    }
+
+    [Fact] // RN-05: el rechazo del backend al quitar (relevamiento cerrado) se refleja como error
+    public async Task Quitar_foto_rechazada_se_refleja_como_error()
+    {
+        var (cliente, _) = Crear(HttpStatusCode.UnprocessableEntity);
+
+        var r = await cliente.QuitarFotoAsync(Guid.NewGuid());
 
         r.Exito.Should().BeFalse();
         r.Mensaje.Should().Contain("422");

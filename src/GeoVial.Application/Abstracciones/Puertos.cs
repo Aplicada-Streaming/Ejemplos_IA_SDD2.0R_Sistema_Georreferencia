@@ -59,6 +59,10 @@ public interface IObservacionRepository
     Task<IReadOnlyList<Observacion>> ListarPorMarcadorParaEdicionAsync(Guid marcadorId, CancellationToken ct = default);
 
     Task AgregarAsync(Observacion observacion, CancellationToken ct = default);
+
+    /// <summary>Elimina la observación al quitar su foto del marcador (US-15/CU-09 §5.A; relación 1:1 foto↔observación).</summary>
+    Task EliminarAsync(Observacion observacion, CancellationToken ct = default);
+
     Task GuardarCambiosAsync(CancellationToken ct = default);
 }
 
@@ -75,6 +79,9 @@ public interface IFotoRepository
     Task<Foto?> ObtenerParaEdicionAsync(Guid fotoId, CancellationToken ct = default);
 
     Task AgregarAsync(Foto foto, CancellationToken ct = default);
+
+    /// <summary>Elimina la foto al quitarla del marcador (US-15/CU-09 §5.A). El binario alojado lo borra el llamador (ADR-08).</summary>
+    Task EliminarAsync(Foto foto, CancellationToken ct = default);
 
     Task GuardarCambiosAsync(CancellationToken ct = default);
 }
@@ -125,6 +132,10 @@ public interface IEtiquetaRepository
     Task<bool> ExisteComentarioEtiquetaAsync(Guid comentarioId, Guid etiquetaId, CancellationToken ct = default);
     Task<IReadOnlyList<string>> ListarNombresDeFotoAsync(Guid fotoId, CancellationToken ct = default);
     Task<IReadOnlyList<string>> ListarNombresDeComentarioAsync(Guid comentarioId, CancellationToken ct = default);
+
+    /// <summary>Quita todas las uniones foto↔etiqueta de una foto al eliminarla del marcador (US-15/CU-09 §5.A).</summary>
+    Task EliminarEtiquetasDeFotoAsync(Guid fotoId, CancellationToken ct = default);
+
     Task GuardarCambiosAsync(CancellationToken ct = default);
 }
 
