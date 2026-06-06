@@ -76,6 +76,8 @@ public static class MauiProgram
 		builder.Services.AddSingleton<IColaCapturas>(_ => new ColaCapturasSqlite($"Data Source={rutaCapturas}"));
 		builder.Services.AddSingleton<ICapturaBackendClient>(sp => new ClienteCapturaHttp(sp.GetRequiredService<HttpClient>()));
 		builder.Services.AddSingleton(sp => new MotorCapturas(sp.GetRequiredService<IColaCapturas>(), sp.GetRequiredService<ICapturaBackendClient>()));
+		// Agregar foto a un marcador desde la revisión (US-15, CU-09): arma la captura en la coordenada del marcador.
+		builder.Services.AddSingleton<ArmadorFotoMarcador>();
 
 		// Indicador de estado de sincronización (acción de retro S45-S47): el monitor calcula el estado
 		// (al día / pendiente / sincronizando / sin conexión / error) desde las dos colas + la conectividad.
