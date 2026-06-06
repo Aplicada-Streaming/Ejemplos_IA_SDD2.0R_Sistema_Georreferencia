@@ -1,5 +1,6 @@
 using System.Globalization;
 using GeoVial.CapturaCampo;
+using GeoVial.Revision;
 using GeoVial.Shared;
 using GeoVial.Sync;
 
@@ -197,6 +198,30 @@ public partial class CapturaPage : ContentPage
 			return;
 		}
 
+		FijarCoordenada(lat, lon);
+	}
+
+	// S56: elegir el punto sobre el mapa (mover el marcador) en vez de tipear las coordenadas (US-13, CU-05).
+	private async void OnElegirEnMapa(object? sender, EventArgs e)
+	{
+		try
+		{
+			var mapa = new MapaSeleccionPuntoPage(VistaMapa.CentroPorDefectoLat, VistaMapa.CentroPorDefectoLon);
+			await Navigation.PushModalAsync(new NavigationPage(mapa));
+			if (await mapa.PuntoElegido is { } punto)
+			{
+				FijarCoordenada(punto.Latitud, punto.Longitud);
+			}
+		}
+		catch (Exception ex)
+		{
+			EstadoLbl.Text = $"No se pudo abrir el mapa: {ex.Message}";
+		}
+	}
+
+	// Valida y deja lista la coordenada (del mapa o manual) para que «Enviar captura» la use.
+	private void FijarCoordenada(decimal lat, decimal lon)
+	{
 		if (_ubicador.Armar(lat, lon) is null)
 		{
 			EstadoLbl.Text = "Coordenada fuera de rango (lat -90..90, lon -180..180).";
@@ -205,8 +230,10 @@ public partial class CapturaPage : ContentPage
 
 		_latManual = lat;
 		_lonManual = lon;
+		LatEntry.Text = lat.ToString("0.#####", CultureInfo.InvariantCulture);
+		LonEntry.Text = lon.ToString("0.#####", CultureInfo.InvariantCulture);
 		UbicacionPanel.IsVisible = false;
-		GeorrefLbl.Text = $"Coordenada manual lista: {lat:0.#####}, {lon:0.#####}. Tocá «Enviar captura».";
+		GeorrefLbl.Text = $"Punto listo: {lat:0.#####}, {lon:0.#####}. Tocá «Enviar captura».";
 	}
 
 	// Drena la cola de capturas (subir lo encolado). Sin conexión, conserva lo pendiente sin perderlo.

@@ -24,9 +24,12 @@
                 <Label x:Name="EstadoLbl" Text="" />
             </Border>
 
-            <!-- Ubicación manual: aparece solo si la observación quedó sin georreferenciar (US-13). -->
+            <!-- Ubicación manual: aparece solo si la observación quedó sin georreferenciar (US-13, CU-05). -->
             <VerticalStackLayout x:Name="UbicacionPanel" IsVisible="False" Spacing="8" Margin="0,8,0,0">
-                <Label Text="Ubicar manualmente el punto" FontAttributes="Bold" />
+                <Label Text="Ubicar el punto" FontAttributes="Bold" />
+                <!-- S56: lo más cómodo es elegir el punto sobre el mapa (moviendo el marcador). -->
+                <Button Text="📍 Elegí el punto en el mapa" Clicked="OnElegirEnMapa" BackgroundColor="#1565c0" TextColor="White" />
+                <Label Text="o cargá las coordenadas a mano:" FontSize="12" TextColor="#666666" />
                 <Entry x:Name="LatEntry" Placeholder="Latitud (-90 a 90)" Keyboard="Numeric" />
                 <Entry x:Name="LonEntry" Placeholder="Longitud (-180 a 180)" Keyboard="Numeric" />
                 <Button Text="Ubicar el punto" Clicked="OnUbicar" />
