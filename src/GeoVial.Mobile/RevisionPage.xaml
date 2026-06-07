@@ -27,7 +27,13 @@
                 <Button Grid.Column="1" Text="Marcador ▶" Clicked="OnSiguienteMarcador" />
             </Grid>
 
-            <Image x:Name="FotoImg" HeightRequest="220" Aspect="AspectFit" BackgroundColor="#f0f0f0" />
+            <!-- H-04: carrusel deslizable — swipe lateral sobre la foto; al terminar cruza de marcador. Los botones siguen. -->
+            <Image x:Name="FotoImg" HeightRequest="220" Aspect="AspectFit" BackgroundColor="#f0f0f0">
+                <Image.GestureRecognizers>
+                    <SwipeGestureRecognizer Direction="Left" Swiped="OnSwipeFoto" />
+                    <SwipeGestureRecognizer Direction="Right" Swiped="OnSwipeFoto" />
+                </Image.GestureRecognizers>
+            </Image>
             <Label x:Name="FotoLbl" Text="" FontSize="13" HorizontalOptions="Center" />
 
             <Grid ColumnDefinitions="*,*" ColumnSpacing="10">

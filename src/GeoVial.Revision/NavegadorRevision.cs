@@ -41,6 +41,54 @@ public sealed class NavegadorRevision
     public void AnteriorFoto() => MoverFoto(-1);
 
     /// <summary>
+    /// Avance del carrusel por gesto lateral (H-04, wireframes-marcador-carrusel §6): pasa a la foto siguiente del
+    /// marcador y, si era la última (o el marcador no tiene fotos), <b>cruza al marcador siguiente</b> (su primera
+    /// foto). Circular sobre todo el relevamiento. Complementa los botones, no los reemplaza.
+    /// </summary>
+    public void Avanzar()
+    {
+        var marcador = MarcadorActual;
+        if (marcador is null)
+        {
+            return;
+        }
+
+        if (marcador.Fotos.Count > 0 && IndiceFoto < marcador.Fotos.Count - 1)
+        {
+            IndiceFoto++;
+            return;
+        }
+
+        SiguienteMarcador(); // cruza al siguiente marcador (reinicia la foto en 0)
+    }
+
+    /// <summary>
+    /// Retroceso del carrusel por gesto lateral (H-04): va a la foto anterior y, si era la primera (o el marcador
+    /// no tiene fotos), <b>cruza al marcador anterior</b> y se posiciona en su <b>última</b> foto. Circular.
+    /// </summary>
+    public void Retroceder()
+    {
+        var marcador = MarcadorActual;
+        if (marcador is null)
+        {
+            return;
+        }
+
+        if (IndiceFoto > 0)
+        {
+            IndiceFoto--;
+            return;
+        }
+
+        AnteriorMarcador(); // cruza al marcador anterior (foto en 0)
+        var nuevo = MarcadorActual;
+        if (nuevo is { Fotos.Count: > 0 })
+        {
+            IndiceFoto = nuevo.Fotos.Count - 1; // última foto del marcador anterior
+        }
+    }
+
+    /// <summary>
     /// Posiciona el carrusel en el marcador indicado (reiniciando la foto en foco), para restaurar la posición
     /// tras recargar la revisión. Devuelve false si el marcador ya no existe (no cambia la posición).
     /// </summary>
