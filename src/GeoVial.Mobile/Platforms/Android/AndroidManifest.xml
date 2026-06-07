@@ -8,4 +8,8 @@
 	<uses-feature android:name="android.hardware.camera" android:required="false" />
 	<!-- RN-06 (S53): verificación biométrica nativa (BiometricPrompt) para el reingreso en terreno. -->
 	<uses-permission android:name="android.permission.USE_BIOMETRIC" />
+	<!-- H-02 (auditoría UX): "Centrar por GPS" y posición del agente en el mapa (experiencia §6). -->
+	<uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+	<uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+	<uses-feature android:name="android.hardware.location.gps" android:required="false" />
 </manifest>

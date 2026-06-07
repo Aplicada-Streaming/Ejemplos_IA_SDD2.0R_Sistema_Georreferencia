@@ -11,6 +11,7 @@ namespace GeoVial.Mobile;
 public sealed class MapaSeleccionPuntoPage : ContentPage
 {
     private readonly TaskCompletionSource<CoordenadaElegida?> _punto = new();
+    private readonly WebView _web;
 
     /// <summary>Se completa con el punto elegido, o <c>null</c> si se cerró el mapa sin confirmar.</summary>
     public Task<CoordenadaElegida?> PuntoElegido => _punto.Task;
@@ -19,7 +20,7 @@ public sealed class MapaSeleccionPuntoPage : ContentPage
     {
         Title = "Elegí el punto en el mapa";
 
-        var web = new WebView
+        _web = new WebView
         {
             Source = new HtmlWebViewSource { Html = MapaUbicacionHtml.Construir(centroLat, centroLon) },
             VerticalOptions = LayoutOptions.Fill,
@@ -29,9 +30,9 @@ public sealed class MapaSeleccionPuntoPage : ContentPage
 #if ANDROID
         // Cachea las teselas de OSM (offline parcial) e intercepta el esquema centinela del punto confirmado:
         // como el client reemplaza al de MAUI, la intercepción va en el client, no por el evento Navigating.
-        web.HandlerChanged += (_, _) =>
+        _web.HandlerChanged += (_, _) =>
         {
-            if (web.Handler?.PlatformView is Android.Webkit.WebView nativo)
+            if (_web.Handler?.PlatformView is Android.Webkit.WebView nativo)
             {
                 var carpeta = Path.Combine(FileSystem.CacheDirectory, "teselas");
                 nativo.SetWebViewClient(new MapaWebViewClient(new CacheTeselasDisco(carpeta),
@@ -40,13 +41,28 @@ public sealed class MapaSeleccionPuntoPage : ContentPage
         };
 #endif
 
+        // H-02 (auditoría UX): centrar el mapa en la posición del agente para elegir el punto cerca suyo.
+        ToolbarItems.Add(new ToolbarItem("📍 Mi ubicación", null, async () => await CentrarEnMiUbicacionAsync()));
         ToolbarItems.Add(new ToolbarItem("Cancelar", null, async () =>
         {
             _punto.TrySetResult(null);
             await Navigation.PopModalAsync();
         }));
 
-        Content = web;
+        Content = _web;
+    }
+
+    private async Task CentrarEnMiUbicacionAsync()
+    {
+        var coordenada = await UbicacionDispositivo.ObtenerAsync();
+        if (coordenada is null)
+        {
+            await DisplayAlertAsync("Mi ubicación", "No se pudo obtener tu ubicación. Activá el GPS y el permiso de ubicación.", "OK");
+            return;
+        }
+
+        await _web.EvaluateJavaScriptAsync(
+            ScriptUbicacionDispositivo.Centrar((double)coordenada.Latitud, (double)coordenada.Longitud));
     }
 
     // El HTML avisa la coordenada por geovial-ubicar://place?lat=…&lon=…; se devuelve y se cierra.
