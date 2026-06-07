@@ -27,7 +27,8 @@ public partial class RevisionPage : ContentPage
 		ArmadorFotoMarcador armadorFoto,
 		IColaCapturas cola,
 		MotorCapturas motor,
-		IMarcadorCaptura marcadorCaptura)
+		IMarcadorCaptura marcadorCaptura,
+		MonitorSincronizacion monitor)
 	{
 		InitializeComponent();
 		_http = http;
@@ -38,6 +39,7 @@ public partial class RevisionPage : ContentPage
 		_cola = cola;
 		_motor = motor;
 		_marcadorCaptura = marcadorCaptura;
+		Cinta.Vincular(monitor); // H-05: cinta de estado de conexión persistente
 	}
 
 	private async void OnCargar(object? sender, EventArgs e)

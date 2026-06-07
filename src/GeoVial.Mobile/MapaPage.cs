@@ -18,11 +18,15 @@ public sealed class MapaPage : ContentPage
     private readonly Label _estado;
     private bool _cargado;
 
-    public MapaPage(ServicioSesion sesion, ClienteRevisionHttp cliente)
+    public MapaPage(ServicioSesion sesion, ClienteRevisionHttp cliente, MonitorSincronizacion monitor)
     {
         _sesion = sesion;
         _cliente = cliente;
         Title = "Mapa";
+
+        // H-05: cinta de estado de conexión persistente arriba del mapa.
+        var cinta = new CintaConexionView();
+        cinta.Vincular(monitor);
 
         _estado = new Label { Text = "Cargando el mapa…", Margin = 16 };
         _web = new WebView
@@ -46,7 +50,11 @@ public sealed class MapaPage : ContentPage
 
         ToolbarItems.Add(new ToolbarItem("Recargar", null, async () => await CargarAsync()));
 
-        Content = new Grid { Children = { _web, _estado } };
+        var mapa = new Grid { Children = { _web, _estado } };
+        var raiz = new Grid { RowDefinitions = { new RowDefinition(GridLength.Auto), new RowDefinition(GridLength.Star) } };
+        raiz.Add(cinta, 0, 0);
+        raiz.Add(mapa, 0, 1);
+        Content = raiz;
     }
 
     protected override async void OnAppearing()

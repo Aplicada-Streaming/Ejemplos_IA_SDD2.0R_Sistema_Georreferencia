@@ -1,10 +1,14 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:local="clr-namespace:GeoVial.Mobile"
              x:Class="GeoVial.Mobile.RevisionPage"
              Title="Revisión sobre mapa">
 
-    <ScrollView>
+    <!-- H-05: cinta de estado de conexión persistente. -->
+    <Grid RowDefinitions="Auto,*">
+        <local:CintaConexionView x:Name="Cinta" Grid.Row="0" />
+        <ScrollView Grid.Row="1">
         <VerticalStackLayout Padding="24" Spacing="14">
 
             <Label Text="Revisar relevamiento" FontSize="22" FontAttributes="Bold" />
@@ -50,6 +54,7 @@
             </VerticalStackLayout>
 
         </VerticalStackLayout>
-    </ScrollView>
+        </ScrollView>
+    </Grid>
 
 </ContentPage>
