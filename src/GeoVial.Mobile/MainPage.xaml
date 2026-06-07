@@ -7,8 +7,11 @@
     <ScrollView>
         <VerticalStackLayout Padding="24" Spacing="18">
 
+            <!-- UX: el título usaba el estilo Headline (gigante) y empujaba el selector de relevamiento y el
+                 estado de sincronización fuera del viewport inicial. Se reduce para priorizar las acciones. -->
             <Label Text="GeoVial — Captura de campo"
-                   Style="{StaticResource Headline}"
+                   FontSize="22"
+                   FontAttributes="Bold"
                    SemanticProperties.HeadingLevel="Level1" />
 
             <Label Text="Recolección sin conexión y sincronización automática (EP-04)." />
