@@ -101,6 +101,27 @@ public partial class RevisionPage : ContentPage
 
 	private async void OnAnteriorFoto(object? sender, EventArgs e) { _nav?.AnteriorFoto(); await RenderAsync(); }
 
+	// H-04: carrusel deslizable. Swipe a la izquierda avanza (y cruza al marcador siguiente al terminar las fotos);
+	// a la derecha retrocede (y cruza al marcador anterior, a su última foto). Complementa los botones.
+	private async void OnSwipeFoto(object? sender, SwipedEventArgs e)
+	{
+		if (_nav is null)
+		{
+			return;
+		}
+
+		if (e.Direction == SwipeDirection.Left)
+		{
+			_nav.Avanzar();
+		}
+		else if (e.Direction == SwipeDirection.Right)
+		{
+			_nav.Retroceder();
+		}
+
+		await RenderAsync();
+	}
+
 	private async Task RenderAsync()
 	{
 		if (_nav is null || !_nav.HayMarcadores)

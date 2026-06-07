@@ -85,6 +85,64 @@ public class NavegadorRevisionTests
         nav.SiguienteFoto(); // no-op
         nav.FotoActual.Should().BeNull();
     }
+
+    [Fact] // H-04: Avanzar pasa a la foto siguiente dentro del marcador
+    public void Avanzar_dentro_del_marcador()
+    {
+        var nav = new NavegadorRevision(Revision(Marcador("a.jpg", "b.jpg")));
+
+        nav.Avanzar();
+
+        nav.IndiceMarcador.Should().Be(0);
+        nav.FotoActual!.ReferenciaArchivo.Should().Be("b.jpg");
+    }
+
+    [Fact] // H-04: Avanzar en la última foto cruza al marcador siguiente (primera foto)
+    public void Avanzar_en_ultima_foto_cruza_de_marcador()
+    {
+        var nav = new NavegadorRevision(Revision(Marcador("a.jpg", "b.jpg"), Marcador("c.jpg", "d.jpg")));
+
+        nav.Avanzar(); // a → b
+        nav.Avanzar(); // b (última) → marcador 2, c
+
+        nav.IndiceMarcador.Should().Be(1);
+        nav.FotoActual!.ReferenciaArchivo.Should().Be("c.jpg");
+    }
+
+    [Fact] // H-04: Retroceder en la primera foto cruza al marcador anterior (ÚLTIMA foto)
+    public void Retroceder_en_primera_foto_cruza_a_la_ultima_del_anterior()
+    {
+        var nav = new NavegadorRevision(Revision(Marcador("a.jpg", "b.jpg"), Marcador("c.jpg", "d.jpg")));
+        nav.SiguienteMarcador(); // marcador 2, foto c (idx 0)
+
+        nav.Retroceder(); // primera foto → marcador 1, última foto (b)
+
+        nav.IndiceMarcador.Should().Be(0);
+        nav.FotoActual!.ReferenciaArchivo.Should().Be("b.jpg");
+    }
+
+    [Fact] // H-04: Avanzar es circular sobre todo el relevamiento
+    public void Avanzar_circular_vuelve_al_inicio()
+    {
+        var nav = new NavegadorRevision(Revision(Marcador("a.jpg"), Marcador("b.jpg")));
+
+        nav.Avanzar(); // marcador 1 (única, última) → marcador 2, b
+        nav.IndiceMarcador.Should().Be(1);
+        nav.Avanzar(); // marcador 2 (última) → vuelve al marcador 1, a
+        nav.IndiceMarcador.Should().Be(0);
+        nav.FotoActual!.ReferenciaArchivo.Should().Be("a.jpg");
+    }
+
+    [Fact] // H-04: un marcador sin fotos: Avanzar cruza directo al siguiente marcador
+    public void Avanzar_marcador_sin_fotos_cruza()
+    {
+        var nav = new NavegadorRevision(Revision(Marcador(), Marcador("c.jpg")));
+
+        nav.Avanzar();
+
+        nav.IndiceMarcador.Should().Be(1);
+        nav.FotoActual!.ReferenciaArchivo.Should().Be("c.jpg");
+    }
 }
 
 /// <summary>Cliente HTTP de la API de revisión (US-21, CU-08).</summary>
