@@ -49,6 +49,8 @@ public sealed class MapaPage : ContentPage
 #endif
 
         ToolbarItems.Add(new ToolbarItem("Recargar", null, async () => await CargarAsync()));
+        // H-02 (auditoría UX): centrar el mapa en la posición del agente (GPS).
+        ToolbarItems.Add(new ToolbarItem("📍 Mi ubicación", null, async () => await CentrarEnMiUbicacionAsync()));
 
         var mapa = new Grid { Children = { _web, _estado } };
         var raiz = new Grid { RowDefinitions = { new RowDefinition(GridLength.Auto), new RowDefinition(GridLength.Star) } };
@@ -64,6 +66,26 @@ public sealed class MapaPage : ContentPage
         {
             await CargarAsync();
         }
+    }
+
+    // H-02: obtiene el GPS (pidiendo permiso) y recentra el mapa en la posición del agente con una marca distinta.
+    private async Task CentrarEnMiUbicacionAsync()
+    {
+        if (!_cargado)
+        {
+            await CargarAsync();
+        }
+
+        var coordenada = await UbicacionDispositivo.ObtenerAsync();
+        if (coordenada is null)
+        {
+            _estado.Text = "No se pudo obtener tu ubicación. Activá el GPS y el permiso de ubicación.";
+            _estado.IsVisible = true;
+            return;
+        }
+
+        await _web.EvaluateJavaScriptAsync(
+            ScriptUbicacionDispositivo.Centrar((double)coordenada.Latitud, (double)coordenada.Longitud));
     }
 
     private async Task CargarAsync()
