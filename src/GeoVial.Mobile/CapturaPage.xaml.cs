@@ -14,6 +14,8 @@ public partial class CapturaPage : ContentPage
 	private readonly IColaCapturas _cola;
 	private readonly MotorCapturas _motor;
 	private readonly IMarcadorCaptura _marcadorCaptura;
+	private readonly ClienteRevisionHttp _revision;
+	private bool _mapaCargado;
 
 	// Relevamiento destino conocido (se obtiene online y se recuerda para poder capturar sin conexión).
 	private static Guid? _relevamientoConocido;
@@ -24,7 +26,7 @@ public partial class CapturaPage : ContentPage
 	private decimal? _latManual;
 	private decimal? _lonManual;
 
-	public CapturaPage(ServicioSesion sesion, ArmadorCapturaCampo armador, ArmadorUbicacionManual ubicador, IColaCapturas cola, MotorCapturas motor, IMarcadorCaptura marcadorCaptura, MonitorSincronizacion monitor)
+	public CapturaPage(ServicioSesion sesion, ArmadorCapturaCampo armador, ArmadorUbicacionManual ubicador, IColaCapturas cola, MotorCapturas motor, IMarcadorCaptura marcadorCaptura, MonitorSincronizacion monitor, ClienteRevisionHttp revision)
 	{
 		InitializeComponent();
 		_sesion = sesion;
@@ -33,16 +35,76 @@ public partial class CapturaPage : ContentPage
 		_cola = cola;
 		_motor = motor;
 		_marcadorCaptura = marcadorCaptura;
+		_revision = revision;
 		Cinta.Vincular(monitor); // H-05: cinta de estado de conexión persistente
+
+#if ANDROID
+		// H-01/H-03: el mapa de la captura cachea las teselas de OSM en disco (offline parcial, S38).
+		MapaWeb.HandlerChanged += (_, _) =>
+		{
+			if (MapaWeb.Handler?.PlatformView is Android.Webkit.WebView nativo)
+			{
+				var carpeta = Path.Combine(FileSystem.CacheDirectory, "teselas");
+				nativo.SetWebViewClient(new MapaWebViewClient(new CacheTeselasDisco(carpeta)));
+			}
+		};
+#endif
 
 		// US-16/F-M-12: subir las capturas encoladas cuando haya conexión.
 		ToolbarItems.Add(new ToolbarItem("Sincronizar capturas", null, async () => await DrenarAsync("Sincronización de capturas.")));
+		// H-02/H-03: centrar el mapa de la captura en la posición del agente.
+		ToolbarItems.Add(new ToolbarItem("📍 Mi ubicación", null, async () => await CentrarEnMiUbicacionAsync()));
 	}
 
 	protected override async void OnAppearing()
 	{
 		base.OnAppearing();
 		EstadoLbl.Text = $"Capturas pendientes de subir: {await _cola.PendientesAsync()}.";
+		await CargarMapaAsync();
+	}
+
+	// H-01/H-03: arma el mapa de la captura con los marcadores del relevamiento activo (pines), una sola vez.
+	private async Task CargarMapaAsync()
+	{
+		if (_mapaCargado)
+		{
+			return;
+		}
+
+		try
+		{
+			if (await _sesion.RelevamientoActivoAsync() is not { } relevamientoId)
+			{
+				return; // sin relevamiento activo todavía; se reintenta en el próximo OnAppearing
+			}
+
+			var revision = await _revision.ObtenerAsync(relevamientoId);
+			if (revision is null)
+			{
+				return;
+			}
+
+			MapaWeb.Source = new HtmlWebViewSource { Html = MapaRevisionHtml.Construir(new VistaMapa(revision.Marcadores)) };
+			_mapaCargado = true;
+		}
+		catch
+		{
+			// El mapa es contexto: si no carga (sin conexión la 1ª vez), la captura sigue funcionando igual.
+		}
+	}
+
+	// H-02/H-03: obtiene el GPS (pidiendo permiso) y recentra el mapa de la captura en la posición del agente.
+	private async Task CentrarEnMiUbicacionAsync()
+	{
+		var coordenada = await UbicacionDispositivo.ObtenerAsync();
+		if (coordenada is null)
+		{
+			GeorrefLbl.Text = "No se pudo obtener tu ubicación. Activá el GPS y el permiso de ubicación.";
+			return;
+		}
+
+		await MapaWeb.EvaluateJavaScriptAsync(
+			ScriptUbicacionDispositivo.Centrar((double)coordenada.Latitud, (double)coordenada.Longitud));
 	}
 
 	// US-40 (bug en dispositivo): elegir foto de la galería sin que un fallo tumbe la app.
