@@ -20,12 +20,16 @@ public sealed class BandejaPage : ContentPage
     private double _centroLat = VistaMapa.CentroPorDefectoLat;
     private double _centroLon = VistaMapa.CentroPorDefectoLon;
 
-    public BandejaPage(ServicioSesion sesion, ClienteRevisionHttp cliente, ClienteUbicacionManual ubicacion)
+    public BandejaPage(ServicioSesion sesion, ClienteRevisionHttp cliente, ClienteUbicacionManual ubicacion, MonitorSincronizacion monitor)
     {
         _sesion = sesion;
         _cliente = cliente;
         _ubicacion = ubicacion;
         Title = "Bandeja";
+
+        // H-05: cinta de estado de conexión persistente.
+        var cinta = new CintaConexionView();
+        cinta.Vincular(monitor);
 
         _estado = new Label { Text = "Cargando la bandeja…", Margin = 16 };
         _lista = new CollectionView
@@ -42,10 +46,11 @@ public sealed class BandejaPage : ContentPage
 
         ToolbarItems.Add(new ToolbarItem("Recargar", null, async () => await CargarAsync()));
 
-        // El estado/conteo va arriba (fila Auto) y la lista debajo (fila *), sin superponerse.
-        var grid = new Grid { RowDefinitions = { new RowDefinition(GridLength.Auto), new RowDefinition(GridLength.Star) } };
-        grid.Add(_estado, 0, 0);
-        grid.Add(_lista, 0, 1);
+        // Cinta (Auto) arriba; estado/conteo (Auto) y lista (*) debajo, sin superponerse.
+        var grid = new Grid { RowDefinitions = { new RowDefinition(GridLength.Auto), new RowDefinition(GridLength.Auto), new RowDefinition(GridLength.Star) } };
+        grid.Add(cinta, 0, 0);
+        grid.Add(_estado, 0, 1);
+        grid.Add(_lista, 0, 2);
         Content = grid;
     }
 

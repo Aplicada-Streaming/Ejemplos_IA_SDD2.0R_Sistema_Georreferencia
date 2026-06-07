@@ -24,7 +24,7 @@ public partial class CapturaPage : ContentPage
 	private decimal? _latManual;
 	private decimal? _lonManual;
 
-	public CapturaPage(ServicioSesion sesion, ArmadorCapturaCampo armador, ArmadorUbicacionManual ubicador, IColaCapturas cola, MotorCapturas motor, IMarcadorCaptura marcadorCaptura)
+	public CapturaPage(ServicioSesion sesion, ArmadorCapturaCampo armador, ArmadorUbicacionManual ubicador, IColaCapturas cola, MotorCapturas motor, IMarcadorCaptura marcadorCaptura, MonitorSincronizacion monitor)
 	{
 		InitializeComponent();
 		_sesion = sesion;
@@ -33,6 +33,7 @@ public partial class CapturaPage : ContentPage
 		_cola = cola;
 		_motor = motor;
 		_marcadorCaptura = marcadorCaptura;
+		Cinta.Vincular(monitor); // H-05: cinta de estado de conexión persistente
 
 		// US-16/F-M-12: subir las capturas encoladas cuando haya conexión.
 		ToolbarItems.Add(new ToolbarItem("Sincronizar capturas", null, async () => await DrenarAsync("Sincronización de capturas.")));
