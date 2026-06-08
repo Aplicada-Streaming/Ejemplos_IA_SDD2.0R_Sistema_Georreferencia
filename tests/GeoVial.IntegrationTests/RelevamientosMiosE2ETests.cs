@@ -16,11 +16,11 @@ namespace GeoVial.IntegrationTests;
 /// relevamientos con asignación vigente del agente, no los del área a los que no está asignado. Cierra la
 /// fuga por la que el dispositivo del agente recibía relevamientos ajenos (el listado de área los traía todos).
 /// </summary>
-public class RelevamientosMiosE2ETests : IClassFixture<WebApplicationFactory<Program>>
+public class RelevamientosMiosE2ETests : IClassFixture<FabricaPruebas>
 {
     private readonly WebApplicationFactory<Program> _factory;
 
-    public RelevamientosMiosE2ETests(WebApplicationFactory<Program> factory) =>
+    public RelevamientosMiosE2ETests(FabricaPruebas factory) =>
         _factory = factory.WithWebHostBuilder(b => b.UseEnvironment("Development"));
 
     [Fact] // E2E / S47: /mios trae el asignado y NO un relevamiento no asignado de la misma área

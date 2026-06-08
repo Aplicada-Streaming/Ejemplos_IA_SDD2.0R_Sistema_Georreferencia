@@ -13,11 +13,11 @@ namespace GeoVial.IntegrationTests;
 /// creación y dos ediciones del mismo comentario (colisión) hace que el last-write-wins consolide y marque
 /// EdicionEnConflicto (RN-04); luego se lista y se confirma. Cierra la última deuda de E2E de conflictos.
 /// </summary>
-public class EdicionConflictoE2ETests : IClassFixture<WebApplicationFactory<Program>>
+public class EdicionConflictoE2ETests : IClassFixture<FabricaPruebas>
 {
     private readonly WebApplicationFactory<Program> _factory;
 
-    public EdicionConflictoE2ETests(WebApplicationFactory<Program> factory) =>
+    public EdicionConflictoE2ETests(FabricaPruebas factory) =>
         _factory = factory.WithWebHostBuilder(b => b.UseEnvironment("Development"));
 
     private static readonly DateTime T0 = new(2027, 5, 4, 10, 0, 0, DateTimeKind.Utc);

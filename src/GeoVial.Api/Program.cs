@@ -56,10 +56,20 @@ using (var scope = app.Services.CreateScope())
     var hasher = scope.ServiceProvider.GetRequiredService<GeoVial.Application.Abstracciones.IHasherClave>();
     await SeedInicial.EjecutarAsync(db, hasher);
 
-    // Solo en desarrollo: un relevamiento de demostración como destino de la app móvil (capturar → sync).
+    // Solo en desarrollo. Sobre la base persistente real (SQL Server) siembra la jerarquía de prueba +
+    // relevamientos de muestra + asignaciones (DATOS-DE-PRUEBA.md), idempotente: seguro de re-ejecutar en
+    // cada arranque. Sobre la base en memoria (pruebas de integración) mantiene el seed demo mínimo previo,
+    // para no alterar las aserciones del gate.
     if (app.Environment.IsDevelopment())
     {
-        await SeedDemo.EjecutarAsync(db);
+        if (db.Database.IsRelational())
+        {
+            await SeedDesarrollo.EjecutarAsync(db, hasher);
+        }
+        else
+        {
+            await SeedDemo.EjecutarAsync(db);
+        }
     }
 }
 

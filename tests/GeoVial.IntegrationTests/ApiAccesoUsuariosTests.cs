@@ -15,11 +15,11 @@ namespace GeoVial.IntegrationTests;
 /// Usan el proveedor en memoria (sin SQL Server) y el seed del usuario raíz (BT-10).
 /// Verifican el camino end-to-end de CU-02 (login), CU-03 (alta jerárquica) y CU-14 (autorización).
 /// </summary>
-public class ApiAccesoUsuariosTests : IClassFixture<WebApplicationFactory<Program>>
+public class ApiAccesoUsuariosTests : IClassFixture<FabricaPruebas>
 {
     private readonly WebApplicationFactory<Program> _factory;
 
-    public ApiAccesoUsuariosTests(WebApplicationFactory<Program> factory)
+    public ApiAccesoUsuariosTests(FabricaPruebas factory)
     {
         _factory = factory.WithWebHostBuilder(b => b.UseEnvironment("Development"));
     }

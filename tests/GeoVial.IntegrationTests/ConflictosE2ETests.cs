@@ -13,11 +13,11 @@ namespace GeoVial.IntegrationTests;
 /// marcadores, ampliar el radio para que queden en conflicto, detectar y resolver (unificar / mantener
 /// separados). Cierra la deuda de E2E de conflictos de las retros S18/S20.
 /// </summary>
-public class ConflictosE2ETests : IClassFixture<WebApplicationFactory<Program>>
+public class ConflictosE2ETests : IClassFixture<FabricaPruebas>
 {
     private readonly WebApplicationFactory<Program> _factory;
 
-    public ConflictosE2ETests(WebApplicationFactory<Program> factory) =>
+    public ConflictosE2ETests(FabricaPruebas factory) =>
         _factory = factory.WithWebHostBuilder(b => b.UseEnvironment("Development"));
 
     private static async Task<Guid> CapturarMarcadorAsync(HttpClient cliente, Guid relevamientoId, decimal lat, decimal lon)
