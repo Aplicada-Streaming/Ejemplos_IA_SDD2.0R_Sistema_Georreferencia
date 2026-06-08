@@ -5,10 +5,13 @@
              x:Class="GeoVial.Mobile.CapturaPage"
              Title="Captura de campo">
 
-    <!-- H-05: cinta persistente; H-01/H-03: la captura ocurre SOBRE el mapa (pines del relevamiento + posición del agente). -->
-    <Grid RowDefinitions="Auto,Auto,*">
+    <!-- H-05: cinta persistente; H-01/H-03: la captura ocurre SOBRE el mapa (pines del relevamiento + posición del agente).
+         La fila del mapa lleva altura FIJA (no Auto): el HTML de Leaflet usa `height:100%`, que necesita un contenedor
+         con altura definida; en una fila Auto el WebView no la tiene y el mapa quedaba en blanco. Una altura acotada,
+         además, deja la acción primaria de captura ("Tomar foto", H-11) a la vista sin desplazarse. -->
+    <Grid RowDefinitions="Auto,180,*">
         <local:CintaConexionView x:Name="Cinta" Grid.Row="0" />
-        <WebView x:Name="MapaWeb" Grid.Row="1" HeightRequest="240" />
+        <WebView x:Name="MapaWeb" Grid.Row="1" />
         <ScrollView Grid.Row="2">
         <VerticalStackLayout Padding="24" Spacing="14">
 

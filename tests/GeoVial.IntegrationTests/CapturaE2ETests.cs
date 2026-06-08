@@ -14,11 +14,11 @@ namespace GeoVial.IntegrationTests;
 /// credencial → relevamiento asignado— y autenticar, y verifican los flujos centrales sobre la API real:
 /// captura georreferenciada, ubicación manual y autorización por área (RN-01).
 /// </summary>
-public class CapturaE2ETests : IClassFixture<WebApplicationFactory<Program>>
+public class CapturaE2ETests : IClassFixture<FabricaPruebas>
 {
     private readonly WebApplicationFactory<Program> _factory;
 
-    public CapturaE2ETests(WebApplicationFactory<Program> factory) =>
+    public CapturaE2ETests(FabricaPruebas factory) =>
         _factory = factory.WithWebHostBuilder(b => b.UseEnvironment("Development"));
 
     [Fact] // E2E: captura georreferenciada → FotoId → subir binario → descargar → revisión → comentar
