@@ -102,11 +102,33 @@ builder.Services.AddAuthorization();
 
 var app = builder.Build();
 
+// Despliegue (hardening): invocado como `migrate` aplica las migraciones y **termina** (paso de despliegue:
+// un job / init-container migra una vez, antes de levantar las instancias que sirven tráfico).
+if (PoliticaMigracion.EsComandoMigrar(args))
+{
+    using var scopeMigracion = app.Services.CreateScope();
+    var dbMigracion = scopeMigracion.ServiceProvider.GetRequiredService<GeoVialDbContext>();
+    if (dbMigracion.Database.IsRelational())
+    {
+        await dbMigracion.Database.MigrateAsync();
+    }
+
+    return; // migró y sale; no levanta el servidor
+}
+
 // Seed de arranque (BT-10): usuario raíz y área inicial.
 using (var scope = app.Services.CreateScope())
 {
     var db = scope.ServiceProvider.GetRequiredService<GeoVialDbContext>();
     var hasher = scope.ServiceProvider.GetRequiredService<GeoVial.Application.Abstracciones.IHasherClave>();
+
+    // En Development se auto-migra al arrancar (instancia única). En producción NO: la migración es el paso
+    // de despliegue `migrate` (arriba), y el readiness no da OK mientras haya migraciones pendientes.
+    if (PoliticaMigracion.DebeAutoMigrarAlArrancar(app.Environment.EnvironmentName) && db.Database.IsRelational())
+    {
+        await db.Database.MigrateAsync();
+    }
+
     await SeedInicial.EjecutarAsync(db, hasher);
 
     // Solo en desarrollo. Sobre la base persistente real (SQL Server) siembra la jerarquía de prueba +
