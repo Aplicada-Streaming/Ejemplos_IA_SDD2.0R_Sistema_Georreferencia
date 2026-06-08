@@ -3,10 +3,12 @@ using GeoVial.Application.Conflictos;
 using GeoVial.Application.Cqrs;
 using GeoVial.Application.ExportImport;
 using GeoVial.Application.Relevamientos;
+using GeoVial.Application.Reportes;
 using GeoVial.Application.Revision;
 using GeoVial.Application.Servicios;
 using GeoVial.Application.Sincronizacion;
 using GeoVial.Domain;
+using GeoVial.Shared;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace GeoVial.Application;
@@ -45,6 +47,9 @@ public static class DependencyInjection
         servicios.AddScoped<IManejador<EtiquetarComentarioCommand, Resultado>, EtiquetarComentarioHandler>();
         servicios.AddScoped<IManejador<EliminarFotoCommand, Resultado>, EliminarFotoHandler>();
         servicios.AddScoped<IManejador<RevisarRelevamientoQuery, RevisionRelevamiento?>, RevisarRelevamientoHandler>();
+
+        // Reporting/analytics: resumen de actividad del relevamiento para el tablero de jefes.
+        servicios.AddScoped<IManejador<ResumenRelevamientoQuery, ResumenRelevamientoDto?>, ResumenRelevamientoHandler>();
 
         // Módulo de detección y resolución de conflictos por radio (CU-11, CU-12; EP-06).
         servicios.AddScoped<IManejador<DetectarConflictosCommand, Resultado<IReadOnlyList<ConflictoDetectado>>>, DetectarConflictosHandler>();
