@@ -1,4 +1,5 @@
 using GeoVial.Sync;
+using Microsoft.Maui.Accessibility;
 
 namespace GeoVial.Mobile;
 
@@ -54,9 +55,9 @@ public sealed class CintaConexionView : ContentView
     }
 
     private void OnCambiado(object? sender, ResumenSincronizacion resumen) =>
-        MainThread.BeginInvokeOnMainThread(() => Render(resumen));
+        MainThread.BeginInvokeOnMainThread(() => Render(resumen, anunciar: true));
 
-    private void Render(ResumenSincronizacion resumen)
+    private void Render(ResumenSincronizacion resumen, bool anunciar = false)
     {
         var v = PresentacionCintaConexion.Para(resumen);
         var textoColor = Color.FromArgb(v.ColorTexto);
@@ -67,5 +68,12 @@ public sealed class CintaConexionView : ContentView
         _borde.BackgroundColor = Color.FromArgb(v.ColorFondo);
         // Anuncio accesible: el lector de pantalla lee el estado completo, no sólo el color.
         SemanticProperties.SetDescription(this, $"Estado de sincronización: {v.Texto}");
+        // H-14 (auditoría UX, región en vivo): al CAMBIAR el estado (no en el render inicial) se anuncia por el
+        // lector de pantalla, para que el agente —que en terreno suele no estar mirando la pantalla— se entere de
+        // "sin conexión", "sincronizando", "pendiente", etc. sin tener que enfocar la cinta.
+        if (anunciar)
+        {
+            try { SemanticScreenReader.Default.Announce(v.Texto); } catch { /* sin lector activo: no pasa nada */ }
+        }
     }
 }
