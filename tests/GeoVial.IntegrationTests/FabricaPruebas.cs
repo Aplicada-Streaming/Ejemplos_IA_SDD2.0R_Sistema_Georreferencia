@@ -12,7 +12,7 @@ namespace GeoVial.IntegrationTests;
 /// conexión a SQL Server que <c>appsettings.Development.json</c> define para el desarrollo real (host DEV):
 /// el gate sigue corriendo sin SQL Server, determinista y aislado, como antes de cablear la base real.
 /// </summary>
-public sealed class FabricaPruebas : WebApplicationFactory<Program>
+public class FabricaPruebas : WebApplicationFactory<Program>
 {
     private readonly string _nombreBase = $"pruebas-{Guid.NewGuid():N}";
 

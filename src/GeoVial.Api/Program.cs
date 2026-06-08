@@ -1,5 +1,6 @@
 using System.Security.Claims;
 using System.Text;
+using System.Threading.RateLimiting;
 using GeoVial.Api;
 using GeoVial.Application;
 using GeoVial.Application.Captura;
@@ -61,6 +62,23 @@ if (!builder.Environment.IsDevelopment())
 builder.Services.AddHttpLogging(opciones =>
     opciones.LoggingFields = HttpLoggingFields.RequestMethod | HttpLoggingFields.RequestPath |
         HttpLoggingFields.ResponseStatusCode | HttpLoggingFields.Duration);
+
+// Manejo global de errores (hardening): las excepciones no controladas devuelven un ProblemDetails 500 genérico
+// (sin filtrar el stack en producción), en vez del 500 por defecto.
+builder.Services.AddExceptionHandler<ManejadorExcepcionesGlobal>();
+
+// Rate limiting (hardening): acota los intentos contra los endpoints de autenticación (objetivo de fuerza bruta),
+// por IP y ventana fija. Configurable; el default es generoso para no molestar el uso normal y atajar el abuso.
+var limiteAuth = builder.Configuration.GetValue("RateLimit:Auth:PermitLimit", 60);
+var ventanaAuthSeg = builder.Configuration.GetValue("RateLimit:Auth:VentanaSegundos", 60);
+builder.Services.AddRateLimiter(opciones =>
+{
+    opciones.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
+    opciones.AddPolicy("auth", contexto =>
+        RateLimitPartition.GetFixedWindowLimiter(
+            contexto.Connection.RemoteIpAddress?.ToString() ?? "desconocida",
+            _ => new FixedWindowRateLimiterOptions { PermitLimit = limiteAuth, Window = TimeSpan.FromSeconds(ventanaAuthSeg), QueueLimit = 0 }));
+});
 
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
@@ -127,7 +145,24 @@ app.Use(async (contexto, siguiente) =>
     }
 });
 
+// Cabeceras de seguridad (hardening) en toda respuesta (incluidas las de error y health).
+app.Use(async (contexto, siguiente) =>
+{
+    foreach (var (nombre, valor) in CabecerasSeguridad.Predeterminadas)
+    {
+        contexto.Response.Headers[nombre] = valor;
+    }
+
+    await siguiente(contexto);
+});
+
+// Manejo global de errores: las excepciones no controladas devuelven un ProblemDetails 500 genérico
+// (sin filtrar detalles). Va dentro del scope de correlación, así el log del error queda correlacionado.
+app.UseExceptionHandler();
+
 app.UseHttpLogging();
+
+app.UseRateLimiter();
 
 app.UseAuthentication();
 app.UseAuthorization();
@@ -137,8 +172,14 @@ app.UseAuthorization();
 app.MapHealthChecks("/health", new HealthCheckOptions { Predicate = _ => false });
 app.MapHealthChecks("/health/ready", new HealthCheckOptions { Predicate = chequeo => chequeo.Tags.Contains("ready") });
 
-// --- Acceso (CU-02; US-04, US-05) ---
-var auth = app.MapGroup("/api/v1/auth");
+// Sólo en Development/tests: endpoint que lanza una excepción, para verificar el manejador global de errores.
+if (app.Environment.IsDevelopment())
+{
+    app.MapGet("/_diagnostico/excepcion", (Action)(() => throw new InvalidOperationException("excepción de prueba")));
+}
+
+// --- Acceso (CU-02; US-04, US-05) — con rate limiting (hardening): acota la fuerza bruta sobre la autenticación ---
+var auth = app.MapGroup("/api/v1/auth").RequireRateLimiting("auth");
 
 auth.MapPost("/login", async (LoginRequest req, AccesoService acceso, CancellationToken ct) =>
 {
