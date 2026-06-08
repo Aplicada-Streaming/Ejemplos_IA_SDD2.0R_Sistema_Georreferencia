@@ -15,12 +15,9 @@ public static class SeedInicial
 
     public static async Task EjecutarAsync(GeoVialDbContext db, IHasherClave hasher, CancellationToken ct = default)
     {
-        if (db.Database.IsRelational())
-        {
-            // Aplica las migraciones de EF Core sobre la base local (ADR-09, migración 20260601_InitialCreate).
-            await db.Database.MigrateAsync(ct);
-        }
-
+        // La migración del esquema la decide Program.cs según la política de despliegue (PoliticaMigracion):
+        // auto en Development; en producción es un paso explícito ("migrate"). Acá sólo se siembra el raíz,
+        // asumiendo que el esquema ya existe (o que la base en memoria lo crea sola).
         if (await db.Usuarios.AnyAsync(u => u.Rol == RolJerarquico.Raiz, ct))
         {
             return;
