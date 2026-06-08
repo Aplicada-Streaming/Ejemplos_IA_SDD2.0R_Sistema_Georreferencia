@@ -39,13 +39,16 @@ public partial class CapturaPage : ContentPage
 		Cinta.Vincular(monitor); // H-05: cinta de estado de conexión persistente
 
 #if ANDROID
-		// H-01/H-03: el mapa de la captura cachea las teselas de OSM en disco (offline parcial, S38).
+		// H-01/H-03: el mapa de la captura cachea las teselas de OSM en disco (offline parcial, S38) e intercepta
+		// el esquema centinela del punto tocado (evolución de H-01): el client reemplaza al de MAUI, así que la
+		// intercepción va acá, no por el evento Navigating.
 		MapaWeb.HandlerChanged += (_, _) =>
 		{
 			if (MapaWeb.Handler?.PlatformView is Android.Webkit.WebView nativo)
 			{
 				var carpeta = Path.Combine(FileSystem.CacheDirectory, "teselas");
-				nativo.SetWebViewClient(new MapaWebViewClient(new CacheTeselasDisco(carpeta)));
+				nativo.SetWebViewClient(new MapaWebViewClient(new CacheTeselasDisco(carpeta),
+					url => MainThread.BeginInvokeOnMainThread(() => OnPuntoMapa(url))));
 			}
 		};
 #endif
@@ -84,7 +87,7 @@ public partial class CapturaPage : ContentPage
 				return;
 			}
 
-			MapaWeb.Source = new HtmlWebViewSource { Html = MapaRevisionHtml.Construir(new VistaMapa(revision.Marcadores)) };
+			MapaWeb.Source = new HtmlWebViewSource { Html = MapaCapturaHtml.Construir(new VistaMapa(revision.Marcadores)) };
 			_mapaCargado = true;
 		}
 		catch
@@ -105,6 +108,16 @@ public partial class CapturaPage : ContentPage
 
 		await MapaWeb.EvaluateJavaScriptAsync(
 			ScriptUbicacionDispositivo.Centrar((double)coordenada.Latitud, (double)coordenada.Longitud));
+	}
+
+	// Evolución de H-01: el agente fijó la coordenada de la captura tocando (o arrastrando el pin) el mapa embebido;
+	// el HTML avisa por geovial-ubicar://place?lat=..&lon=.. y acá se fija como coordenada de la captura.
+	private void OnPuntoMapa(string url)
+	{
+		if (ParseadorMensajeUbicacion.Intentar(url) is { } punto)
+		{
+			FijarCoordenada(punto.Latitud, punto.Longitud);
+		}
 	}
 
 	// US-40 (bug en dispositivo): elegir foto de la galería sin que un fallo tumbe la app.
@@ -198,10 +211,10 @@ public partial class CapturaPage : ContentPage
 			}
 			else
 			{
-				// US-13/CU-05: la foto no trae coordenada. Se puede ubicar a mano AHORA (antes de encolar),
-				// así la captura viaja con su coordenada; si no, irá a la bandeja sin georreferenciar.
+				// US-13/CU-05 (evolución H-01): la foto no trae coordenada. Lo más cómodo es tocar el mapa de
+				// arriba para fijar el punto; si no, ubicarla a mano abajo. Sin coordenada, irá a la bandeja.
 				UbicacionPanel.IsVisible = true;
-				GeorrefLbl.Text = "La foto no trae ubicación: ubicala a mano abajo o encolala para la bandeja.";
+				GeorrefLbl.Text = "La foto no trae ubicación: tocá el mapa de arriba para fijar el punto (o ubicala a mano abajo), o encolala para la bandeja.";
 			}
 		}
 		catch (Exception ex)
