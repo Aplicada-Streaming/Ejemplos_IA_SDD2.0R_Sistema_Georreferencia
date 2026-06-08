@@ -26,10 +26,9 @@ public static class MapaRevisionHtml
             comentarios = p.Comentarios,
         }));
 
-        // Plantilla con tokens (sin interpolación de C#) para no lidiar con el escape de llaves del JS/CSS.
-        return Plantilla
-            .Replace("__URL_TESELAS__", MapaTeselas.UrlPlantilla)
-            .Replace("__ATRIBUCION__", MapaTeselas.Atribucion)
+        // Sólo el script propio lleva tokens (sin interpolación de C#, para no escapar las llaves del JS); la
+        // cabecera Leaflet + creación del mapa + teselas las aporta el andamiaje compartido MapaLeaflet.
+        var script = Script
             .Replace("__ESQUEMA_MARCADOR__", ParseadorMensajeMarcador.Esquema)
             .Replace("__PINES__", pinesJson)
             .Replace("__CENTRO_LAT__", vista.CentroLat.ToString(ci))
@@ -38,28 +37,13 @@ public static class MapaRevisionHtml
             .Replace("__MIN_LON__", vista.MinLon.ToString(ci))
             .Replace("__MAX_LAT__", vista.MaxLat.ToString(ci))
             .Replace("__MAX_LON__", vista.MaxLon.ToString(ci));
+
+        return MapaLeaflet.Documento("html, body, #mapa { height: 100%; margin: 0; }", "  <div id=\"mapa\"></div>", script);
     }
 
-    private const string Plantilla =
+    private const string Script =
 """
-<!DOCTYPE html>
-<html>
-<head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-  <style>html, body, #mapa { height: 100%; margin: 0; }</style>
-</head>
-<body>
-  <div id="mapa"></div>
-  <script>
-    var pines = __PINES__;
-    var mapa = L.map('mapa');
-    L.tileLayer('__URL_TESELAS__', {
-      maxZoom: 19,
-      attribution: '__ATRIBUCION__'
-    }).addTo(mapa);
+var pines = __PINES__;
     if (pines.length === 0) {
       mapa.setView([__CENTRO_LAT__, __CENTRO_LON__], 4);
     } else {
@@ -78,8 +62,5 @@ public static class MapaRevisionHtml
         mapa.fitBounds([[__MIN_LAT__, __MIN_LON__], [__MAX_LAT__, __MAX_LON__]], { padding: [30, 30] });
       }
     }
-  </script>
-</body>
-</html>
 """;
 }

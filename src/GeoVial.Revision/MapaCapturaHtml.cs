@@ -27,10 +27,9 @@ public static class MapaCapturaHtml
             conflicto = p.EnConflicto,
         }));
 
-        // Plantilla con tokens (sin interpolación de C#) para no lidiar con el escape de llaves del JS/CSS.
-        return Plantilla
-            .Replace("__URL_TESELAS__", MapaTeselas.UrlPlantilla)
-            .Replace("__ATRIBUCION__", MapaTeselas.Atribucion)
+        // Sólo el script propio lleva tokens; la cabecera Leaflet + creación del mapa + teselas las aporta el
+        // andamiaje compartido MapaLeaflet (control de mapa compartido).
+        var script = Script
             .Replace("__ESQUEMA__", ParseadorMensajeUbicacion.Esquema)
             .Replace("__PINES__", pinesJson)
             .Replace("__CENTRO_LAT__", vista.CentroLat.ToString(ci))
@@ -39,25 +38,13 @@ public static class MapaCapturaHtml
             .Replace("__MIN_LON__", vista.MinLon.ToString(ci))
             .Replace("__MAX_LAT__", vista.MaxLat.ToString(ci))
             .Replace("__MAX_LON__", vista.MaxLon.ToString(ci));
+
+        return MapaLeaflet.Documento("html, body, #mapa { height: 100%; margin: 0; }", "  <div id=\"mapa\"></div>", script);
     }
 
-    private const string Plantilla =
+    private const string Script =
 """
-<!DOCTYPE html>
-<html>
-<head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-  <style>html, body, #mapa { height: 100%; margin: 0; }</style>
-</head>
-<body>
-  <div id="mapa"></div>
-  <script>
-    var pines = __PINES__;
-    var mapa = L.map('mapa');
-    L.tileLayer('__URL_TESELAS__', { maxZoom: 19, attribution: '__ATRIBUCION__' }).addTo(mapa);
+var pines = __PINES__;
     // Marcadores de contexto del relevamiento (círculos, no arrastrables): para ubicarse respecto de lo ya capturado.
     pines.forEach(function (p) {
       var color = p.conflicto ? '#c62828' : '#1565c0';
@@ -85,8 +72,5 @@ public static class MapaCapturaHtml
       avisar(latlng);
     }
     mapa.on('click', function (e) { fijarCaptura(e.latlng); });
-  </script>
-</body>
-</html>
 """;
 }
