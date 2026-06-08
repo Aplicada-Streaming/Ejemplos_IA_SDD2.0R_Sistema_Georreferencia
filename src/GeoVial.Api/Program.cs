@@ -5,6 +5,7 @@ using GeoVial.Application;
 using GeoVial.Application.Captura;
 using GeoVial.Application.Configuracion;
 using GeoVial.Application.Conflictos;
+using GeoVial.Application.Observabilidad;
 using GeoVial.Application.Cqrs;
 using GeoVial.Application.ExportImport;
 using GeoVial.Application.Relevamientos;
@@ -18,6 +19,7 @@ using GeoVial.Infrastructure.Seguridad;
 using GeoVial.Shared;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
+using Microsoft.AspNetCore.HttpLogging;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
@@ -45,6 +47,20 @@ builder.Services.AddInfrastructure(builder.Configuration);
 // Health checks (hardening): liveness (/health) y readiness (/health/ready, con chequeo de base de datos).
 builder.Services.AddHealthChecks()
     .AddCheck<ChequeoBaseDeDatos>("base-de-datos", tags: ["ready"]);
+
+// Observabilidad (hardening): fuera de Development, logs **estructurados** (JSON) para que un agregador
+// (ELK / Loki / CloudWatch) los parsee; en Development se conserva la consola legible.
+if (!builder.Environment.IsDevelopment())
+{
+    builder.Logging.ClearProviders();
+    builder.Logging.AddJsonConsole();
+}
+
+// Log de cada request (método, ruta, estado, duración) para diagnóstico; los detalles van con el id de
+// correlación en el scope, así se rastrea una petición de punta a punta.
+builder.Services.AddHttpLogging(opciones =>
+    opciones.LoggingFields = HttpLoggingFields.RequestMethod | HttpLoggingFields.RequestPath |
+        HttpLoggingFields.ResponseStatusCode | HttpLoggingFields.Duration);
 
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
@@ -96,6 +112,22 @@ if (app.Environment.IsDevelopment())
 {
     app.MapOpenApi();
 }
+
+// Observabilidad (hardening): id de correlación por request. Reusa el que venga en la cabecera (válido) o genera
+// uno; lo pone en el scope de logging (todos los logs del request lo llevan) y lo devuelve en la respuesta, para
+// rastrear una petición de punta a punta. Va temprano para envolver también el log HTTP y la autenticación.
+app.Use(async (contexto, siguiente) =>
+{
+    var id = Correlacion.Resolver(contexto.Request.Headers[Correlacion.Cabecera]);
+    contexto.Response.Headers[Correlacion.Cabecera] = id;
+    var logger = contexto.RequestServices.GetRequiredService<ILoggerFactory>().CreateLogger("GeoVial.Request");
+    using (logger.BeginScope(new Dictionary<string, object> { ["CorrelationId"] = id }))
+    {
+        await siguiente(contexto);
+    }
+});
+
+app.UseHttpLogging();
 
 app.UseAuthentication();
 app.UseAuthorization();
