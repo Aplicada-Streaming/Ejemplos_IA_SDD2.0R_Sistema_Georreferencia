@@ -3,6 +3,7 @@ using System.Text;
 using GeoVial.Api;
 using GeoVial.Application;
 using GeoVial.Application.Captura;
+using GeoVial.Application.Configuracion;
 using GeoVial.Application.Conflictos;
 using GeoVial.Application.Cqrs;
 using GeoVial.Application.ExportImport;
@@ -16,16 +17,34 @@ using GeoVial.Infrastructure.Persistencia;
 using GeoVial.Infrastructure.Seguridad;
 using GeoVial.Shared;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 
 var builder = WebApplication.CreateBuilder(args);
 
+// Hardening (producción): no arrancar con configuración insegura. En producción se exige una base real (no
+// InMemory) y una clave JWT propia (no la de desarrollo, que es pública). Falla rápido antes de levantar.
+var erroresConfig = GuardrailsProduccion.Validar(
+    builder.Environment.EnvironmentName,
+    builder.Configuration.GetConnectionString("GeoVial"),
+    builder.Configuration[$"{JwtOptions.Seccion}:ClaveSecreta"]);
+if (erroresConfig.Count > 0)
+{
+    throw new InvalidOperationException(
+        $"Configuración de arranque inválida para el entorno '{builder.Environment.EnvironmentName}':{Environment.NewLine} - " +
+        string.Join($"{Environment.NewLine} - ", erroresConfig));
+}
+
 builder.Services.AddOpenApi();
 builder.Services.AddProblemDetails();
 builder.Services.AddApplication();
 builder.Services.AddInfrastructure(builder.Configuration);
+
+// Health checks (hardening): liveness (/health) y readiness (/health/ready, con chequeo de base de datos).
+builder.Services.AddHealthChecks()
+    .AddCheck<ChequeoBaseDeDatos>("base-de-datos", tags: ["ready"]);
 
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
@@ -80,6 +99,11 @@ if (app.Environment.IsDevelopment())
 
 app.UseAuthentication();
 app.UseAuthorization();
+
+// Health checks (hardening, anónimos): /health = liveness (el proceso responde); /health/ready = readiness
+// (la base de datos es alcanzable). Pensados para sondas de contenedor / balanceador.
+app.MapHealthChecks("/health", new HealthCheckOptions { Predicate = _ => false });
+app.MapHealthChecks("/health/ready", new HealthCheckOptions { Predicate = chequeo => chequeo.Tags.Contains("ready") });
 
 // --- Acceso (CU-02; US-04, US-05) ---
 var auth = app.MapGroup("/api/v1/auth");
