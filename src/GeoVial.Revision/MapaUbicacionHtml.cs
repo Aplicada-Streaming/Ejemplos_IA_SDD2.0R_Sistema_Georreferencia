@@ -14,37 +14,33 @@ public static class MapaUbicacionHtml
     public static string Construir(double centroLat, double centroLon)
     {
         var ci = CultureInfo.InvariantCulture;
-        return Plantilla
-            .Replace("__URL_TESELAS__", MapaTeselas.UrlPlantilla)
-            .Replace("__ATRIBUCION__", MapaTeselas.Atribucion)
+        var script = Script
             .Replace("__ESQUEMA__", ParseadorMensajeUbicacion.Esquema)
             .Replace("__CENTRO_LAT__", centroLat.ToString(ci))
             .Replace("__CENTRO_LON__", centroLon.ToString(ci));
+
+        return MapaLeaflet.Documento(Estilos, Cuerpo, script);
     }
 
-    private const string Plantilla =
+    // El mapa ocupa todo menos una barra inferior con el botón de confirmar (lo propio de este mapa).
+    private const string Estilos =
 """
-<!DOCTYPE html>
-<html>
-<head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-  <style>
-    html, body { height: 100%; margin: 0; }
+html, body { height: 100%; margin: 0; }
     #mapa { position: absolute; top: 0; bottom: 56px; left: 0; right: 0; }
     #barra { position: absolute; bottom: 0; left: 0; right: 0; height: 56px; display: flex; }
     #confirmar { flex: 1; font-size: 16px; border: 0; background: #1565c0; color: #fff; }
     #confirmar:disabled { background: #9e9e9e; }
-  </style>
-</head>
-<body>
+""";
+
+    private const string Cuerpo =
+"""
   <div id="mapa"></div>
   <div id="barra"><button id="confirmar" disabled>Tocá el mapa para elegir el punto</button></div>
-  <script>
-    var mapa = L.map('mapa').setView([__CENTRO_LAT__, __CENTRO_LON__], 13);
-    L.tileLayer('__URL_TESELAS__', { maxZoom: 19, attribution: '__ATRIBUCION__' }).addTo(mapa);
+""";
+
+    private const string Script =
+"""
+mapa.setView([__CENTRO_LAT__, __CENTRO_LON__], 13);
     var marcador = null;
     var elegido = null;
     var boton = document.getElementById('confirmar');
@@ -58,8 +54,5 @@ public static class MapaUbicacionHtml
       if (!elegido) { return; }
       window.location.href = '__ESQUEMA__://place?lat=' + elegido.lat + '&lon=' + elegido.lng;
     });
-  </script>
-</body>
-</html>
 """;
 }
