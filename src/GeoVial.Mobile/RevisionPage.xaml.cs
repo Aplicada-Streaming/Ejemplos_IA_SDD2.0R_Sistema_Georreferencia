@@ -42,7 +42,20 @@ public partial class RevisionPage : ContentPage
 		Cinta.Vincular(monitor); // H-05: cinta de estado de conexión persistente
 	}
 
-	private async void OnCargar(object? sender, EventArgs e)
+	// H-10 (auditoría UX): la revisión se carga al entrar a la solapa, sin esperar un toque a "Cargar revisión"
+	// (el botón se conserva para refrescar a mano). Se carga una vez; las ediciones refrescan vía RecargarAsync.
+	protected override async void OnAppearing()
+	{
+		base.OnAppearing();
+		if (_nav is null)
+		{
+			await CargarRevisionAsync();
+		}
+	}
+
+	private async void OnCargar(object? sender, EventArgs e) => await CargarRevisionAsync();
+
+	private async Task CargarRevisionAsync()
 	{
 		try
 		{
@@ -66,9 +79,10 @@ public partial class RevisionPage : ContentPage
 			_nav = new NavegadorRevision(revision);
 			await RenderAsync();
 		}
-		catch (Exception ex)
+		catch (Exception)
 		{
-			MarcadorLbl.Text = $"Error al cargar: {ex.Message}";
+			// UX experiencia §8: mensaje llano, sin el detalle técnico de la excepción.
+			MarcadorLbl.Text = "No se pudo cargar la revisión. Revisá tu conexión e intentá de nuevo.";
 		}
 	}
 

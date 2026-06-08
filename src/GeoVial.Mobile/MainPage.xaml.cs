@@ -28,7 +28,8 @@ public partial class MainPage : ContentPage
 
 		// Cerrar sesión (US-40): limpia el token del HttpClient compartido y vuelve al login.
 		// Logout total (S55): el próximo ingreso es con usuario y clave (el patrón es para volver a la sesión, no tras cerrarla).
-		ToolbarItems.Add(new ToolbarItem("Cerrar sesión (pedirá clave)", null, CerrarSesion));
+		// H-12 (auditoría UX): va al overflow (Order=Secondary) para evitar el toque accidental de una acción destructiva.
+		ToolbarItems.Add(new ToolbarItem("Cerrar sesión (pedirá clave)", null, CerrarSesion) { Order = ToolbarItemOrder.Secondary });
 	}
 
 	protected override async void OnAppearing()

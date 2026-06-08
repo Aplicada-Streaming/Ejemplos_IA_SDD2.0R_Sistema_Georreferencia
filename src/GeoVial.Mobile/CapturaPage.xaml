@@ -16,8 +16,12 @@
             <Label Text="Elegí o tomá una foto: la coordenada se deriva de sus metadatos EXIF (RN-03). Si no trae ubicación, la observación va a la bandeja y podés ubicarla a mano."
                    FontSize="13" TextColor="#666666" />
 
-            <Button x:Name="ElegirBtn" Text="Elegir foto" Clicked="OnElegirFoto" />
-            <Button x:Name="TomarBtn" Text="Tomar foto" Clicked="OnTomarFoto" />
+            <!-- H-11 (auditoría UX): "Tomar foto" es la acción primaria de campo (disparador) — objetivo grande y
+                 destacado (Ley de Fitts); "Elegir foto" (galería) queda como acción secundaria. -->
+            <Button x:Name="TomarBtn" Text="📷 Tomar foto" Clicked="OnTomarFoto"
+                    FontSize="20" FontAttributes="Bold" HeightRequest="64" />
+            <Button x:Name="ElegirBtn" Text="Elegir foto de la galería" Clicked="OnElegirFoto"
+                    FontSize="14" BackgroundColor="Transparent" TextColor="#1565c0" />
 
             <Border Padding="12" Stroke="#cccccc" StrokeThickness="1" Margin="0,8,0,0">
                 <Label x:Name="GeorrefLbl" Text="Sin foto seleccionada." />

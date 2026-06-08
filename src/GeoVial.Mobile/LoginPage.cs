@@ -31,8 +31,10 @@ public sealed class LoginPage : ContentPage
         _biometrico = biometrico;
         Title = "GeoVial";
 
-        _usuario = new Entry { Placeholder = "Usuario", ReturnType = ReturnType.Next };
-        _clave = new Entry { Placeholder = "Clave", IsPassword = true, ReturnType = ReturnType.Go };
+        // H-13 (auditoría UX): placeholder con contraste suficiente (gris claro por defecto < 4.5:1 sobre blanco).
+        var grisPlaceholder = Color.FromArgb("#595959"); // ~7:1 sobre blanco (WCAG 2.2 AA 1.4.3)
+        _usuario = new Entry { Placeholder = "Usuario", PlaceholderColor = grisPlaceholder, ReturnType = ReturnType.Next };
+        _clave = new Entry { Placeholder = "Clave", PlaceholderColor = grisPlaceholder, IsPassword = true, ReturnType = ReturnType.Go };
         // Ojito: mostrar/ocultar la clave para evitar errores de tipeo en el teléfono (S54).
         var verClave = new Button { Text = "👁", WidthRequest = 52, BackgroundColor = Colors.Transparent, FontSize = 18 };
         verClave.Clicked += (_, _) =>
