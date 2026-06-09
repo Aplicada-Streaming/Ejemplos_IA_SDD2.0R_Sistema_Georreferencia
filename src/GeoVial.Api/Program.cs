@@ -10,6 +10,7 @@ using GeoVial.Application.Observabilidad;
 using GeoVial.Application.Cqrs;
 using GeoVial.Application.ExportImport;
 using GeoVial.Application.Relevamientos;
+using GeoVial.Application.Reportes;
 using GeoVial.Application.Revision;
 using GeoVial.Application.Servicios;
 using GeoVial.Application.Sincronizacion;
@@ -450,6 +451,18 @@ relevamientos.MapGet("/{relevamientoId:guid}/revision", async (Guid relevamiento
 
     var revision = await mediador.EnviarAsync(new RevisarRelevamientoQuery(id, relevamientoId, filtro), ct);
     return revision is null ? Results.NotFound() : Results.Ok(AMapaRevision(revision));
+});
+
+// Reporting/analytics (tablero de jefes): resumen de actividad del relevamiento (totales + productividad por agente).
+relevamientos.MapGet("/{relevamientoId:guid}/resumen", async (Guid relevamientoId, ClaimsPrincipal solicitante, IMediador mediador, CancellationToken ct) =>
+{
+    if (!TryGetUsuarioId(solicitante, out var id))
+    {
+        return Results.Unauthorized();
+    }
+
+    var resumen = await mediador.EnviarAsync(new ResumenRelevamientoQuery(id, relevamientoId), ct);
+    return resumen is null ? Results.NotFound() : Results.Ok(resumen);
 });
 
 var marcadores = app.MapGroup("/api/v1/marcadores").RequireAuthorization();
