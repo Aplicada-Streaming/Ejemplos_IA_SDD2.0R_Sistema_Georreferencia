@@ -183,6 +183,17 @@ public sealed class GeoVialApiCliente
         return resp.IsSuccessStatusCode ? await resp.Content.ReadFromJsonAsync<RevisionRelevamientoDto>(ct) : null;
     }
 
+    // --- Reporting / analytics (tablero de jefes) ---
+
+    /// <summary>Resumen de actividad del relevamiento (totales + productividad por agente). Null si no hay acceso.</summary>
+    public async Task<ResumenRelevamientoDto?> ObtenerResumenAsync(Guid relevamientoId, CancellationToken ct = default)
+    {
+        using var reqResumen = new HttpRequestMessage(HttpMethod.Get, $"api/v1/relevamientos/{relevamientoId}/resumen");
+        Autorizar(reqResumen);
+        var respResumen = await _http.SendAsync(reqResumen, ct);
+        return respResumen.IsSuccessStatusCode ? await respResumen.Content.ReadFromJsonAsync<ResumenRelevamientoDto>(ct) : null;
+    }
+
     public async Task<byte[]?> DescargarContenidoFotoAsync(Guid fotoId, CancellationToken ct = default)
     {
         using var req = new HttpRequestMessage(HttpMethod.Get, $"api/v1/fotos/{fotoId}/contenido");

@@ -1,0 +1,137 @@
+@page "/tablero"
+@rendermode InteractiveServer
+@using GeoVial.Shared
+@using GeoVial.Web.Servicios
+@inject GeoVialApiCliente Api
+
+<PageTitle>GeoVial — Tablero</PageTitle>
+
+<h1>Tablero de actividad</h1>
+<p>Reporting (Sprint 72/73): resumen de actividad de un relevamiento — totales y productividad por agente. Para jefes (acceso por área).</p>
+
+@if (!Api.Autenticado)
+{
+    <section>
+        <h2>Iniciar sesión</h2>
+        <div><label>Usuario: <input @bind="usuario" /></label></div>
+        <div><label>Clave: <input type="password" @bind="clave" /></label></div>
+        <button @onclick="Login">Ingresar</button>
+        @if (mensaje is not null)
+        {
+            <p role="alert">@mensaje</p>
+        }
+    </section>
+}
+else
+{
+    <section>
+        <button @onclick="Salir">Cerrar sesión</button>
+
+        <h2>Elegí un relevamiento</h2>
+        <button @onclick="RefrescarRelevamientos">Refrescar lista</button>
+        <select @onchange="OnSeleccion">
+            <option value="">— elegí —</option>
+            @foreach (var r in relevamientos)
+            {
+                <option value="@r.RelevamientoId">@r.IdentificacionObra</option>
+            }
+        </select>
+
+        @if (mensaje is not null)
+        {
+            <p role="alert">@mensaje</p>
+        }
+
+        @if (resumen is not null)
+        {
+            <h2>@resumen.IdentificacionObra — @NombreEstado(resumen.Estado)</h2>
+            <table>
+                <tbody>
+                    <tr><th>Marcadores</th><td>@resumen.Marcadores</td></tr>
+                    <tr><th>En conflicto</th><td>@resumen.MarcadoresEnConflicto</td></tr>
+                    <tr><th>Observaciones</th><td>@resumen.Observaciones</td></tr>
+                    <tr><th>Sin georreferenciar (bandeja)</th><td>@resumen.ObservacionesSinGeorreferenciar</td></tr>
+                    <tr><th>Fotos</th><td>@resumen.Fotos</td></tr>
+                    <tr><th>Comentarios</th><td>@resumen.Comentarios</td></tr>
+                </tbody>
+            </table>
+
+            <h3>Productividad por agente</h3>
+            @if (resumen.Productividad.Count == 0)
+            {
+                <p>Sin observaciones todavía.</p>
+            }
+            else
+            {
+                <table>
+                    <thead>
+                        <tr><th>Agente</th><th>Observaciones</th></tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var p in resumen.Productividad)
+                        {
+                            <tr><td>@p.Nombre</td><td>@p.Observaciones</td></tr>
+                        }
+                    </tbody>
+                </table>
+            }
+        }
+    </section>
+}
+
+@code {
+    private string usuario = "jefe.norte";
+    private string clave = "";
+    private string? mensaje;
+    private IReadOnlyList<RelevamientoDto> relevamientos = Array.Empty<RelevamientoDto>();
+    private ResumenRelevamientoDto? resumen;
+
+    private async Task Login()
+    {
+        mensaje = null;
+        if (await Api.LoginAsync(usuario, clave))
+        {
+            await RefrescarRelevamientos();
+        }
+        else
+        {
+            mensaje = "Credenciales inválidas.";
+        }
+    }
+
+    private void Salir()
+    {
+        Api.CerrarSesion();
+        relevamientos = Array.Empty<RelevamientoDto>();
+        resumen = null;
+        mensaje = null;
+    }
+
+    private async Task RefrescarRelevamientos()
+    {
+        relevamientos = await Api.ListarRelevamientosAsync();
+        resumen = null;
+    }
+
+    private async Task OnSeleccion(ChangeEventArgs e)
+    {
+        resumen = null;
+        mensaje = null;
+        if (Guid.TryParse(e.Value?.ToString(), out var id))
+        {
+            resumen = await Api.ObtenerResumenAsync(id);
+            if (resumen is null)
+            {
+                mensaje = "No se pudo obtener el resumen (¿sin acceso al área?).";
+            }
+        }
+    }
+
+    private static string NombreEstado(int estado) => estado switch
+    {
+        1 => "Recolección",
+        2 => "Revisión",
+        3 => "Cerrado",
+        _ => "Desconocido",
+    };
+}
