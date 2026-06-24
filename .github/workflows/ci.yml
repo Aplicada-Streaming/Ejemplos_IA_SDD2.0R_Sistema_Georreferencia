@@ -27,7 +27,7 @@ jobs:
           SERVICES: s3
     steps:
       - name: Checkout
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with:
           fetch-depth: 0   # MinVer (versionado de GeoVial.Sync) necesita el historial y los tags
 

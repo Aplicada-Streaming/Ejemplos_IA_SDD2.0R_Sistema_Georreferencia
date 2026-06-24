@@ -22,7 +22,7 @@ jobs:
     steps:
       - name: Metadata de Dependabot
         id: meta
-        uses: dependabot/fetch-metadata@v2
+        uses: dependabot/fetch-metadata@v3
 
       - name: Aprobar y habilitar auto-merge (solo minor/patch)
         if: >-
