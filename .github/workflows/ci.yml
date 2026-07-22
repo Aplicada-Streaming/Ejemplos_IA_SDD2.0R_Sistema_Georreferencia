@@ -27,12 +27,12 @@ jobs:
           SERVICES: s3
     steps:
       - name: Checkout
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with:
           fetch-depth: 0   # MinVer (versionado de GeoVial.Sync) necesita el historial y los tags
 
       - name: Setup .NET
-        uses: actions/setup-dotnet@v5
+        uses: actions/setup-dotnet@v6
         with:
           dotnet-version: '10.0.x'
 

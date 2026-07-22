@@ -33,7 +33,7 @@ jobs:
             dockerfile: infra/db/Dockerfile
     steps:
       - name: Checkout
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with:
           fetch-depth: 0   # historial completo para el SHA y la version
 
